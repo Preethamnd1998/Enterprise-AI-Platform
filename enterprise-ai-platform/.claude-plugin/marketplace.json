@@ -1,0 +1,12 @@
+{
+  "name": "lifetrenz-internal",
+  "owner": { "name": "Lifetrenz Engineering" },
+  "metadata": { "description": "Lifetrenz internal Claude Code plugins", "version": "3.0.0" },
+  "plugins": [
+    {
+      "name": "enterprise-ai-platform",
+      "source": "./",
+      "description": "Enterprise AI Platform v3 — bug-fix, planning, ui-redesign, dual-mode migration"
+    }
+  ]
+}

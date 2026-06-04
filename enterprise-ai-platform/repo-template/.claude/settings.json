@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "mcp__gitlab-reader__approve_merge_request",
+      "mcp__gitlab-reader__bulk_publish_draft_notes",
+      "mcp__gitlab-reader__create_branch",
+      "mcp__gitlab-reader__create_commit_status",
+      "mcp__gitlab-reader__create_draft_note",
+      "mcp__gitlab-reader__create_group",
+      "mcp__gitlab-reader__create_issue",
+      "mcp__gitlab-reader__create_issue_emoji_reaction",
+      "mcp__gitlab-reader__create_issue_link",
+      "mcp__gitlab-reader__create_issue_note",
+      "mcp__gitlab-reader__create_issue_note_emoji_reaction",
+      "mcp__gitlab-reader__create_label",
+      "mcp__gitlab-reader__create_merge_request",
+      "mcp__gitlab-reader__create_merge_request_discussion_note",
+      "mcp__gitlab-reader__create_merge_request_emoji_reaction",
+      "mcp__gitlab-reader__create_merge_request_note",
+      "mcp__gitlab-reader__create_merge_request_note_emoji_reaction",
+      "mcp__gitlab-reader__create_merge_request_thread",
+      "mcp__gitlab-reader__create_note",
+      "mcp__gitlab-reader__create_or_update_file",
+      "mcp__gitlab-reader__create_repository",
+      "mcp__gitlab-reader__delete_branch",
+      "mcp__gitlab-reader__delete_draft_note",
+      "mcp__gitlab-reader__delete_issue",
+      "mcp__gitlab-reader__delete_issue_emoji_reaction",
+      "mcp__gitlab-reader__delete_issue_link",
+      "mcp__gitlab-reader__delete_issue_note_emoji_reaction",
+      "mcp__gitlab-reader__delete_label",
+      "mcp__gitlab-reader__delete_merge_request_discussion_note",
+      "mcp__gitlab-reader__delete_merge_request_emoji_reaction",
+      "mcp__gitlab-reader__delete_merge_request_note",
+      "mcp__gitlab-reader__delete_merge_request_note_emoji_reaction",
+      "mcp__gitlab-reader__fork_repository",
+      "mcp__gitlab-reader__mark_all_todos_done",
+      "mcp__gitlab-reader__mark_todo_done",
+      "mcp__gitlab-reader__merge_merge_request",
+      "mcp__gitlab-reader__publish_draft_note",
+      "mcp__gitlab-reader__push_files",
+      "mcp__gitlab-reader__resolve_merge_request_thread",
+      "mcp__gitlab-reader__unapprove_merge_request",
+      "mcp__gitlab-reader__update_draft_note",
+      "mcp__gitlab-reader__update_issue",
+      "mcp__gitlab-reader__update_issue_description_patch",
+      "mcp__gitlab-reader__update_issue_note",
+      "mcp__gitlab-reader__update_label",
+      "mcp__gitlab-reader__update_merge_request",
+      "mcp__gitlab-reader__update_merge_request_discussion_note",
+      "mcp__gitlab-reader__update_merge_request_note",
+      "mcp__gitlab-reader__upload_markdown",
+      "mcp__redmine-reader__redmine_create_issue",
+      "mcp__redmine-reader__redmine_create_project",
+      "mcp__redmine-reader__redmine_delete_issue",
+      "mcp__redmine-reader__redmine_delete_time_entry",
+      "mcp__redmine-reader__redmine_delete_wiki_page",
+      "mcp__redmine-reader__redmine_log_time",
+      "mcp__redmine-reader__redmine_update_issue",
+      "mcp__redmine-reader__redmine_update_project",
+      "mcp__redmine-reader__redmine_update_time_entry",
+      "mcp__redmine-reader__redmine_update_wiki_page",
+      "mcp__canary_mongo_db__insert-many",
+      "mcp__canary_mongo_db__update-many",
+      "mcp__canary_mongo_db__delete-many",
+      "mcp__canary_mongo_db__drop-collection",
+      "mcp__canary_mongo_db__drop-database",
+      "mcp__canary_mongo_db__drop-index",
+      "mcp__canary_mongo_db__create-collection",
+      "mcp__canary_mongo_db__create-index",
+      "mcp__canary_mongo_db__rename-collection",
+      "Bash(git push*)",
+      "Bash(git commit*)",
+      "Bash(rm -rf*)",
+      "Bash(flyway*)"
+    ],
+    "ask": [
+      "Edit(**/db/migration/**)",
+      "Write(**/db/migration/**)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/audit.js"
+          }
+        ]
+      }
+    ]
+  },
+  "enableAllProjectMcpServers": false
+}

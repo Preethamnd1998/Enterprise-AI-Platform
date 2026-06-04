@@ -1,0 +1,20 @@
+{
+  "name": "enterprise-ai-platform",
+  "version": "3.0.0",
+  "description": "Token-efficient, deterministic Claude Code commands for bug fix, planning, UI redesign, and dual-mode migration across enterprise Java/Spring Boot/Angular repositories. Single LLM execution path, lazy standards loading, MCP read-only allowlists, no agent chains.",
+  "author": {
+    "name": "Lifetrenz Engineering"
+  },
+  "homepage": "https://gitlab/internal/enterprise-ai-platform",
+  "license": "UNLICENSED",
+  "keywords": [
+    "enterprise",
+    "migration",
+    "cherry-pick",
+    "spring-boot",
+    "angular",
+    "java",
+    "code-migration",
+    "bug-fix"
+  ]
+}
