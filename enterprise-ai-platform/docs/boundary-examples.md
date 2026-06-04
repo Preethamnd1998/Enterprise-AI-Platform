@@ -1,4 +1,8 @@
-# Boundary Declaration Examples (Week 2)
+# Boundary Declaration Examples
+
+**See also:** [`repo-onboarding.md`](repo-onboarding.md) · [`project-structure.md`](../../../project-structure.md) · [`README.md`](../../../README.md)
+
+---
 
 Boundaries power migration `mode=functionality` closure and the no-scan guarantee.
 Put these in each repo's `.claude/CLAUDE.md`.

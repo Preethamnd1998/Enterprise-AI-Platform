@@ -15,8 +15,13 @@
 D:\enterprise-ai-platform\
 ├── README.md                  ← Overview + all 5 commands reference
 ├── usage-instructions.md      ← Install · update · uninstall guide
+├── prompt-guide.md            ← How to write prompts for each command
 ├── contributing.md            ← How to add commands, standards, docs, release
 ├── project-structure.md       ← This file
+├── context\                   ← Agent input folder (external path config + gitignore)
+│   ├── context.path           ← Set your external folder path here once
+│   ├── .gitignore             ← Keeps content files out of git
+│   └── README.md              ← Setup + usage instructions
 ├── .github\
 │   └── copilot-instructions.md ← Copilot instructions for the platform repo itself
 └── enterprise-ai-platform\    ← The platform source (all install scripts copy from here)
@@ -26,8 +31,10 @@ D:\enterprise-ai-platform\
 | --- | --- |
 | [`README.md`](README.md) | Quick-reference: what the platform is, all 5 commands, global rules |
 | [`usage-instructions.md`](usage-instructions.md) | Full install/update/uninstall walkthrough, command quick-ref |
+| [`prompt-guide.md`](prompt-guide.md) | Minimal prompt patterns for each command; `context` shorthand guide |
 | [`contributing.md`](contributing.md) | Developer guide: adding commands, standards, docs, release process |
 | [`project-structure.md`](project-structure.md) | This file |
+| [`context/`](context/README.md) | External context folder config — logs, specs, and design files live outside the repo |
 
 ---
 
@@ -64,14 +71,16 @@ shared/
 
 The **single source of truth** for how every command behaves. Installed to `~/.claude/CLAUDE.md` by `install-claude.ps1` and vendored to `.github/ai-platform/shared/contract.md` by `install-copilot.ps1`.
 
-Contains 14 sections (§0–§14):
-- §0–§4: Discovery, no-scan, depth-1 expansion rules
+Contains 17 sections (§0–§16):
+
+- §0–§4: Prime directives, argument parsing, discovery, search governance, depth-1 expansion
 - §5–§6: Lazy standards loading + context discipline
 - §7–§9: Validation gates (completeness, regression, risk)
-- §10–§11: Budgets and stop conditions
-- §12: Output shape (analysis block format)
-- §13: Execution Summary format
+- §10–§11: Budgets (token/file/search) + stop conditions + failed search policy
+- §12–§13: Output shape + Execution Summary (includes Prompt Quality score)
 - §14: Global Approval Gate + `auto=true`
+- §15: Migration Intelligence (semantic rules, exact/functionality modes)
+- §16: Prompt Quality Assessment (scoring, token correlation, session rollup)
 
 Every command file says `<!-- contract is loaded via ~/.claude/CLAUDE.md -->` — it does not embed the contract, it inherits it.
 
@@ -196,24 +205,24 @@ Referenced by commands during validation. Installed to `~/.claude/templates/` (C
 
 ```text
 docs/
-├── installation.md          ← Plugin/marketplace install (alternative to PowerShell scripts)
 ├── repo-onboarding.md       ← Per-repo onboarding checklist (10-minute setup)
 ├── mcp-setup.md             ← MCP server read-only credential setup (GitLab, Redmine, DB)
-├── audit-and-metrics.md     ← Audit log schema (JSONL) + sample metrics queries
-├── example-executions.md    ← Worked examples for each command
-└── boundary-examples.md     ← Module boundary definition examples for .claude/CLAUDE.md
+├── audit-and-metrics.md     ← Audit log schema (JSONL) + metrics (includes Prompt Quality)
+├── example-executions.md    ← Worked examples for each command with Prompt Quality scores
+├── boundary-examples.md     ← Module boundary definition examples for .claude/CLAUDE.md
+└── installation.md          ← Plugin/marketplace install (alternative to PowerShell scripts)
 ```
 
-These are reference guides for engineers using the platform. They are **not** installed — engineers access them from the platform repo or a team wiki.
+These are reference guides for engineers. They are **not** installed — access them from the platform repo.
 
 | Doc | When to read |
 | --- | --- |
-| `installation.md` | Alternative install via Claude plugin marketplace |
-| `repo-onboarding.md` | First time setting up a new repository |
-| `mcp-setup.md` | Configuring MCP server tokens (read-only GitLab PAT, Redmine key, DB credentials) |
-| `audit-and-metrics.md` | Understanding the audit log or running metrics queries |
-| `example-executions.md` | Learning how a command works end-to-end |
-| `boundary-examples.md` | Writing the module boundaries section in `.claude/CLAUDE.md` |
+| [`repo-onboarding.md`](enterprise-ai-platform/docs/repo-onboarding.md) | First time setting up a new repository |
+| [`mcp-setup.md`](enterprise-ai-platform/docs/mcp-setup.md) | Configuring MCP server tokens (read-only GitLab PAT, Redmine key, DB credentials) |
+| [`audit-and-metrics.md`](enterprise-ai-platform/docs/audit-and-metrics.md) | Audit log schema, Prompt Quality metrics, search budget compliance |
+| [`example-executions.md`](enterprise-ai-platform/docs/example-executions.md) | Learning how each command works with real input/output examples |
+| [`boundary-examples.md`](enterprise-ai-platform/docs/boundary-examples.md) | Writing the module boundaries section in `.claude/CLAUDE.md` |
+| [`installation.md`](enterprise-ai-platform/docs/installation.md) | Alternative install via Claude plugin marketplace |
 
 See [`contributing.md §5`](contributing.md#5-adding-documentation) for how to add a new doc.
 

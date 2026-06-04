@@ -198,14 +198,13 @@ Analyse production/support data issues and generate correction scripts.
 | Redmine issue | `redmine=42391` |
 | GitLab MR | `mr=!247` |
 | Commit SHA | `commit=abc1234` |
-| Stack trace / error log | Save to `context/logs.md` → `file=context/logs.md` |
-| Feature spec / user story | Save to `context/design.md` → `file=context/design.md` |
-| Designer HTML mockup | Save as `context/design.html` → `file=context/design.html` |
+| Stack trace / log / spec / design | Drop in external context folder → say `context` |
+| Specific file (any name) | `file=context/my-file.md` or full path |
 | Screenshot / image | Attach to the chat message |
 | Free text (one-liner) | Type directly in chat |
-| Word document (.docx) | Export to `.md` or `.txt`, save in `context/`, pass `file=` |
+| Word document (.docx) | Export to `.md` or `.txt`, drop in context folder |
 
-> **`context/` folder:** each repo has a `context/` folder for logs, specs, and design files — use it instead of pasting large content into chat. See [`context/README.md`](context/README.md) and [`prompt-guide.md`](prompt-guide.md).
+> **`context` shorthand:** say `context` in any command — the agent reads `context/context.path` to find your external folder, then reads all files in it. Set the path once: [`context/README.md`](context/README.md). Full prompt patterns: [`prompt-guide.md`](prompt-guide.md).
 
 ---
 
@@ -226,15 +225,15 @@ These apply to every command:
 Full guide: [`enterprise-ai-platform/docs/repo-onboarding.md`](enterprise-ai-platform/docs/repo-onboarding.md)
 
 ```text
-☐ 1. Global install done on this machine (see usage-instructions.md §3)
-☐ 2. Per-repo install done (see usage-instructions.md §4)
-☐ 3. .claude\CLAUDE.md filled in (stack, module boundaries, Flyway path)
-☐ 4. MCP servers connected: gitlab-reader · redmine-reader
-☐ 5. Smoke test:
-       /bug-fix "NullPointerException in OrderService"           → analysis shown, approval asked
-       /migration mode=exact mr=!<recent> target=main auto=true  → minimal patch + validation
-       /data-correction "test issue"                             → SELECT queries run, scripts generated
-☐ 6. Commit .claude\settings.json + .claude\CLAUDE.md
+☐ 1. Global install:  cd install && .\install-claude.ps1
+☐ 2. Per-repo:        .\install-claude.ps1 -RepoPath <repo-path>
+☐ 3. Context folder:  set external path in context\context.path (once per machine)
+☐ 4. Edit <repo>\.claude\CLAUDE.md — fill in stack, module boundaries, Flyway path
+☐ 5. MCP servers connected: gitlab-reader · redmine-reader (+ DB MCP if data tasks expected)
+☐ 6. Smoke test:
+       /bug-fix "NullPointerException in OrderService"  → analysis + Prompt Quality score shown
+       /migration mode=exact mr=!<recent> target=main   → minimal patch + validation PASS
+☐ 7. Commit .claude\settings.json + .claude\CLAUDE.md
        (do NOT commit .claude\audit\ — it is in .gitignore)
 ```
 
@@ -247,10 +246,10 @@ D:\enterprise-ai-platform\
 ├── README.md                              ← this file (overview + commands)
 ├── usage-instructions.md                  ← install · update · uninstall
 ├── prompt-guide.md                        ← how to write prompts for each command
-├── context\                               ← drop logs / specs / design files here
-│   ├── README.md                          ← how to use this folder
-│   ├── logs.md                            ← paste stack traces and error logs
-│   └── design.md                          ← paste feature specs and design notes
+├── context\                               ← agent input folder
+│   ├── context.path                       ← set your external folder path here (once)
+│   ├── .gitignore                         ← keeps content files out of git
+│   └── README.md                          ← setup + usage instructions
 ├── .github\copilot-instructions.md
 └── enterprise-ai-platform\               ← v3 platform source
     ├── shared\contract.md                 ← execution contract (→ ~/.claude/CLAUDE.md)
@@ -268,12 +267,12 @@ D:\enterprise-ai-platform\
     ├── adapters\copilot\                  ← Copilot files vendored per repo
     ├── templates\                         ← checklist templates
     ├── docs\                              ← detailed guides
-    │   ├── repo-onboarding.md
-    │   ├── mcp-setup.md
-    │   ├── audit-and-metrics.md
-    │   └── example-executions.md
-    ├── repo-template\                     ← templates copied by install scripts
-    │   ├── context\                       ← logs.md + design.md copied to each repo
+    │   ├── repo-onboarding.md             ← per-repo setup checklist
+    │   ├── mcp-setup.md                   ← read-only MCP credential setup
+    │   ├── audit-and-metrics.md           ← audit log schema + metrics
+    │   ├── example-executions.md          ← worked examples for each command
+    │   └── boundary-examples.md           ← module boundary definition examples
+    ├── repo-template\                     ← templates copied by install scripts (only .claude/ contents)
     ├── install\                           ← PowerShell installers
     │   ├── install-claude.ps1
     │   ├── install-copilot.ps1

@@ -14,6 +14,7 @@ Discovery, dependency expansion, and validation are deterministic steps **you** 
 3. Hunks not files. Signatures not bodies (for unchanged neighbors).
 4. Depth-1 dependency expansion by default.
 5. Prove completeness AND prove no regression before "done".
+6. Token efficiency: 5 targeted searches beat 1 repository scan. Accuracy first · token efficiency second · search minimization third.
 
 ## 1. Argument parsing
 Arguments arrive as space-separated `key=value` pairs in `$ARGUMENTS`.
@@ -34,12 +35,43 @@ If a required key is missing, ask exactly one clarifying question, then proceed.
 - `release=vX..vY`→ `list_commits` over the tag range → aggregate changed paths → diff at endpoints.
 Produce a CHANGE SET: `{ files[], hunks[], symbolsTouched[] }`. Read source from GitLab, not local.
 
-## 3. No-scan rules (hard)
-Forbidden by default: `get_repository_tree` broadly, listing modules, reading "all" services/
-controllers/components, global grep for "related" code, opening unrelated modules.
-A file may enter scope ONLY if (a) it is in the change set, (b) something already loaded
-references it, or (c) naming/package convention ties it to a loaded symbol — AND it is inside
-the module boundary (see repo `.claude/CLAUDE.md`). Growth is along existing edges, never enumeration.
+## 3. Search Governance
+
+**3a. Search levels** — exhaust each level before expanding to the next:
+
+| Level | Scope |
+| ----- | ----- |
+| L1 Direct | Known file · known class · known component · known service · known table |
+| L2 Module | Current module only |
+| L3 Bounded | Related modules only |
+| L4 Cross-system | Requires explicit user approval before proceeding |
+
+**3b. No-scan rules (hard)**
+Forbidden: `get_repository_tree` broadly, listing modules, reading "all" services/controllers/
+components, global grep for "related" code, full history scans, wildcard MCP searches, broad regex.
+A file may enter scope ONLY if (a) it is in the change set, (b) something already loaded references
+it, or (c) naming/package convention ties it to a loaded symbol — AND it is inside the module
+boundary (see repo `.claude/CLAUDE.md`). Growth is along existing edges, never enumeration.
+Prefer: exact identifiers · exact file names · exact MR numbers · exact Redmine IDs · exact class names.
+
+**3c. Search expansion rule** — if not found, do NOT auto-expand. Stop and output:
+
+```text
+SEARCH RESULT — NOT FOUND
+Searched:        <scope>
+Possible scopes: <options>
+Estimated cost:  Low / Medium / High
+Expand search? (approve to continue)
+```
+
+**3d. Scope drift detection**
+Detect when a task expands beyond its original type:
+bug-fix → investigation · migration → discovery · UI change → architecture analysis.
+If detected: STOP, describe the drift, request approval before continuing.
+
+**3e. Repeated-search protection**
+Cache MCP results, file reads, and repository searches within the session.
+Never search the same location twice in the same session.
 
 ## 4. Depth-1 expansion
 Expand only to symbols the change directly references (imports, field types, injected beans,
@@ -83,18 +115,33 @@ Approval required (stop and ask): High/Critical — DB/Flyway changes, permissio
 auth, billing/financial/patient data, or anything at application scope.
 
 ## 10. Budgets (hard limits — stop and report when reached; never silently truncate, never auto-expand)
-| Task | Max files | Token budget |
-|------|-----------|--------------|
-| bug-fix | 10 | ≤ 6k working |
-| planning | 5 (structure only) | ≤ 10k |
-| ui-redesign | 5 | ≤ 8k + image |
-| migration exact | 15 | ≤ 12k |
-| migration functionality | 40 | ≤ 40k |
+
+| Task | Max files | Max searches | Token budget |
+| ---- | --------- | ------------ | ------------ |
+| bug-fix | 10 | 5 | ≤ 6k working |
+| planning | 5 (structure only) | 5 | ≤ 10k |
+| ui-redesign | 5 | 5 | ≤ 8k + image |
+| migration exact | 15 | 15 | ≤ 12k |
+| migration functionality | 40 | 30 | ≤ 40k |
+
 Other ceilings: ≤ 2 MCP servers/task, ≤ 10 MCP calls/task, ≤ 20 commits, ≤ 3 branch comparisons.
+Beyond any limit: stop and report what was covered vs what is missing — never silently expand.
 
 ## 11. Stop conditions
 Stop when: objective met AND both gates PASS; or root-cause confidence > 90% (then fix);
 or a hard budget is reached (then report covered vs missing). Do not keep exploring.
+
+**Failed search policy:** if required information cannot be found after exhausting approved scopes,
+do not continue or guess. Output:
+
+```text
+MISSING EVIDENCE
+Missing:               <list>
+Required to continue:  <list>
+Suggested next search: <list>
+```
+
+Wait for user input.
 
 ## 12. Output shape
 
@@ -137,6 +184,7 @@ Files Read: N  |  Modified: N
 Standards Loaded: N  |  Subagents: N
 Validation: PASS / FAIL
 Estimated Tokens: ~Nk
+Prompt Quality: N/100 (<band>) — <one-line note>
 ```
 
 Session-end block (when user types `done`):
@@ -148,6 +196,8 @@ Parts: N  |  Phases: N  |  Tasks: N
 Files Read: N  |  Modified: N
 Standards Loaded: N  |  Subagents: N
 Estimated Tokens: ~Nk
+Avg Prompt Quality: N/100 | High: N | Low: N
+Most missing: <top 1-2 items>
 ```
 
 Replace `<TaskType>` with: Bugs · Features · Migrations · Components · Corrections.
@@ -178,3 +228,100 @@ Only after one of those responses: proceed to the Execution Phase.
 If `auto=true` was set: skip the gate, proceed directly to execution.
 
 Allowed approval responses: `approve` · `yes` · `proceed` · `implement`
+
+## 15. Migration Intelligence
+
+Migration is **semantic, not a file-copy operation.** Understand intent before comparing code.
+
+**15a. Discovery (before any migration)** — identify and document:
+
+- Business requirement and functional behavior
+- API changes (signatures, status codes, contracts)
+- Data model changes (schema, constraints, indexes)
+- Validation, security, and authorization changes
+- Feature flags and configuration changes
+
+Build semantic understanding first. Do not compare files line-by-line before understanding intent.
+
+**15b. mode=exact** — goal: smallest possible patch.
+Rules: no redesign · no refactor · no optimization · no cleanup.
+Only migrate what is required. Call out scope creep explicitly; never silently absorb it.
+
+**15c. mode=functionality** — goal: preserve behavior, not code.
+Determine source behavior + target architecture → produce behavior-preserving implementation.
+Identical code is not required. Structural differences are expected.
+
+**15d. Search limits**
+Scope: source branch · target branch · directly related MRs · directly related Redmine tickets.
+Do not scan unrelated repositories or unrelated services.
+
+**15e. Migration approval gate** — before implementation, stop and output:
+
+```text
+MIGRATION ANALYSIS
+Business Objective:  <summary>
+Affected Parts:      <list>
+Affected Phases:     <list>
+Affected Tasks:      <list>
+Risk Analysis:       Low / Medium / High
+Migration Strategy:  exact / functionality
+Est. Files:          N
+Est. Complexity:     Small / Medium / Large / XLarge
+```
+
+STOP. Wait for approval.
+
+## 16. Prompt Quality Assessment
+
+Evaluate every user request and append a `Prompt Quality` line to the §13 Execution Summary.
+**Purpose:** measure how much discovery work the platform had to perform — not user skill.
+A low score means more tokens were consumed on investigation that better input could have avoided.
+
+### 16a. Scoring factors
+
+Positive signals (raise score): exact identifier (Redmine ID / MR / branch / commit / table /
+collection) · error evidence (stack trace / logs / screenshot / SQL error) · business context
+(expected vs actual behavior) · scope definition (module / component / service / API) ·
+reproduction steps · design reference.
+
+Negative signals (lower score): missing issue details · missing scope · missing expected behavior ·
+ambiguous request · multiple unrelated objectives · repository-wide instruction
+("search all", "analyze everything", "find the issue").
+
+### 16b. Score bands
+
+| Score | Label | Discovery impact |
+| ----- | ----- | ---------------- |
+| 90–100 | Excellent | Minimal discovery required |
+| 70–89 | Good | Minor discovery required |
+| 50–69 | Moderate | Several assumptions needed |
+| 30–49 | Poor | Large discovery effort required |
+| 0–29 | Very Poor | Scope unclear — significant investigation required |
+
+### 16c. Per-task output — included in §13 Execution Summary
+
+```text
+Prompt Quality: 86/100 (Good)
+Strengths:     Redmine ID · exact module · stack trace
+Missing:       Expected behavior
+Token impact:  Minor — one assumption needed
+```
+
+### 16d. Session rollup — included in §13 Session Summary
+
+```text
+Avg Prompt Quality: 74/100
+High: 92  Low: 45
+Most missing: stack trace · expected behavior
+```
+
+### 16e. Token correlation
+
+Report `Prompt Quality` alongside `Estimated Tokens` — this shows engineers which missing inputs drove cost.
+Example: Quality 92 → ~3k tokens · Quality 35 → ~18k tokens.
+
+### 16f. Rules
+
+- Never shame or criticize. Never block execution. Score is informational only.
+- Execution always continues regardless of score.
+- Goal: better prompts → lower token usage → faster execution → less discovery effort.

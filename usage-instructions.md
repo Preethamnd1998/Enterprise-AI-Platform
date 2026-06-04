@@ -5,8 +5,12 @@
 **Related docs:**
 
 - [`README.md`](README.md) — platform overview and command reference
+- [`prompt-guide.md`](prompt-guide.md) — how to write prompts for each command
 - [`project-structure.md`](project-structure.md) — what every folder and file does
 - [`contributing.md`](contributing.md) — how to add commands, standards, and docs
+- [`enterprise-ai-platform/docs/repo-onboarding.md`](enterprise-ai-platform/docs/repo-onboarding.md) — per-repo setup checklist
+- [`enterprise-ai-platform/docs/example-executions.md`](enterprise-ai-platform/docs/example-executions.md) — worked examples for each command
+- [`enterprise-ai-platform/docs/audit-and-metrics.md`](enterprise-ai-platform/docs/audit-and-metrics.md) — audit log schema and metrics
 
 ---
 
@@ -383,11 +387,13 @@ All commands support:
 | Redmine issue | `redmine=42391` |
 | GitLab MR | `mr=!247` |
 | Commit SHA | `commit=abc1234` |
-| Stack trace | Paste directly into chat |
-| User story / free text | Type or paste |
-| Markdown / text file | `file=D:\path\to\file.md` |
+| Stack trace / log / spec / design | Drop in external context folder → say `context` |
+| Specific file | `file=context/my-file.md` or full path |
+| User story / free text (short) | Type directly in chat |
 | Screenshot / image | Attach to the chat message |
-| Word document (.docx) | Not directly readable — export to `.md` or `.txt` first |
+| Word document (.docx) | Export to `.md` or `.txt`, drop in context folder |
+
+> Set your context folder path once in `context/context.path`. See [`prompt-guide.md`](prompt-guide.md) for usage patterns and [`context/README.md`](context/README.md) for setup.
 
 ---
 

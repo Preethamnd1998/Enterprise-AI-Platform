@@ -3,9 +3,12 @@
 > How to add commands, update standards, write docs, and release a new version.
 
 **Related docs:**
+
 - [`README.md`](README.md) — platform overview and command reference
 - [`usage-instructions.md`](usage-instructions.md) — install · update · uninstall
+- [`prompt-guide.md`](prompt-guide.md) — how to write prompts for each command
 - [`project-structure.md`](project-structure.md) — what each folder does
+- [`enterprise-ai-platform/docs/example-executions.md`](enterprise-ai-platform/docs/example-executions.md) — worked examples (useful when testing new commands)
 
 ---
 
@@ -300,21 +303,23 @@ The shared contract (`shared/contract.md`) is the execution policy installed to 
 
 | Section | What it controls |
 | --- | --- |
-| §0 Prime directives | The 5 top-level rules |
-| §1 Argument parsing | How `key=value` args are parsed |
+| §0 Prime directives | 6 top-level rules including token efficiency |
+| §1 Argument parsing | How `key=value` args are parsed; `context` shorthand |
 | §2 Deterministic discovery | How change sets are resolved from input |
-| §3 No-scan rules | What files may NOT be opened |
+| §3 Search Governance | Levels L1–L4, no-scan rules, expansion rule, scope drift, cache |
 | §4 Depth-1 expansion | How far dependency tracing goes |
 | §5 Lazy standards loading | Which standards files map to which layers |
 | §6 Context discipline | What to send vs discard |
 | §7 Validation gate A | Completeness check |
 | §8 Validation gate B | Regression check |
 | §9 Risk gate | When to stop and ask |
-| §10 Budgets | Hard token/file limits per task type |
-| §11 Stop conditions | When a task is done |
+| §10 Budgets | Hard token/file/search limits per task type |
+| §11 Stop conditions | When a task is done; failed search policy |
 | §12 Output shape | Phase 1 output blocks format |
-| §13 Execution Summary | Mandatory end-of-task summary format |
+| §13 Execution Summary | Mandatory end-of-task summary (includes Prompt Quality) |
 | §14 Global Approval Gate | Default APPROVAL REQUIRED + auto=true |
+| §15 Migration Intelligence | Semantic migration rules, exact/functionality modes, approval gate |
+| §16 Prompt Quality Assessment | Per-task quality scoring, token correlation, session rollup |
 
 ### After editing
 

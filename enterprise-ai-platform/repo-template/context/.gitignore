@@ -1,7 +1,0 @@
-# Ignore all content files — they live in the external path set in context.path
-*
-
-# Keep these tracked by git
-!.gitignore
-!context.path
-!README.md
