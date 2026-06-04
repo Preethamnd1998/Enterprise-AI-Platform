@@ -1,6 +1,7 @@
-<!-- SHARED CONTRACT v3 — embedded by every command via @${CLAUDE_PLUGIN_ROOT}/shared/contract.md
-     This is the single shared brain. Keep it STABLE so it stays in the prompt cache.
-     Do not duplicate these rules into command files. -->
+<!-- SHARED CONTRACT v3
+     Claude Code (global):  installed to ~/.claude/CLAUDE.md by install-claude.ps1
+     Copilot (per-repo):    vendored to .github/ai-platform/shared/contract.md by install-copilot.ps1
+     Keep this file STABLE — it is the prompt-cache prefix for every session. -->
 
 # Enterprise AI Platform — Shared Execution Contract (v3)
 
@@ -40,12 +41,17 @@ called methods, DTO/entity types, Angular selectors, routing entries). Deeper ex
 explicit, budget-charged, logged decision that must state why. No automatic depth-2.
 
 ## 5. Lazy standards loading (Read at runtime; NEVER embed)
-Detect the languages in the CHANGE SET, then `Read` only the matching files, once each:
-- Any code            → `${CLAUDE_PLUGIN_ROOT}/standards/coding-standards.md`
-- Java / Spring       → `${CLAUDE_PLUGIN_ROOT}/standards/backend/<layer>.md` (only layers touched: controller, service, repository, entity, dto-mapper-enum, common-api, spring)
-- Angular / TS        → `${CLAUDE_PLUGIN_ROOT}/standards/frontend/<topic>.md` (only topics touched: component, service, custom-components, pagination, others, angular)
-- SQL / Flyway        → `standards/backend/repository.md` + `standards/migration/*` (DB sections)
-- Migration task      → `${CLAUDE_PLUGIN_ROOT}/standards/migration/*`
+Standards root:
+- Claude Code (global install): `~/.claude/standards/`
+- Copilot (per-repo vendor):    `.github/ai-platform/standards/`
+
+Detect the languages in the CHANGE SET, then `Read` only the matching files from the
+appropriate root above, once each:
+- Any code        → `<root>/coding-standards.md`
+- Java / Spring   → `<root>/backend/<layer>.md` (only layers touched: controller, service, repository, entity, dto-mapper-enum, common-api, spring)
+- Angular / TS    → `<root>/frontend/<topic>.md` (only topics touched: component, service, custom-components, pagination, others, angular)
+- SQL / Flyway    → `<root>/backend/repository.md` + `<root>/migration/` DB sections
+- Migration task  → `<root>/migration/semantic-git.md`, `<root>/migration/cherry-pick-rules.md`
 A Java-only task must not read `frontend/`, and vice versa. Reuse within the session; never re-read.
 
 ## 6. Context discipline
