@@ -91,5 +91,84 @@ Stop when: objective met AND both gates PASS; or root-cause confidence > 90% (th
 or a hard budget is reached (then report covered vs missing). Do not keep exploring.
 
 ## 12. Output shape
-Findings → plan → changes (small diffs) → validation (both gates) → audit line.
-Concise. No essays, no full-file dumps, no repeated analysis.
+
+Phase 1 always runs first (Discovery & Analysis — read-only).
+Then: Approval Gate (§14) → Execution Phase → Validation → Execution Summary (§13).
+
+Output structure per command:
+
+```text
+## ROOT CAUSE / REQUIREMENT
+<summary>
+
+## IMPACT ANALYSIS
+Affected Areas: UI · Backend · Database · Integrations · APIs · Reports
+Risk Level: Low / Medium / High
+
+## IMPLEMENTATION BREAKDOWN
+PART N - <area>
+  PHASE N.N - <topic>
+    TASK N.N.N ...
+
+## CHANGE ESTIMATE
+Files Read: N | Est. Files Modified: N | UI: N | Backend: N | DB Objects: N
+Complexity: Small / Medium / Large / XLarge
+```
+
+No essays, no full-file dumps, no repeated analysis.
+
+## 13. Execution Summary (mandatory — every command, after execution)
+
+Append at the END of every command output. Never during execution.
+Never expose chain-of-thought, credentials, or tool arguments.
+Counts estimated from activity only — no token-counting APIs. Round to nearest 100.
+
+```text
+## Execution Summary
+Mode: <command-name>
+Parts: N  |  Phases: N  |  Tasks: N
+Files Read: N  |  Modified: N
+Standards Loaded: N  |  Subagents: N
+Validation: PASS / FAIL
+Estimated Tokens: ~Nk
+```
+
+Session-end block (when user types `done`):
+
+```text
+## Session Summary
+<TaskType> Processed: N
+Parts: N  |  Phases: N  |  Tasks: N
+Files Read: N  |  Modified: N
+Standards Loaded: N  |  Subagents: N
+Estimated Tokens: ~Nk
+```
+
+Replace `<TaskType>` with: Bugs · Features · Migrations · Components · Corrections.
+
+## 14. Global Approval Gate (applies to every command)
+
+**Default mode: APPROVAL REQUIRED.**
+
+No source code changes. No configuration changes. No database changes.
+No generated scripts. No write-capable MCP operations.
+Until explicit user approval is received.
+
+Optional override: include `auto=true` in arguments. Examples:
+
+```text
+/bug-fix auto=true
+/new-development auto=true
+/migration auto=true
+```
+
+**After Phase 1 – Discovery & Analysis, STOP and output §12 analysis blocks, then ask:**
+
+```text
+Approve implementation? (approve / yes / proceed / implement)
+```
+
+Only after one of those responses: proceed to the Execution Phase.
+If `auto=true` was set: skip the gate, proceed directly to execution.
+
+Allowed approval responses: `approve` · `yes` · `proceed` · `implement`
