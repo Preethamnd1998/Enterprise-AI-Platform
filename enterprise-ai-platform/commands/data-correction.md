@@ -38,6 +38,7 @@ Describe your data issue using any of:
   • collection=<name>         — target specific Mongo collection
   • id=<record-id>            — sample affected record
   • file=<path>               — .md / .txt requirement or issue description
+  • context                   — scan context/ folder (any filenames)
 
 Scripts are generated for your manual review.  Nothing is executed automatically.
 
@@ -67,7 +68,8 @@ For each issue the user provides in this session:
 | `table=<name>` | Use as the primary target table for SQL analysis |
 | `collection=<name>` | Use as the primary target Mongo collection |
 | `id=<record-id>` | Use as a sample record for tracing data lineage |
-| `file=<path>` (.md / .txt) | `Read` the file — extract issue details, table/collection names, sample IDs |
+| `file=<path>` (.md / .txt / .html) | `Read` the file — extract issue details, table/collection names, sample IDs |
+| `context` or `file=context` | `Glob context/**` → `Read` all files found — use as full input context |
 | Patient ID / Order ID / Bill ID | Use as seed for data lineage trace |
 
 ---

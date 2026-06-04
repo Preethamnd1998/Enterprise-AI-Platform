@@ -33,7 +33,8 @@ Describe your bug using any of:
   • mr=!<n> or commit=<sha>   — GitLab MR or commit
   • Paste a stack trace / error log
   • Paste a user story / bug description
-  • file=<path>               — .md or .txt file with bug details
+  • file=<path>               — .md / .txt / .html file with bug details
+  • context                   — scan context/ folder (any filenames)
   • Attach a screenshot       — error UI or console snapshot
 
 Options:
@@ -65,8 +66,9 @@ For each bug the user provides in this session:
 | `commit=<sha>` | `get_commit_diff` |
 | Pasted stack trace | Parse directly — keep OWN-package frames only |
 | User story / free text | Treat as bug description — extract symptoms and affected area |
-| `file=<path>` (.md / .txt) | `Read` the file — use as bug description or trace |
+| `file=<path>` (.md / .txt / .html) | `Read` the file — use as bug description or trace |
 | `file=<path>` (.doc / .docx) | Cannot read binary — ask user to export as `.md` or `.txt` |
+| `context` or `file=context` | `Glob context/**` → `Read` all files found — use as full input context |
 | Screenshot attached | Read as image — visual error context |
 
 ---

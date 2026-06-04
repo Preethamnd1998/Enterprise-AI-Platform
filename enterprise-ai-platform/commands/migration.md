@@ -34,6 +34,7 @@ Provide mode + source + target for each migration:
   • mode=functionality  branch=feature/bulk-discharge  target=main
   • mode=functionality  redmine=41800  target=main
   • mode=exact   file=notes.md  target=release/v2.5
+  • mode=exact   context        target=release/v2.5  — scan context/ folder
 
 Options:
   • auto=true    — skip approval gate for this session
@@ -64,8 +65,9 @@ For each migration the user provides in this session:
 | `branch=<b>` | `get_branch_diffs` against merge-base of `target` |
 | `release=vX..vY` | `list_commits` over tag range → aggregate paths → diff at endpoints |
 | `redmine=<id>` | `redmine_get_issue` → parse body for `!<n>` (MR) or SHA → follow to MR/commit |
-| `file=<path>` (.md / .txt) | `Read` the file — extract MR numbers, SHAs, branch names, change descriptions |
+| `file=<path>` (.md / .txt / .html) | `Read` the file — extract MR numbers, SHAs, branch names, change descriptions |
 | `file=<path>` (.doc / .docx) | Cannot read binary — ask user to export as `.md` or `.txt` |
+| `context` or `file=context` | `Glob context/**` → `Read` all files found — use as full input context |
 
 If `mode` is missing: suggest `exact` for cherry-pick/hotfix/backport, `functionality` for feature ports.
 If `target` is missing: ask before proceeding.

@@ -17,8 +17,14 @@ Discovery, dependency expansion, and validation are deterministic steps **you** 
 
 ## 1. Argument parsing
 Arguments arrive as space-separated `key=value` pairs in `$ARGUMENTS`.
-Parse keys: `redmine`, `mr`, `commit`, `branch`, `release`, `target`, `component`, `mode`.
+Parse keys: `redmine`, `mr`, `commit`, `branch`, `release`, `target`, `component`, `mode`, `file`.
 If a required key is missing, ask exactly one clarifying question, then proceed.
+
+**`context` shorthand:** if `$ARGUMENTS` contains the bare word `context` OR `file=context` (no filename):
+
+1. `Read context/context.path` — take the first non-empty, non-comment line as the folder path. If missing or blank, fall back to `context/` inside the repo.
+2. `Glob <resolved-path>/**` → `Read` each file found (md, txt, html) in one pass.
+3. Use all content as the task's input context. Do not ask the user which file to use.
 
 ## 2. Deterministic discovery (resolve input → change set, O(change), no scan)
 - `redmine=<id>`  → `redmine_get_issue` → parse body/journals for `!<n>` (MR) or `[0-9a-f]{7,40}` (SHA) → follow to MR/commit path below.

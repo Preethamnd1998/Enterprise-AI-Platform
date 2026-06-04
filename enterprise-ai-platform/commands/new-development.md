@@ -32,7 +32,8 @@ Describe your feature using any of:
   • redmine=<id>              — Redmine story or epic (fetched automatically)
   • Free text                 — "Add bulk discharge for inpatient"
   • Paste a user story        — As a doctor, I want to...
-  • file=<path>               — .md or .txt requirements document
+  • file=<path>               — .md / .txt / .html requirements document
+  • context                   — scan context/ folder (any filenames)
   • Attach a screenshot       — UI mockup or wireframe
 
 Options:
@@ -61,8 +62,9 @@ For each feature the user provides in this session:
 | --- | --- |
 | `redmine=<id>` | `redmine_get_issue` → extract story, acceptance criteria, linked wiki/project |
 | Free text / user story | Extract feature name, actors, expected behaviour |
-| `file=<path>` (.md / .txt) | `Read` the file — treat as requirements document |
+| `file=<path>` (.md / .txt / .html) | `Read` the file — treat as requirements document |
 | `file=<path>` (.doc / .docx) | Cannot read binary — ask user to export as `.md` or `.txt` |
+| `context` or `file=context` | `Glob context/**` → `Read` all files found — use as full input context |
 | Screenshot / wireframe | Read as image — treat as visual spec |
 
 ---

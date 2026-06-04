@@ -1,0 +1,11 @@
+# AI context folder path
+# Enter the absolute path to the folder where you store your logs, specs, and design files.
+# This folder should live OUTSIDE the repository so git never tracks your content.
+#
+# Examples:
+#   D:\AI-Context\
+#   C:\Users\YourName\Desktop\ai-context\
+#   D:\Work\ai-input\
+#
+# Leave blank to fall back to the context/ folder inside this repo.
+

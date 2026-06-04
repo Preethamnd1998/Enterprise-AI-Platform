@@ -37,7 +37,8 @@ Provide one of:
   • component=<ComponentName>              — load from GitLab
   • Paste the component HTML               — use directly
   • Attach a screenshot                    — visual spec or error snapshot
-  • file=<path>                            — .md / .txt design spec or requirements
+  • file=<path>                            — .md / .txt / .html design spec or requirements
+  • context                                — scan context/ folder (any filenames)
   • User story (free text)                 — "The ward list should show..."
   • Format A paths:
       Component needs change :- <folder>
@@ -85,8 +86,9 @@ When ambiguous, ask one clarifying question before proceeding.
 | `component=<Name>` | `get_file_contents` for `.html`, `.ts`, `.scss` from GitLab |
 | Pasted HTML | Use directly as current component state |
 | Screenshot / image | Read as image — error context (BUG FIX) or visual target (DESIGN UPDATE / NEW DEV) |
-| `file=<path>` (.md / .txt) | `Read` — design spec, requirements, or bug report |
+| `file=<path>` (.md / .txt / .html) | `Read` — design spec, requirements, or bug report |
 | `file=<path>` (.doc / .docx) | Cannot read binary — ask user to export as `.md` or `.txt` |
+| `context` or `file=context` | `Glob context/**` → `Read` all files found — use as full input context |
 | User story (free text) | Extract UI requirements, actors, expected visual behaviour |
 | Format A paths | Read component folder + design HTML file directly |
 | Format B short args | Resolve `d:\GitLab Workspace\UI\Core\Clinical\projects\<project>\src\lib\app\pages\` + design root |

@@ -7,6 +7,7 @@
 ---
 
 **Install / Update / Uninstall:** [`usage-instructions.md`](usage-instructions.md)
+**How to write prompts:** [`prompt-guide.md`](prompt-guide.md)
 **Project structure:** [`project-structure.md`](project-structure.md)
 **Contributing / adding commands:** [`contributing.md`](contributing.md)
 **Git repository:** `https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git`
@@ -197,11 +198,14 @@ Analyse production/support data issues and generate correction scripts.
 | Redmine issue | `redmine=42391` |
 | GitLab MR | `mr=!247` |
 | Commit SHA | `commit=abc1234` |
-| Stack trace | Paste directly into chat |
-| User story / free text | Type or paste |
-| Markdown / text file | `file=D:\path\to\file.md` |
+| Stack trace / error log | Save to `context/logs.md` → `file=context/logs.md` |
+| Feature spec / user story | Save to `context/design.md` → `file=context/design.md` |
+| Designer HTML mockup | Save as `context/design.html` → `file=context/design.html` |
 | Screenshot / image | Attach to the chat message |
-| Word document (.docx) | Not directly readable — export to `.md` or `.txt` first |
+| Free text (one-liner) | Type directly in chat |
+| Word document (.docx) | Export to `.md` or `.txt`, save in `context/`, pass `file=` |
+
+> **`context/` folder:** each repo has a `context/` folder for logs, specs, and design files — use it instead of pasting large content into chat. See [`context/README.md`](context/README.md) and [`prompt-guide.md`](prompt-guide.md).
 
 ---
 
@@ -242,6 +246,11 @@ Full guide: [`enterprise-ai-platform/docs/repo-onboarding.md`](enterprise-ai-pla
 D:\enterprise-ai-platform\
 ├── README.md                              ← this file (overview + commands)
 ├── usage-instructions.md                  ← install · update · uninstall
+├── prompt-guide.md                        ← how to write prompts for each command
+├── context\                               ← drop logs / specs / design files here
+│   ├── README.md                          ← how to use this folder
+│   ├── logs.md                            ← paste stack traces and error logs
+│   └── design.md                          ← paste feature specs and design notes
 ├── .github\copilot-instructions.md
 └── enterprise-ai-platform\               ← v3 platform source
     ├── shared\contract.md                 ← execution contract (→ ~/.claude/CLAUDE.md)
@@ -264,6 +273,7 @@ D:\enterprise-ai-platform\
     │   ├── audit-and-metrics.md
     │   └── example-executions.md
     ├── repo-template\                     ← templates copied by install scripts
+    │   ├── context\                       ← logs.md + design.md copied to each repo
     ├── install\                           ← PowerShell installers
     │   ├── install-claude.ps1
     │   ├── install-copilot.ps1
