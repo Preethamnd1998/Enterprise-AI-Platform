@@ -1,0 +1,46 @@
+{
+  "_comment": "Enterprise AI Platform — MCP server template (v3.2). DO NOT commit with literal values. Copy to .mcp.json and set env vars. Keep .mcp.json in .gitignore.",
+  "_security": "All tokens/URIs injected via ${env:} — never hardcode. See docs/secrets.md.",
+  "mcpServers": {
+
+    "gitlab-reader": {
+      "_comment": "Custom read-only GitLab MCP. Provides get_file, get_commit_diff, list_merge_requests, etc. All write operations absent from this server.",
+      "command": "node",
+      "args": ["${env:GITLAB_MCP_PATH}/index.js"],
+      "env": {
+        "GITLAB_URL":        "${env:GITLAB_BASE_URL}",
+        "GITLAB_TOKEN":      "${env:GITLAB_PAT}",
+        "GITLAB_READ_ONLY":  "true"
+      }
+    },
+
+    "redmine-reader": {
+      "_comment": "Optional. Provides redmine_get_issue, redmine_list_issues, redmine_get_project. Remove this block if Redmine is not used.",
+      "command": "node",
+      "args": ["${env:REDMINE_MCP_PATH}/index.js"],
+      "env": {
+        "REDMINE_URL":   "${env:REDMINE_URL}",
+        "REDMINE_TOKEN": "${env:REDMINE_PAT}"
+      }
+    },
+
+    "canary_mongo_db": {
+      "_comment": "Read-only MongoDB access. Provides find, aggregate, list-collections, list-databases. Connection string must be read-only credentials.",
+      "command": "npx",
+      "args": ["-y", "@anthropic-labs/mcp-mongo"],
+      "env": {
+        "MONGODB_URI": "${env:MONGO_READ_URI}"
+      }
+    },
+
+    "postgres-reader": {
+      "_comment": "Read-only PostgreSQL access. Connection string must use a read-only role (SELECT only, no INSERT/UPDATE/DELETE). Remove if not used.",
+      "command": "npx",
+      "args": ["-y", "@anthropic-labs/mcp-postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "${env:POSTGRES_READ_URI}"
+      }
+    }
+
+  }
+}

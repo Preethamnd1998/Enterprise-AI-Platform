@@ -1,0 +1,50 @@
+# adapters/opencode/file-map.yml
+# Maps platform source files → consuming repo targets for OpenCode adapter.
+# SP-04 decision: inline + AGENTS.md approach. Shared/ copied to .opencode/ai-platform/.
+# SP-03 decision: no hooks (event API insufficient). No audit.js for OC.
+
+version: "4.0"
+adapter: opencode
+
+entries:
+
+  # ── Shared contract (copied for command files to reference) ───────────────
+  - source: "shared/contract.md"
+    target: ".opencode/ai-platform/shared/contract.md"
+    action: copy
+
+  # ── Commands ──────────────────────────────────────────────────────────────
+  - source: "shared/commands/"
+    target: ".opencode/ai-platform/shared/commands/"
+    action: copy_directory
+
+  # ── Standards ─────────────────────────────────────────────────────────────
+  - source: "shared/standards/"
+    target: ".opencode/ai-platform/standards/"
+    action: copy_directory
+
+  # ── Prompt framework (referenced by prompt-audit.md) ───────────────────────
+  - source: "shared/prompts/"
+    target: ".opencode/ai-platform/shared/prompts/"
+    action: copy_directory
+
+  # ── OC command shells ─────────────────────────────────────────────────────
+  - source: "adapters/opencode/commands/"
+    target: ".opencode/command/"
+    action: copy_directory
+    notes: "Thin shells referencing .opencode/ai-platform/shared/commands/"
+
+  # ── AGENTS.md — global AI instructions ────────────────────────────────────
+  - source: "adapters/opencode/AGENTS.md"
+    target: "AGENTS.md"
+    action: marker_inject
+    markers:
+      start: "<!-- enterprise-ai-platform:contract:start -->"
+      end:   "<!-- enterprise-ai-platform:contract:end -->"
+    notes: "Injected between markers. Repo-specific content outside markers is preserved."
+
+  # ── Platform version ──────────────────────────────────────────────────────
+  - source: "_generated_"
+    target: ".opencode/ai-platform/.platform-version.json"
+    action: generate
+    notes: "Written by installer with version, adapter=opencode, features{}"

@@ -145,6 +145,35 @@ The command auto-detects the task type — you don't have to specify "bug" or "n
 
 ---
 
+## `/test`
+
+```text
+# From a Redmine ID, MR, commit, or context file — same input types as /bug-fix
+/test redmine=42391
+/test mr=!247
+```
+
+> Claude Code and OpenCode only — not yet available on Copilot.
+
+---
+
+## `/prompt-audit`
+
+```text
+# Audit the last prompt in the current session
+/prompt-audit
+
+# Audit a specific prompt string
+/prompt-audit prompt="fix the bug in ward management"
+
+# Audit the whole session
+/prompt-audit session=true
+```
+
+> Analysis-only — no file changes, no approval gate.
+
+---
+
 ## Session Mode vs Direct Mode
 
 ```text

@@ -1,0 +1,109 @@
+# adapters/copilot/capability-map.yml
+# Capability matrix for GitHub Copilot adapter.
+# Master matrix: shared/capability-matrix.yml (Phase D — not yet built; this is the adapter view)
+# SP-08 result: MCP control is server-level only (no per-tool allow/deny from VS Code).
+# SP-05 result: Prompt files reference shared/ via relative paths (copy-on-install approach).
+
+version: "3.2"
+adapter: copilot
+platform: "GitHub Copilot (VS Code)"
+updated: "2026-07-07"
+
+# Capability classes:
+#   supported    — works in this adapter
+#   degraded     — partial support (documented limitation)
+#   unsupported  — not available on this platform
+#   deferred     — planned for a later phase
+
+capabilities:
+
+  # ── Commands ──────────────────────────────────────────────────────────────
+  - id: cap-01
+    name: "/bug-fix command"
+    status: supported
+    notes: "Prompt file at .github/prompts/bug-fix.prompt.md"
+
+  - id: cap-02
+    name: "/migration command"
+    status: supported
+    notes: "Prompt file at .github/prompts/migration.prompt.md"
+
+  - id: cap-03
+    name: "/new-development command"
+    status: supported
+    notes: "Prompt file at .github/prompts/new-development.prompt.md"
+
+  - id: cap-04
+    name: "/data-correction command"
+    status: supported
+    notes: "Prompt file at .github/prompts/data-correction.prompt.md"
+
+  - id: cap-05
+    name: "/ui-design-update command"
+    status: supported
+    notes: "Prompt file at .github/prompts/ui-design-update.prompt.md"
+
+  - id: cap-06
+    name: "/test command"
+    status: deferred
+    notes: "No prompt.md/chatmode.md shell built yet. Available on Claude Code and OpenCode. registry.yml supported_platforms excludes copilot until built."
+
+  - id: cap-07
+    name: "/prompt-audit command"
+    status: supported
+    notes: "Prompt file at .github/prompts/prompt-audit.prompt.md; chatmode at .github/chatmodes/prompt-audit.chatmode.md. Depends on shared/commands/ and shared/prompts/ being copied by file-map.yml (fixed in v4.3.0 hardening pass)."
+
+  # ── Contract ──────────────────────────────────────────────────────────────
+  - id: cap-08
+    name: "Shared contract injection"
+    status: degraded
+    notes: "Contract copied to .github/ai-platform/shared/contract.md. Copilot reads it via codebase tool; no marker-based auto-injection. copilot-instructions.md references it."
+
+  - id: cap-09
+    name: "Contract hash-check"
+    status: unsupported
+    notes: "No hook system in Copilot — PreToolUse hooks are Claude Code only"
+
+  # ── MCP ───────────────────────────────────────────────────────────────────
+  - id: cap-10
+    name: "MCP read tools (GitLab)"
+    status: supported
+    notes: "VS Code MCP config; server-level only — no per-tool allow/deny (SP-08)"
+
+  - id: cap-11
+    name: "MCP per-tool allowlist"
+    status: unsupported
+    notes: "SP-08: Copilot MCP is server-level only. Mitigation: read-only PATs."
+
+  - id: cap-12
+    name: "MCP write-tool deny"
+    status: degraded
+    notes: "Controlled by PAT scope, not by platform allowlist. Read-only PAT = write physically impossible."
+
+  # ── Sessions / Memory ─────────────────────────────────────────────────────
+  - id: cap-13
+    name: "Session memory (standards cached)"
+    status: unsupported
+    notes: "Copilot has no persistent session state. Standards must be re-loaded per conversation."
+
+  - id: cap-14
+    name: "Subagent orchestration"
+    status: unsupported
+    notes: "No native subagent API in Copilot. /test subagents = Claude Code only."
+
+  # ── Observability ─────────────────────────────────────────────────────────
+  - id: cap-15
+    name: "Audit log (audit.js)"
+    status: unsupported
+    notes: "No hook/stop event in Copilot. Observability = Phase E manual."
+
+  # ── Installer ─────────────────────────────────────────────────────────────
+  - id: cap-16
+    name: "Idempotent installer"
+    status: supported
+    notes: "adapters/copilot/install.ps1 copies shared/ to .github/ai-platform/"
+
+  - id: cap-17
+    name: "Feature flags (.platform-version.json)"
+    status: supported
+    notes: "Installer writes .github/ai-platform/.platform-version.json"

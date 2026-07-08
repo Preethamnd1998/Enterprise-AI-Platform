@@ -1,0 +1,77 @@
+# adapters/claude/file-map.yml
+# Maps platform source files to their installed targets in a consuming repo.
+# Format: source (relative to plugin root) -> target (relative to consuming repo root)
+# Method: inject | copy | generate
+#   inject   = replace-in-markers; preserves content outside markers
+#   copy     = direct overwrite; installer backs up to .prev
+#   generate = produced by installer script (not a direct copy)
+
+version: "3.1"
+adapter: claude
+
+install_targets:
+  # Contract kernel — injected between markers in .claude/CLAUDE.md
+  - source: shared/contract.md
+    target: .claude/CLAUDE.md
+    method: inject
+    markers:
+      start: "enterprise-ai-platform:contract:start"
+      end:   "enterprise-ai-platform:contract:end"
+    inject_section: kernel  # extracts content between kernel:start and kernel:end
+
+  # Settings — injected between markers in .claude/settings.json
+  - source: adapters/claude/config/settings.json
+    target: .claude/settings.json
+    method: copy
+    backup: .claude/settings.json.prev
+
+  # Hooks
+  - source: adapters/claude/hooks/audit.js
+    target: .claude/hooks/audit.js
+    method: copy
+
+  - source: adapters/claude/hooks/hash-check.js
+    target: .claude/hooks/hash-check.js
+    method: copy
+
+  # Commands (all files from shared/commands/)
+  - source: shared/commands/
+    target: .claude/commands/
+    method: copy
+    recursive: true
+
+  # Standards (for lazy loading by commands)
+  - source: shared/standards/
+    target: .github/ai-platform/standards/
+    method: copy
+    recursive: true
+
+  # Templates
+  - source: shared/templates/
+    target: .github/ai-platform/templates/
+    method: copy
+    recursive: true
+
+post_install:
+  # Write .ai/.contract-hash from shared/contract.md.sha256
+  - write_hash:
+      source: shared/contract.md.sha256
+      target: .ai/.contract-hash
+  # Write .ai/.platform-version.json
+  - write_version:
+      target: .ai/.platform-version.json
+
+# Rules layer (Phase D — not yet available)
+# V-E2 clarification: source is shared/rules/ (canonical in plugin repo);
+# target is .claude/rules/ in each consuming repo (installed by adapter engine).
+# NOT .github/ai-platform/rules/ — rules are CC-only (not Copilot).
+# - source: shared/rules/
+#   target: .claude/rules/
+#   method: copy
+#   recursive: true
+#   phase: D
+
+gitignore_entries:
+  - ".ai/.session-verified"
+  - ".ai/.contract-hash"
+  - ".ai/.standards-hash"

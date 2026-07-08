@@ -1,0 +1,33 @@
+# VS Code Agent Mode — Capability Map (STUB)
+# adapters/vscode-agent/capability-map.yml — assessed 2026-07-07
+
+platform: vscode-agent
+status: stub
+evidence_gate: agent_mode_stable OR lifetrenz_adoption_confirmed
+
+capabilities:
+  config_injection:
+    format: .github/copilot-instructions.md (shared with copilot adapter)
+    supported: yes
+    notes: Same file as Copilot Chat — may not need a separate adapter; evaluate overlap
+  commands:
+    format: VS Code tasks or Copilot slash commands
+    supported: partial
+    notes: Agent Mode works via natural language in Copilot Edits panel; slash commands TBD
+  hooks:
+    pre_tool: unknown
+    post_tool: unknown
+    session_stop: unknown
+    notes: VS Code extension API may expose tool use events; investigate
+  mcp_servers:
+    supported: yes
+    format: .vscode/mcp.json (per workspace)
+    notes: VS Code 1.99+ supports MCP; allowlist syntax TBD
+  per_repo_config:
+    supported: yes
+    via: .github/copilot-instructions.md + .vscode/ workspace config
+
+gaps_vs_claude_code:
+  - Strong overlap with copilot adapter — may extend rather than duplicate
+  - Tool event API investigation needed before deciding on separate adapter
+  - MCP per-repo allowlist in .vscode/mcp.json is promising; needs testing

@@ -1,0 +1,34 @@
+{
+  "name": "enterprise-ai-platform",
+  "version": "4.3.0",
+  "description": "Token-efficient, deterministic AI commands for enterprise Java/Spring Boot/Angular repositories. Provides /bug-fix, /migration, /new-development, /data-correction, /ui-design-update, /test, /prompt-audit. Single reasoning agent, lazy standards loading, MCP read-only allowlist, fail-closed security, no agent chains.",
+  "author": {
+    "name": "Lifetrenz Engineering"
+  },
+  "homepage": "https://gitlab/internal/enterprise-ai-platform",
+  "license": "UNLICENSED",
+  "engines": {
+    "claude-code": ">=1.0.0"
+  },
+  "commands": [
+    "/bug-fix",
+    "/migration",
+    "/new-development",
+    "/data-correction",
+    "/ui-design-update",
+    "/test",
+    "/prompt-audit"
+  ],
+  "keywords": [
+    "enterprise",
+    "migration",
+    "cherry-pick",
+    "spring-boot",
+    "angular",
+    "java",
+    "bug-fix",
+    "deterministic",
+    "read-only-mcp"
+  ],
+  "_removed_commands_note": "v3.0 had /planning and /ui-redesign — removed in v3.1 (D2 fix)"
+}

@@ -1,0 +1,28 @@
+# Consumer repo drift gate. Include in each repo's .gitlab-ci.yml:
+#
+#   include:
+#     - project: 'dev-user-groups/v2-dev-common-group/my-enterprise-ai-platform'
+#       ref: stable
+#       file: '/repo-template/ci/ai-platform-drift.gitlab-ci.yml'
+#   variables:
+#     AI_PLATFORM_EXPECTED: "3.0.0"
+#
+# Fails the pipeline if the repo's vendored platform version drifts from AI_PLATFORM_EXPECTED.
+
+ai-platform-drift:
+  stage: test
+  image: mcr.microsoft.com/powershell:latest
+  variables:
+    AI_PLATFORM_EXPECTED: "3.0.0"
+  script:
+    - pwsh -c "
+        $stamp='.github/ai-platform/.platform-version';
+        if (-not (Test-Path $stamp)) { Write-Host 'AI Platform not installed (Copilot)'; }
+        else {
+          $cur=(Get-Content $stamp -Raw | ConvertFrom-Json).version;
+          if ($cur -ne $env:AI_PLATFORM_EXPECTED) { throw \"AI Platform drift: repo=$cur expected=$($env:AI_PLATFORM_EXPECTED). Run update-platform.ps1.\" }
+          Write-Host \"AI Platform OK: $cur\"
+        }"
+  allow_failure: false
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

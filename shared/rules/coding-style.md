@@ -1,0 +1,50 @@
+# Coding Style Rules
+<!-- shared/rules/coding-style.md — v4.1 -->
+<!-- Lazy-loaded when the change set includes production code. Complements standards/. -->
+<!-- Linked from contract §5 (lazy rules loading). Never inlined. -->
+
+## CS-01 — Follow established patterns first
+Before suggesting a new pattern, check `AI_PATTERNS.md`. If a pattern for this use case
+already exists in the codebase, use it. Introducing an alternative pattern requires
+explicit justification and human approval.
+
+## CS-02 — Naming conventions
+Follow the project's naming conventions documented in `AI_PATTERNS.md`.
+If not documented: use the naming convention already present in the same file or package.
+Never mix conventions (camelCase + snake_case in the same class, for example).
+
+## CS-03 — No magic numbers or strings
+Extract magic literals (numbers, status codes, string keys) as named constants.
+Use the project's existing constants class/enum if one exists. Create one if none exists,
+following the project's naming convention.
+
+## CS-04 — Method length
+Methods should do one thing. If a method exceeds ~30 lines, consider whether it can be
+decomposed — but only if decomposition is consistent with the existing codebase style.
+Do not refactor for style alone unless the task specifically requires it.
+
+## CS-05 — No commented-out code
+Do not leave commented-out code in a change. Dead code should be deleted, not commented.
+If a block may be needed for rollback, document the rollback approach in the PR description
+instead.
+
+## CS-06 — Minimize diff size
+Only change what the task requires. Do not reformat unrelated lines, reorganize imports
+beyond what's needed, or adjust whitespace in unchanged methods. Large irrelevant diffs
+make review harder and increase regression risk.
+
+## CS-07 — Imports
+Use the project's import style (wildcard vs explicit, static imports, etc.).
+Remove unused imports. Do not add imports for classes that are not used in the change.
+
+## CS-08 — Logging
+Follow the project's logging pattern (see `AI_PATTERNS.md`).
+Never log PII, credentials, tokens, or full request/response bodies.
+Use appropriate log levels: DEBUG for diagnostic, INFO for operational events, WARN for
+recoverable issues, ERROR for failures requiring attention.
+
+## CS-09 — Comments
+Write comments only when the WHY is non-obvious: a hidden constraint, a workaround for a
+known bug, a subtle invariant, or behavior that would surprise a reader.
+Do not write comments that restate what the code does. Do not write TODO comments unless
+they are linked to a tracked issue (Redmine ID / ticket reference).

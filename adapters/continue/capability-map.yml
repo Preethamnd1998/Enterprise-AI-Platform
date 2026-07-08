@@ -1,0 +1,35 @@
+# Continue — Capability Map (STUB)
+# adapters/continue/capability-map.yml — assessed 2026-07-07
+# Source: continue.dev/docs
+
+platform: continue
+status: stub
+evidence_gate: systemMessage_injection_confirmed OR lifetrenz_adoption_confirmed
+
+capabilities:
+  config_injection:
+    format: config.ts / .continuerc.json (systemMessage field)
+    supported: yes
+    notes: Continue supports systemMessage in config — viable contract kernel injection point
+  commands:
+    format: customCommands array in config.ts
+    supported: yes
+    notes: Custom slash commands with prompt templates supported; maps to our command model
+  hooks:
+    pre_tool: no
+    post_tool: no
+    session_stop: no
+    notes: No documented hook event API; no audit.js equivalent possible
+  mcp_servers:
+    supported: yes
+    format: mcpServers array in config.ts
+    notes: Continue supports MCP; our allowlist pattern needs a Continue equivalent
+  per_repo_config:
+    supported: yes
+    via: .continuerc.json in repo root (overrides user config)
+
+gaps_vs_claude_code:
+  - No hook API → no audit.js
+  - customCommands are simpler than CC slash commands (no multi-phase algorithm support)
+  - MCP allowlist enforcement mechanism TBD
+  - Continue commands well-matched to our command format — highest priority stub

@@ -1,0 +1,41 @@
+# VS Code Agent Mode — File Map (STUB)
+# adapters/vscode-agent/file-map.yml — source → destination mapping for when adapter is activated
+# NOTE: High overlap with adapters/copilot/file-map.yml — evaluate merge before implementing
+
+platform: vscode-agent
+status: stub
+
+install_targets:
+  - source: shared/contract.md
+    destination: .github/copilot-instructions.md
+    method: kernel_only
+    create_if_absent: true
+    overwrite: true
+    notes: Shared with copilot adapter — coordinate to avoid conflicts
+
+  - source: shared/standards/
+    destination: .github/ai-platform/standards/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: true
+
+  - source: shared/rules/
+    destination: .github/ai-platform/rules/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: true
+
+  - source: shared/company-profile.md
+    destination: .github/ai-platform/company-profile.md
+    method: copy_file
+    create_if_absent: true
+    overwrite: false
+
+  - source: shared/templates/ai/
+    destination: .ai/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: false
+
+version_stamp:
+  destination: .vscode/.platform-version.json

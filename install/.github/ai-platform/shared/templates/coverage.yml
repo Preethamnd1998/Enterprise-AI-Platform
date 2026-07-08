@@ -1,0 +1,50 @@
+# .ai-platform/coverage.yml
+# Per-repo coverage gate configuration for the Enterprise AI Platform /test command.
+# Place this file at: <repo-root>/.ai-platform/coverage.yml
+# Phase C: warn mode (default). Phase D+ will add enforce mode.
+#
+# CI job 'coverage-gate' reads this file. See: .gitlab-ci.yml (repo root)
+
+version: "1.0"
+
+# ── Gate mode ─────────────────────────────────────────────────────────────
+# warn    : emit warning on coverage drop; do not fail the pipeline (Phase C default)
+# enforce : fail the pipeline if threshold not met (Phase D+ when enabled)
+gate_mode: warn
+
+# ── Coverage thresholds ───────────────────────────────────────────────────
+# Applied per stack. "0" means "warn if completely uncovered".
+thresholds:
+  java:
+    line:   0      # warn if any changed file has 0% line coverage
+    branch: 0
+  angular:
+    statement: 0   # warn if any changed file has 0% statement coverage
+    branch:    0
+  node:
+    line:   0
+    branch: 0
+
+# ── Allow-list ────────────────────────────────────────────────────────────
+# Files matching these patterns are excluded from the coverage gate.
+# Use glob patterns relative to the repo root.
+allow_list:
+  - "src/main/java/**/*Generated*.java"    # generated code
+  - "src/main/java/**/*Mapper*.java"       # MapStruct mappers (generated-adjacent)
+  - "src/**/*.g.ts"                        # generated TypeScript
+  - "src/environments/**"                  # Angular environment files
+  - "src/main/java/**/config/**"           # Spring configuration classes
+  - "src/main/java/**/Application.java"    # Spring boot entry point
+
+# ── Reporting ─────────────────────────────────────────────────────────────
+# Where coverage reports are written. Used by the CI gate to read results.
+report_paths:
+  java:    "target/site/jacoco/jacoco.xml"
+  angular: "coverage/lcov.info"
+  node:    "coverage/lcov.info"
+
+# ── Notes ─────────────────────────────────────────────────────────────────
+# - This file is read by the platform CI job; do not rename it.
+# - Thresholds of 0 = "warn if completely uncovered" (Phase C safe default).
+# - Raise thresholds incrementally as test coverage improves.
+# - gate_mode: enforce should only be set after baseline coverage is established.

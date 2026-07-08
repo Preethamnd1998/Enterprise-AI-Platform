@@ -1,0 +1,38 @@
+# Enterprise AI Platform — root .gitignore
+
+# ─── Secrets / local config ───────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# MCP config with real values (only commit .mcp.json.template)
+.mcp.json
+
+# ─── Platform runtime artefacts ───────────────────────────────────────────
+# Session flag (cleared on each Stop hook)
+enterprise-ai-platform/.ai/.session-verified
+# Platform state files (created by installer — not source-controlled in platform repo)
+enterprise-ai-platform/.ai/
+
+# Audit logs from test installs
+**/.claude/audit/
+
+# ─── OS / IDE ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# ─── Node / npm ───────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log
+package-lock.json
+
+# ─── PowerShell ───────────────────────────────────────────────────────────
+*.ps1xml
+
+# ─── Backup files created by installer ───────────────────────────────────
+*.prev

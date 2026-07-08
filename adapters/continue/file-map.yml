@@ -1,0 +1,47 @@
+# Continue — File Map (STUB)
+# adapters/continue/file-map.yml — source → destination mapping for when adapter is activated
+
+platform: continue
+status: stub
+
+install_targets:
+  - source: shared/contract.md
+    destination: .continue/ai-platform/contract.md
+    method: kernel_only
+    create_if_absent: true
+    overwrite: true
+    notes: Kernel injected via .continuerc.json systemMessage reference (not direct file injection)
+
+  - source: shared/standards/
+    destination: .continue/ai-platform/standards/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: true
+
+  - source: shared/rules/
+    destination: .continue/ai-platform/rules/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: true
+
+  - source: shared/commands/
+    destination: .continue/ai-platform/commands/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: true
+    notes: Commands adapted to Continue customCommands format by install script
+
+  - source: shared/company-profile.md
+    destination: .continue/ai-platform/company-profile.md
+    method: copy_file
+    create_if_absent: true
+    overwrite: false
+
+  - source: shared/templates/ai/
+    destination: .ai/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: false
+
+version_stamp:
+  destination: .continue/.platform-version.json

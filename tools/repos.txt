@@ -1,0 +1,37 @@
+# Enterprise AI Platform — Fleet Rollout Target Repos
+# Format: one GitLab HTTPS clone URL per line (no trailing slash)
+# Lines starting with # are ignored. Blank lines are ignored.
+# Usage: ./rollout-fleet.ps1 -ReposFile .\repos.txt -Mode both -DryRun
+#        ./rollout-fleet.ps1 -ReposFile .\repos.txt -Mode both
+#
+# SECURITY: This file must NOT contain credentials, tokens, or passwords.
+#           Use HTTPS clone URLs only. Authentication is handled by the git credential
+#           manager or SSH agent configured on the engineer's machine.
+#
+# IMPORTANT: Add real GitLab repo clone URLs below. Run with -DryRun first.
+#            Contact preetham.nd@lifetrenz.com before adding repos from other teams.
+#
+# ─── Backend Services ─────────────────────────────────────────────────────────
+# https://<gitlab-host>/lifetrenz/<backend-service-1>.git
+# https://<gitlab-host>/lifetrenz/<backend-service-2>.git
+# https://<gitlab-host>/lifetrenz/<backend-service-3>.git
+#
+# ─── Frontend Applications ────────────────────────────────────────────────────
+# https://<gitlab-host>/lifetrenz/<frontend-app-1>.git
+# https://<gitlab-host>/lifetrenz/<frontend-app-2>.git
+#
+# ─── Data / Integration Services ─────────────────────────────────────────────
+# https://<gitlab-host>/lifetrenz/<data-service-1>.git
+# https://<gitlab-host>/lifetrenz/<integration-service-1>.git
+#
+# ─── Shared Libraries ─────────────────────────────────────────────────────────
+# https://<gitlab-host>/lifetrenz/<shared-lib-1>.git
+#
+# ─── Onboarding Instructions ──────────────────────────────────────────────────
+# To add a new repo to the fleet:
+#   1. Get the GitLab HTTPS clone URL from the repo's "Clone" button
+#   2. Uncomment the appropriate section above and paste the URL
+#   3. Run: pwsh rollout-fleet.ps1 -ReposFile repos.txt -DryRun
+#   4. Verify output shows the repo would be processed
+#   5. Run without -DryRun for actual rollout
+#   6. Review and merge the MR opened in the target repo

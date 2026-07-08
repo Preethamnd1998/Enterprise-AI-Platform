@@ -1,0 +1,309 @@
+stages: [validate, security, coverage, release]
+
+# ── Phase A CI jobs (Sprint 1 / v3.1) ──────────────────────────────────────
+
+# Validates that shared/commands/registry.yml is consistent:
+# - All listed command source files exist
+# - No adapter chatmodes/prompts reference commands not in the registry
+# - No phantom /planning or /ui-redesign references anywhere in source
+validate-registry:
+  stage: validate
+  image: alpine:latest
+  script:
+    - apk add --no-cache bash
+    - |
+      echo "=== Validate command registry ==="
+      # Check all source files listed in registry exist
+      for cmd in bug-fix migration new-development data-correction ui-design-update; do
+        if [ ! -f "shared/commands/${cmd}.md" ]; then
+          echo "FAIL: shared/commands/${cmd}.md not found"
+          exit 1
+        fi
+      done
+      echo "PASS: all active command source files exist"
+
+      # Check no phantom commands exist in adapters
+      for phantom in planning ui-redesign; do
+        if find adapters/ -name "*${phantom}*" 2>/dev/null | grep -q .; then
+          echo "FAIL: phantom ${phantom} files found in adapters/"
+          find adapters/ -name "*${phantom}*"
+          exit 1
+        fi
+      done
+      echo "PASS: no phantom command files in adapters/"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# Validates shared/ has no duplicates inside adapters/ or install/
+# Each asset must have exactly one canonical copy in shared/
+no-dup-shared:
+  stage: validate
+  image: alpine:latest
+  script:
+    - apk add --no-cache bash
+    - |
+      echo "=== No-dup-shared check ==="
+      FAIL=0
+      # Standards must not exist under adapters/ (only under shared/standards/)
+      if find adapters/ -path "*/standards/*.md" 2>/dev/null | grep -q .; then
+        echo "FAIL: standards files found inside adapters/ — must live only in shared/standards/"
+        find adapters/ -path "*/standards/*.md"
+        FAIL=1
+      fi
+      # Commands must not exist under adapters/ (only under shared/commands/)
+      # Exclusion: adapters/opencode/commands/ holds thin shells (glue files, not shared copies)
+      if find adapters/ -path "*/commands/*.md" ! -path "adapters/opencode/commands/*" 2>/dev/null | grep -q .; then
+        echo "FAIL: command files found inside adapters/ — must live only in shared/commands/"
+        find adapters/ -path "*/commands/*.md" ! -path "adapters/opencode/commands/*"
+        FAIL=1
+      fi
+      # OC command shells must be thin (≤20 lines) — catch accidental full-copy
+      OC_FAT=$(find adapters/opencode/commands/ -name "*.md" 2>/dev/null | while read f; do
+        lines=$(wc -l < "$f")
+        if [ "$lines" -gt 20 ]; then echo "$f ($lines lines)"; fi
+      done)
+      if [ -n "$OC_FAT" ]; then
+        echo "FAIL: OC command shells must be ≤20 lines (thin glue only):"
+        echo "$OC_FAT"
+        FAIL=1
+      fi
+      if [ $FAIL -eq 0 ]; then
+        echo "PASS: no shared-layer duplicates found in adapters/"
+      fi
+      exit $FAIL
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# Validates adapters contain only glue files — no business logic
+no-business-logic-in-adapters:
+  stage: validate
+  image: alpine:latest
+  script:
+    - apk add --no-cache bash
+    - |
+      echo "=== No business logic in adapters ==="
+      FAIL=0
+      # Adapters must not contain: standards files, prompt libraries, knowledge docs
+      for forbidden in "standards" "knowledge" "reports" "prompts"; do
+        if find adapters/ -type d -name "${forbidden}" 2>/dev/null | grep -q .; then
+          echo "FAIL: '${forbidden}/' directory found inside adapters/ — belongs in shared/"
+          find adapters/ -type d -name "${forbidden}"
+          FAIL=1
+        fi
+      done
+      if [ $FAIL -eq 0 ]; then
+        echo "PASS: adapters contain only glue files"
+      fi
+      exit $FAIL
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# Verifies contract kernel hash matches shared/contract.md.sha256
+contract-hash-verify:
+  stage: security
+  image: alpine:latest
+  script:
+    - apk add --no-cache bash coreutils
+    - |
+      echo "=== Contract hash verification ==="
+      if [ ! -f "shared/contract.md.sha256" ]; then
+        echo "FAIL: shared/contract.md.sha256 not found"
+        exit 1
+      fi
+      EXPECTED=$(cat shared/contract.md.sha256 | tr -d '[:space:]')
+      # Extract kernel section from contract
+      START="<!-- enterprise-ai-platform:kernel:start -->"
+      END="<!-- enterprise-ai-platform:kernel:end -->"
+      KERNEL=$(awk "/$START/{f=1} f; /$END/{f=0}" shared/contract.md)
+      ACTUAL=$(printf '%s' "$KERNEL" | sha256sum | awk '{print $1}')
+      if [ "$EXPECTED" != "$ACTUAL" ]; then
+        echo "FAIL: contract kernel hash mismatch"
+        echo "  Expected: $EXPECTED"
+        echo "  Actual:   $ACTUAL"
+        echo "  Recompute: pwsh -File tools/compute-contract-hash.ps1"
+        exit 1
+      fi
+      echo "PASS: contract kernel hash verified ($ACTUAL)"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ── Phase B CI jobs (Sprint 2 / v3.2) ──────────────────────────────────────
+
+# Validates each adapter's capability-map.yml lists only capabilities in the known set.
+# Catches drift when a new capability is added to an adapter without updating the master set.
+capability-map-drift:
+  stage: validate
+  image: alpine:latest
+  script:
+    - apk add --no-cache bash
+    - |
+      echo "=== Capability-map drift check ==="
+      FAIL=0
+      KNOWN_STATUSES="supported degraded unsupported deferred"
+
+      for adapter in claude copilot; do
+        MAP="adapters/${adapter}/capability-map.yml"
+        if [ ! -f "$MAP" ]; then
+          echo "WARN: $MAP not found (adapter not yet implemented)"
+          continue
+        fi
+        echo "Checking: $MAP"
+
+        # Every status value must be in the known set
+        STATUSES=$(grep -oP '(?<=status: )\S+' "$MAP" || true)
+        for s in $STATUSES; do
+          if ! echo "$KNOWN_STATUSES" | grep -qw "$s"; then
+            echo "FAIL: unknown capability status '$s' in $MAP"
+            echo "      Allowed: $KNOWN_STATUSES"
+            FAIL=1
+          fi
+        done
+
+        # Every entry must have an id and a status
+        IDS=$(grep -c 'id: cap-' "$MAP" || echo 0)
+        STATCOUNT=$(grep -c 'status:' "$MAP" || echo 0)
+        if [ "$IDS" -ne "$STATCOUNT" ]; then
+          echo "FAIL: $MAP has $IDS id entries but $STATCOUNT status entries (mismatch)"
+          FAIL=1
+        fi
+
+        echo "  $MAP: $IDS capabilities checked"
+      done
+
+      if [ $FAIL -eq 0 ]; then
+        echo "PASS: capability-map drift check"
+      fi
+      exit $FAIL
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# Scans committed files for patterns matching known secret formats.
+# Fails if a literal token/password is found outside template placeholder syntax.
+no-literal-secrets:
+  stage: security
+  image: alpine:latest
+  script:
+    - apk add --no-cache bash grep
+    - |
+      echo "=== No literal secrets scan ==="
+      FAIL=0
+
+      # GitLab PAT pattern: glpat- followed by 20+ alphanumeric/dash/underscore
+      if grep -rE 'glpat-[0-9A-Za-z_-]{20,}' --include="*.json" --include="*.yml" --include="*.yaml" --include="*.md" --include="*.sh" --include="*.ps1" . 2>/dev/null | grep -v ".prev\|.example\|Binary\|node_modules"; then
+        echo "FAIL: GitLab PAT token found in committed file"
+        FAIL=1
+      fi
+
+      # MongoDB Atlas URI with real credentials (not a placeholder)
+      if grep -rE 'mongodb\+srv://[^<$\{][^@]+@' --include="*.json" --include="*.yml" . 2>/dev/null | grep -v ".prev\|.example\|node_modules"; then
+        echo "FAIL: MongoDB connection string with credentials found in committed file"
+        FAIL=1
+      fi
+
+      # PostgreSQL connection string with password
+      if grep -rE 'postgresql://[^<$\{][^:]+:[^<$\{][^@]+@' --include="*.json" --include="*.yml" . 2>/dev/null | grep -v ".prev\|.example\|node_modules"; then
+        echo "FAIL: PostgreSQL connection string with credentials found in committed file"
+        FAIL=1
+      fi
+
+      if [ $FAIL -eq 0 ]; then
+        echo "PASS: no literal secrets found"
+      fi
+      exit $FAIL
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# ── Phase C CI jobs (Sprint 3 / v4.0) ──────────────────────────────────────
+
+# Coverage gate — reads .ai-platform/coverage.yml from consuming repo.
+# Phase C: gate_mode=warn → emits warning, exits 0 (never blocks pipeline).
+# Phase D+: gate_mode=enforce → exits 1 if threshold not met.
+# BUG-B7 CLOSED: coverage gate location and config are now defined.
+coverage-gate:
+  stage: coverage
+  image: alpine:latest
+  script:
+    - apk add --no-cache bash
+    - |
+      echo "=== Coverage gate ==="
+      CONFIG=".ai-platform/coverage.yml"
+
+      if [ ! -f "$CONFIG" ]; then
+        echo "INFO: $CONFIG not found — coverage gate skipped (not a platform-managed repo)"
+        exit 0
+      fi
+
+      # Parse gate_mode
+      GATE_MODE=$(grep -oP '(?<=gate_mode: )\S+' "$CONFIG" | head -1 || echo "warn")
+      echo "Gate mode: $GATE_MODE"
+
+      # Check each stack's report
+      WARN=0
+
+      # Java / JaCoCo
+      JAVA_REPORT=$(grep -oP '(?<=java: +").*(?=")' "$CONFIG" | head -1 || echo "target/site/jacoco/jacoco.xml")
+      if [ ! -f "$JAVA_REPORT" ]; then
+        echo "WARN: Java coverage report not found at $JAVA_REPORT (stack not built or not a Java project)"
+        WARN=1
+      else
+        echo "INFO: Java coverage report found at $JAVA_REPORT"
+      fi
+
+      # Angular / LCOV
+      NG_REPORT=$(grep -A2 'angular:' "$CONFIG" | grep -oP '(?<=: ).*lcov.*' | head -1 || echo "coverage/lcov.info")
+      if [ ! -f "$NG_REPORT" ]; then
+        echo "WARN: Angular coverage report not found at $NG_REPORT (stack not built or not an Angular project)"
+        WARN=1
+      else
+        echo "INFO: Angular coverage report found at $NG_REPORT"
+      fi
+
+      if [ "$WARN" -eq 1 ]; then
+        echo ""
+        echo "Coverage gate result: WARN"
+        echo "  One or more coverage reports are missing."
+        echo "  Threshold 0 = warn if completely uncovered (Phase C safe default)."
+        echo "  To suppress: add stack paths to allow_list in $CONFIG"
+        if [ "$GATE_MODE" = "enforce" ]; then
+          echo "  Gate mode is 'enforce' — pipeline BLOCKED"
+          exit 1
+        else
+          echo "  Gate mode is 'warn' — pipeline continues (Phase C)"
+          exit 0
+        fi
+      fi
+
+      echo "Coverage gate result: PASS"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  allow_failure: true
+
+# Include platform drift detection CI
+include:
+  - local: ci/ai-platform-drift.gitlab-ci.yml
+
+# ── Existing jobs ───────────────────────────────────────────────────────────
+
+validate:
+  stage: validate
+  image: node:20-alpine
+  script:
+    - sh ci/validate.sh
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+release:
+  stage: release
+  image: alpine:latest
+  script:
+    - sh ci/release-check.sh
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/'

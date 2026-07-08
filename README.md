@@ -1,318 +1,238 @@
-# Enterprise AI Platform v3
+# Enterprise AI Platform
 
-> Shared execution contract + AI skills for **Claude Code** and **GitHub Copilot**.
-> Covers the full Lifetrenz development workflow: bug fix · new development · code migration · UI design · data correction.
-> Version **3.0.0** · Released 2026-06-03
+**Version:** v4.3.0 | **Status:** Production | **Platforms:** Claude Code · GitHub Copilot · OpenCode
 
----
-
-**Install / Update / Uninstall:** [`usage-instructions.md`](usage-instructions.md)
-**How to write prompts:** [`prompt-guide.md`](prompt-guide.md)
-**Project structure:** [`project-structure.md`](project-structure.md)
-**Contributing / adding commands:** [`contributing.md`](contributing.md)
-**Git repository:** `https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git`
+A portable, multi-LLM AI engineering assistant platform for enterprise development teams. One shared configuration. Four supported platforms. Seven commands. Consistent behavior everywhere.
 
 ---
 
-## Table of Contents
+## What It Does
 
-1. [What This Is](#1-what-this-is)
-2. [Available Commands](#2-available-commands)
-3. [Global Rules](#3-global-rules)
-4. [Per-Repo Onboarding Checklist](#4-per-repo-onboarding-checklist)
-5. [Directory Structure](#5-directory-structure)
-6. [For Platform Owners / Contributors](#6-for-platform-owners--contributors)
+The Enterprise AI Platform enforces a single execution contract across all AI coding assistants used in your organisation. Every engineer, every repo, every platform follows the same rules:
 
----
-
-## 1. What This Is
-
-The Enterprise AI Platform is a **single source of truth** for how AI assistants (Claude Code and GitHub Copilot) behave across the Lifetrenz codebase. It provides:
-
-| Component | What it does |
-| --- | --- |
-| **Shared contract** | One execution policy installed to every engineer's machine. Controls discovery, token budgets, validation gates, audit, and risk rules. |
-| **Commands** | `/bug-fix`, `/new-development`, `/migration`, `/ui-design-update`, `/data-correction` — task-specific AI workflows as slash commands in Claude Code. |
-| **Standards** | Backend (Java/Spring) and Frontend (Angular) coding standards, loaded lazily — only when the task touches that layer. |
-| **Copilot adapter** | Equivalent prompt files and chat modes for GitHub Copilot in VS Code. |
-| **Repo template** | Per-repo `.claude/` config (module boundaries + audit hook + settings) copied once per repository. |
-
-**Design goals:** 70–90% fewer tokens per task · approval gate before every change · no repository-wide scanning · maintained by a 2–3 engineer team.
+- **Read-only by default** — AI cannot push code, merge MRs, or write to databases
+- **Approval gate** — AI presents its analysis; you approve before any change is made
+- **Audit trail** — every session logged to `.claude/audit/log.jsonl`
+- **Contract integrity** — tamper-detection hash-check before every tool use
+- **Lazy standards** — only the standards relevant to the current task are loaded
 
 ---
 
-## 2. Available Commands
+## Supported Platforms
 
-All commands default to **Session Mode** when invoked without arguments — describe multiple tasks back-to-back, skill loads once, standards read once. Type `done` to end a session.
+| Platform | Status | Hooks | Audit | MCP Allowlist | Commands |
+|---|---|---|---|---|---|
+| **Claude Code** | ✅ Full | ✅ | ✅ | ✅ | All 7 |
+| **GitHub Copilot** | ✅ Partial | ❌ | ❌ | Read-only PAT | 7 (via chatmodes) |
+| **OpenCode** | ✅ Partial | ❌ | ❌ | Limited | 7 (via AGENTS.md) |
+| Cursor | 🔵 Stub | — | — | — | — |
+| Windsurf | 🔵 Stub | — | — | — | — |
+| Continue | 🔵 Stub | — | — | — | — |
+| Cline | 🔵 Stub | — | — | — | — |
+| Roo Code | 🔵 Stub | — | — | — | — |
+| VS Code Agent | 🔵 Stub | — | — | — | — |
 
-Every command runs a **read-only Discovery & Analysis phase first**, then stops for approval. No code, config, database, or script changes happen until you approve.
-
-```text
-add auto=true to any command to skip the approval gate
-example: /bug-fix auto=true
-```
-
----
-
-### `/bug-fix`
-
-Root-cause and fix a defect. Trace-driven. No repository scan.
-
-**Accepts:** Redmine ID · stack trace · error log · user story · `file=<path.md>` · screenshot
-
-```text
-/bug-fix                        Session Mode (multiple bugs, approval per bug)
-/bug-fix redmine=42391          Direct Mode — Redmine issue
-/bug-fix auto=true              Skip approval gate
-```
-
-**What it does:**
-
-1. Reads affected files only (OWN-package frames, depth-1 symbol).
-2. Outputs ROOT CAUSE + IMPACT + PARTS/PHASES/TASKS breakdown.
-3. Stops for approval — then applies the smallest possible fix.
+> For sensitive tasks (auth, PII, migrations), use **Claude Code** — it is the only platform with a full security posture. See [HITL Matrix](docs/hitl-matrix.md).
 
 ---
 
-### `/new-development`
+## Commands
 
-Plan and implement new features or large functionalities.
+| Command | Purpose | Platforms |
+|---|---|---|
+| `/bug-fix` | Investigate and fix a bug from a Redmine ID or MR | CC, Copilot |
+| `/migration` | Migrate code between branches or versions | CC, Copilot |
+| `/new-development` | Implement a new feature from a Redmine story | CC, Copilot |
+| `/data-correction` | Analyse and correct database data issues | CC, Copilot |
+| `/ui-design-update` | Apply a UI design change | CC, Copilot |
+| `/test` | Generate tests and report coverage gaps | CC, Copilot, OC |
+| `/prompt-audit` | Score prompt quality and suggest improvements | CC, Copilot, OC |
 
-**Accepts:** Redmine story · user story · `file=<path.md>` · wireframe screenshot
-
-```text
-/new-development                         Session Mode
-/new-development redmine=41800           Direct Mode — Redmine story
-/new-development "Add bulk discharge"    Direct Mode — free text
-/new-development auto=true               Skip approval gate
-```
-
-**What it does:**
-
-1. Finds the nearest existing analog feature (insertion point).
-2. Outputs REQUIREMENT + IMPACT + full PARTS/PHASES/TASKS breakdown.
-3. Stops for approval — user may approve all parts or a specific subset.
-4. Implements only the approved scope.
-
-Supports partial approval: `approve part 1` · `approve phase 1.1`
+All commands accept `key=value` arguments. Common keys: `redmine=<id>`, `mr=!<n>`, `commit=<sha>`, `branch=<b>`, `auto=true`.
 
 ---
 
-### `/migration`
+## Quick Start
 
-Port a change (MR / commit / branch / release) to a target branch.
-
-**Accepts:** `mr=!N` · `commit=SHA` · `branch=B` · `release=vX..vY` · `redmine=ID` · `file=<path.md>`
-
-| Mode | Use for |
-| --- | --- |
-| `mode=exact` | Cherry-pick, hotfix, backport — smallest patch |
-| `mode=functionality` | Feature port, cross-version — full capability |
-
-```text
-/migration                                                   Session Mode
-/migration mode=exact mr=!247 target=release/v2.5            Direct Mode
-/migration mode=functionality redmine=41800 target=main       Direct Mode
-/migration mode=exact mr=!247 target=release/v2.5 auto=true  Skip approval
-```
-
-**What it does:**
-
-1. Resolves the change set from source. Filters non-functional hunks.
-2. Outputs change set + drift warnings + PARTS/PHASES/TASKS breakdown.
-3. Stops for approval — then applies exact patch or full capability closure.
-
----
-
-### `/ui-design-update`
-
-UI agent — handles three types of UI work in one command.
-
-**Task types (auto-classified from input):**
-
-| Signals | Task |
-| --- | --- |
-| Stack trace · console error · "bug" / "fix" / "broken" | **BUG FIX** |
-| "new component" · "new screen" · user story | **NEW DEV** |
-| Design HTML paths · "update to match design" | **DESIGN UPDATE** |
-
-**Accepts:** `component=<Name>` · screenshot · `file=<path.md>` · user story · design HTML paths (Format A/B)
-
-```text
-/ui-design-update                                Session Mode
-/ui-design-update component=WardManagement       Direct — load from GitLab
-/ui-design-update auto=true                      Skip approval gate
-
-Format A:
-  Component needs change :- d:\...\ward-management\
-  Component to refer :-    d:\...\ward-management.html
-
-Format B:
-  /ui-design-update inpatient ward-management ward-management
-```
-
-**Rules (all task types):**
-
-- `.component.ts` is **NEVER modified**.
-- All Angular bindings, directives, pipes, and template refs are preserved.
-- Backend, APIs, DB, and routing are out of scope.
-
----
-
-### `/data-correction`
-
-Analyse production/support data issues and generate correction scripts.
-
-**Accepts:** free text · `redmine=<id>` · `table=<name>` · `collection=<name>` · `id=<record>`
-
-**Supported databases:** PostgreSQL · MongoDB · all connected DB MCPs
-
-```text
-/data-correction                                      Session Mode
-/data-correction redmine=42500                        Direct Mode — Redmine ticket
-/data-correction "Patient bills wrong after upgrade"  Direct Mode — free text
-/data-correction table=patient_bill id=123456         Direct Mode — specific record
-```
-
-**What it does:**
-
-1. Runs SELECT / `find` / `aggregate` queries to locate bad records.
-2. Outputs ROOT CAUSE + AFFECTED TABLES/COLLECTIONS + RECORD COUNT + CORRECTION APPROACH.
-3. Stops for approval — then generates the full script set.
-
-**Generated scripts (shown for manual review — never executed):**
-
-- PRE-VALIDATION queries
-- CORRECTION scripts (UPDATE / DELETE / INSERT / Mongo update)
-- POST-VALIDATION queries
-- ROLLBACK scripts
-
-> `auto=true` does **not** bypass the manual-execution safety rule. Scripts are always shown for your review.
-
----
-
-### Input types accepted by all commands
-
-| Input | Format |
-| --- | --- |
-| Redmine issue | `redmine=42391` |
-| GitLab MR | `mr=!247` |
-| Commit SHA | `commit=abc1234` |
-| Stack trace / log / spec / design | Drop in external context folder → say `context` |
-| Specific file (any name) | `file=context/my-file.md` or full path |
-| Screenshot / image | Attach to the chat message |
-| Free text (one-liner) | Type directly in chat |
-| Word document (.docx) | Export to `.md` or `.txt`, drop in context folder |
-
-> **`context` shorthand:** say `context` in any command — the agent reads `context/context.path` to find your external folder, then reads all files in it. Set the path once: [`context/README.md`](context/README.md). Full prompt patterns: [`prompt-guide.md`](prompt-guide.md).
-
----
-
-## 3. Global Rules
-
-These apply to every command:
-
-1. **No writes before approval.** Phase 1 is always read-only. No code, config, DB, or script changes until explicit user approval (`approve` / `yes` / `proceed` / `implement`).
-2. **`auto=true` skips the approval gate** for code/UI/migration changes. Data correction scripts are always manual regardless.
-3. **No repository-wide scanning.** Files enter scope only via the stack trace, diff, named symbol, or naming convention.
-4. **Standards are lazy-loaded.** Only the layers actually touched are read.
-5. **Session memory.** Standards cached in an earlier task are not re-read for subsequent tasks in the same session.
-
----
-
-## 4. Per-Repo Onboarding Checklist
-
-Full guide: [`enterprise-ai-platform/docs/repo-onboarding.md`](enterprise-ai-platform/docs/repo-onboarding.md)
-
-```text
-☐ 1. Global install:  cd install && .\install-claude.ps1
-☐ 2. Per-repo:        .\install-claude.ps1 -RepoPath <repo-path>
-☐ 3. Context folder:  set external path in context\context.path (once per machine)
-☐ 4. Edit <repo>\.claude\CLAUDE.md — fill in stack, module boundaries, Flyway path
-☐ 5. MCP servers connected: gitlab-reader · redmine-reader (+ DB MCP if data tasks expected)
-☐ 6. Smoke test:
-       /bug-fix "NullPointerException in OrderService"  → analysis + Prompt Quality score shown
-       /migration mode=exact mr=!<recent> target=main   → minimal patch + validation PASS
-☐ 7. Commit .claude\settings.json + .claude\CLAUDE.md
-       (do NOT commit .claude\audit\ — it is in .gitignore)
-```
-
----
-
-## 5. Directory Structure
-
-```text
-D:\enterprise-ai-platform\
-├── README.md                              ← this file (overview + commands)
-├── usage-instructions.md                  ← install · update · uninstall
-├── prompt-guide.md                        ← how to write prompts for each command
-├── context\                               ← agent input folder
-│   ├── context.path                       ← set your external folder path here (once)
-│   ├── .gitignore                         ← keeps content files out of git
-│   └── README.md                          ← setup + usage instructions
-├── .github\copilot-instructions.md
-└── enterprise-ai-platform\               ← v3 platform source
-    ├── shared\contract.md                 ← execution contract (→ ~/.claude/CLAUDE.md)
-    ├── commands\                          ← skill source   (→ ~/.claude/commands/)
-    │   ├── bug-fix.md
-    │   ├── new-development.md
-    │   ├── migration.md
-    │   ├── ui-design-update.md
-    │   └── data-correction.md
-    ├── standards\                         ← coding standards (→ ~/.claude/standards/)
-    │   ├── coding-standards.md
-    │   ├── backend\
-    │   ├── frontend\
-    │   └── migration\
-    ├── adapters\copilot\                  ← Copilot files vendored per repo
-    ├── templates\                         ← checklist templates
-    ├── docs\                              ← detailed guides
-    │   ├── repo-onboarding.md             ← per-repo setup checklist
-    │   ├── mcp-setup.md                   ← read-only MCP credential setup
-    │   ├── audit-and-metrics.md           ← audit log schema + metrics
-    │   ├── example-executions.md          ← worked examples for each command
-    │   └── boundary-examples.md           ← module boundary definition examples
-    ├── repo-template\                     ← templates copied by install scripts (only .claude/ contents)
-    ├── install\                           ← PowerShell installers
-    │   ├── install-claude.ps1
-    │   ├── install-copilot.ps1
-    │   ├── install-both.ps1
-    │   └── update-platform.ps1
-    └── tools\
-        ├── check-drift.ps1
-        └── rollout-fleet.ps1
-```
-
----
-
-## 6. For Platform Owners / Contributors
-
-> Full contributor guide: [`contributing.md`](contributing.md)
-> Full project structure reference: [`project-structure.md`](project-structure.md)
-
-### Adding a new command
-
-1. Add `commands/<command-name>.md` to the source (see [`contributing.md §2`](contributing.md#2-adding-a-new-command)).
-2. Update `shared/contract.md` if new lazy-loading rules are needed (see [`contributing.md §7`](contributing.md#7-updating-the-shared-contract)).
-3. Add Copilot equivalent: `adapters/copilot/prompts/<command-name>.prompt.md` (see [`contributing.md §6`](contributing.md#6-adding-copilot-prompts-and-chat-modes)).
-4. Bump `VERSION` (patch = fixes · minor = new commands · major = contract changes).
-5. Update `CHANGELOG.md`.
-6. Commit and tag: `git tag v<version> && git push --tags`.
-7. Notify team to run `.\install\update-platform.ps1`.
-
-### Updating coding standards
-
-Edit files in `standards/`. Notify team to run `update-platform.ps1`. Update `CHANGELOG.md`.
-
-### Fleet operations
+**60-second path for Claude Code:**
 
 ```powershell
-.\tools\check-drift.ps1      # find repos with stale platform version
-.\tools\rollout-fleet.ps1    # bulk update all repos
+# 1. Clone the platform repo
+git clone https://gitlab.example.com/lifetrenz/enterprise-ai-platform.git
+cd enterprise-ai-platform
+
+# 2. Install globally (once per machine)
+pwsh install/install-claude.ps1
+
+# 3. Configure a consuming repo
+pwsh install/install-claude.ps1 -RepoPath C:\src\my-service
+
+# 4. Configure MCP (one-time setup)
+Copy-Item shared/mcp/.mcp.json.template C:\src\my-service\.mcp.json
+# Edit .mcp.json — set your GITLAB_PAT and server paths
+
+# 5. Open a new Claude Code session in the repo and run a command
+/bug-fix redmine=12345
 ```
+
+See [docs/QUICK-START.md](docs/QUICK-START.md) for a full walkthrough.
 
 ---
 
-*Enterprise AI Platform v3 · Lifetrenz Engineering*
-*Repository: `https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git`*
-*Issues / contributions: open a GitLab MR in the platform repo.*
+## Architecture
+
+```
+D:\enterprise-ai-platform\                 # git repo root (flattened — no nested subdirectory)
+├── README.md · CONTRIBUTING.md · PROJECT-STRUCTURE.md · CHANGELOG.md · SECURITY.md · VERSION
+├── docs/                      # All other reference guides (INSTALL-*.md, GOVERNANCE.md, etc.)
+├── shared/                    # Single source of truth for all shared assets
+│   ├── contract.md            # Execution contract (kernel injected to ~/.claude/CLAUDE.md)
+│   ├── commands/              # 7 command definitions (shared by all platforms)
+│   ├── standards/             # Coding standards (backend/, frontend/, migration/)
+│   ├── rules/                 # Governance rules (coding-style, testing, security, code-review)
+│   ├── prompts/               # CRISP framework, prompt quality scoring
+│   ├── templates/             # Per-repo AI context templates (AI_PROJECT.md etc.)
+│   ├── mcp/                   # MCP allowlist + .mcp.json template
+│   ├── schemas/               # audit-schema.json (v1.1)
+│   └── company-profile.md     # Company-specific customisation seam (F10)
+│
+├── adapters/                  # Platform-specific glue (thin — no business logic)
+│   ├── claude/                # Claude Code: config, hooks, installers
+│   ├── copilot/               # GitHub Copilot: chatmodes, prompts, instructions
+│   ├── opencode/              # OpenCode: AGENTS.md, command shells
+│   ├── cursor/                # [STUB] Future adapter
+│   ├── windsurf/              # [STUB] Future adapter
+│   ├── continue/              # [STUB] Future adapter
+│   ├── cline/                 # [STUB] Future adapter
+│   ├── roo-code/              # [STUB] Future adapter
+│   └── vscode-agent/          # [STUB] Future adapter
+│
+├── install/                   # Installer scripts
+│   ├── install-claude.ps1     # Global + per-repo CC install
+│   ├── install-copilot.ps1    # Copilot per-repo install
+│   ├── install-both.ps1       # CC + Copilot combined
+│   └── _common.ps1            # Shared installer helpers
+│
+├── tools/                     # Platform operations tooling
+│   ├── rollout-fleet.ps1      # Fleet rollout to all consuming repos
+│   ├── repos.txt              # Fleet target repo list
+│   ├── check-drift.ps1        # Detect installed-vs-source drift
+│   └── generate-copilot.ps1   # Generate Copilot adapter shells
+│
+└── docs/                      # Documentation
+```
+
+> **Key principle:** `shared/` contains every reusable asset exactly once. Adapters contain only glue. This is enforced by CI (`no-dup-shared` job).
+
+---
+
+## Installation Guides
+
+| Platform | Guide |
+|---|---|
+| Claude Code | [docs/INSTALL-CLAUDE.md](docs/INSTALL-CLAUDE.md) |
+| GitHub Copilot | [docs/INSTALL-COPILOT.md](docs/INSTALL-COPILOT.md) |
+| OpenCode | [docs/INSTALL-OPENCODE.md](docs/INSTALL-OPENCODE.md) |
+| MCP Setup | [docs/mcp-setup.md](docs/mcp-setup.md) |
+| Fleet Rollout | [docs/fleet-rollout.md](docs/fleet-rollout.md) |
+
+---
+
+## Documentation Index
+
+| Document | Purpose |
+|---|---|
+| [docs/QUICK-START.md](docs/QUICK-START.md) | Install and run your first command in 15 minutes |
+| [docs/INSTALL-CLAUDE.md](docs/INSTALL-CLAUDE.md) | Full Claude Code installation guide |
+| [docs/INSTALL-COPILOT.md](docs/INSTALL-COPILOT.md) | Full Copilot installation guide |
+| [docs/INSTALL-OPENCODE.md](docs/INSTALL-OPENCODE.md) | Full OpenCode installation guide |
+| [docs/PLATFORM-CAPABILITY-MATRIX.md](docs/PLATFORM-CAPABILITY-MATRIX.md) | Cross-platform feature comparison |
+| [PROJECT-STRUCTURE.md](PROJECT-STRUCTURE.md) | Repository structure explanation |
+| [docs/UPGRADE-GUIDE.md](docs/UPGRADE-GUIDE.md) | How to upgrade to a new version |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common problems and fixes |
+| [docs/FAQ.md](docs/FAQ.md) | Frequently asked questions |
+| [docs/GOVERNANCE.md](docs/GOVERNANCE.md) | How to change commands, approval gate, security |
+| [CHANGELOG.md](CHANGELOG.md) | Version history |
+| [docs/mcp-setup.md](docs/mcp-setup.md) | MCP server credentials and configuration |
+| [docs/security.md](docs/security.md) | Security model and threat mitigations |
+| [docs/hitl-matrix.md](docs/hitl-matrix.md) | When human approval is required |
+| [docs/rollback.md](docs/rollback.md) | Rollback procedures for all components |
+| [docs/fleet-rollout.md](docs/fleet-rollout.md) | Fleet rollout to consuming repos |
+| [docs/prerequisites.md](docs/prerequisites.md) | Required tools and versions |
+| [docs/audit-and-metrics.md](docs/audit-and-metrics.md) | Audit log structure and metrics |
+
+---
+
+## How the Contract Works
+
+When a Claude Code session starts, the platform kernel is already injected into `~/.claude/CLAUDE.md`. The AI reads it before your first message. The kernel defines:
+
+1. **No-scan rule** — AI reads only files in the change set, never the whole repo
+2. **Depth-1 expansion** — only direct symbol references are expanded
+3. **Lazy standards** — standards files loaded only for languages in the change set
+4. **Approval gate** — Phase 1 = analysis only; implementation requires your approval
+5. **MCP read-only** — write-capable tools are denied at the settings level
+
+The `shared/contract.md.sha256` file stores the expected kernel hash. The `hash-check.js` hook verifies it before every tool use.
+
+---
+
+## Security
+
+- MCP is restricted to **28 read-only tools** across 4 servers (allowlist pattern — fails closed)
+- Secrets use `${env:}` injection in `.mcp.json` — no literals ever committed
+- Contract tamper detection: hash mismatch → warn + re-inject
+- Session audit: every tool use logged to `.claude/audit/log.jsonl`
+- Security contact: preetham.nd@lifetrenz.com
+
+See [docs/security.md](docs/security.md) and [GOVERNANCE.md](docs/GOVERNANCE.md) §4.
+
+---
+
+## Usage Hierarchy
+
+Use platforms in this order of preference:
+
+1. **Claude Code** — default for all tasks (full capability)
+2. **GitHub Copilot** — when CC unavailable or already in VS Code
+3. **OpenCode** — terminal-only or when CC+Copilot unavailable
+
+Do not use Copilot or OpenCode for security-critical tasks (auth, PII, Flyway on PII tables).
+
+---
+
+## Contributing
+
+See [GOVERNANCE.md](docs/GOVERNANCE.md) §1 for the 7-step process to add or change a command.
+
+The architecture is stable. All commands are registered in `shared/commands/registry.yml`.
+Do not add commands, rules, or standards without following the governance process.
+
+---
+
+## Versioning
+
+Semantic Versioning (SemVer). Current: **v4.3.0**.
+
+| Phase | Version | What changed |
+|---|---|---|
+| Phase A | v3.1 | Repo restructure, contract, allowlist, hash-check |
+| Phase B | v3.2 | MCP env injection, GitLab+DB MCP, Copilot adapter |
+| Phase C | v4.0 | /test command, subagents, coverage gate, audit schema |
+| Phase D | v4.1 | /ai/ templates, rules, /prompt-audit, pre-flight block |
+| Phase E | v4.2 | GOVERNANCE.md, telemetry, HITL matrix, pause-turn cap |
+| Phase F | v4.3 | Lazy kernel refactor, company-profile seam, fleet rollout, adapter stubs |
+
+---
+
+## Support
+
+- Security incidents: preetham.nd@lifetrenz.com (see [GOVERNANCE.md](docs/GOVERNANCE.md) §4)
+- Platform issues: file a Redmine ticket or open a GitLab MR against this repo
+- Documentation gaps: open an MR with the fix
+
+---
+
+## License
+
+Internal — Lifetrenz Engineering. All rights reserved.

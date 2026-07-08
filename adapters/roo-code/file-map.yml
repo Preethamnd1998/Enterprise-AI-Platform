@@ -1,0 +1,40 @@
+# Roo Code — File Map (STUB)
+# adapters/roo-code/file-map.yml — source → destination mapping for when adapter is activated
+
+platform: roo-code
+status: stub
+
+install_targets:
+  - source: shared/contract.md
+    destination: .roo/rules/ai-platform-contract.md
+    method: kernel_only
+    create_if_absent: true
+    overwrite: true
+
+  - source: shared/standards/
+    destination: .roo/ai-platform/standards/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: true
+
+  - source: shared/rules/
+    destination: .roo/rules/ai-platform/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: true
+    notes: Rules placed in .roo/rules/ are auto-loaded by Roo Code per-mode
+
+  - source: shared/company-profile.md
+    destination: .roo/ai-platform/company-profile.md
+    method: copy_file
+    create_if_absent: true
+    overwrite: false
+
+  - source: shared/templates/ai/
+    destination: .ai/
+    method: copy_tree
+    create_if_absent: true
+    overwrite: false
+
+version_stamp:
+  destination: .roo/.platform-version.json

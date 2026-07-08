@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.lifetrenz.com/schemas/audit-log-entry.json",
+  "title": "AuditLogEntry",
+  "description": "Schema for one JSONL line in .claude/audit/log.jsonl (schema v1.1, introduced Phase E v4.2; unchanged through v4.3)",
+  "type": "object",
+
+  "required": ["ts", "schema_version", "event"],
+
+  "properties": {
+
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version — 1.0 (Phase C), 1.1 (Phase E: telemetry fields promoted)",
+      "enum": ["1.0", "1.1"]
+    },
+
+    "event": {
+      "type": "string",
+      "description": "Hook event that triggered this entry",
+      "enum": ["Stop", "PostToolUse", "SubagentStop"]
+    },
+
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when the entry was written"
+    },
+
+    "session_id": {
+      "type": ["string", "null"],
+      "description": "Claude Code session ID from the hook payload"
+    },
+
+    "cwd": {
+      "type": "string",
+      "description": "Absolute path of the working directory when the hook fired"
+    },
+
+    "transcript_path": {
+      "type": ["string", "null"],
+      "description": "Path to the session transcript .jsonl file"
+    },
+
+    "stop_reason": {
+      "type": ["string", "null"],
+      "description": "Why the session stopped: end_turn, max_tokens, tool_use, error",
+      "enum": ["end_turn", "max_tokens", "tool_use", "error", null]
+    },
+
+    "tool_name": {
+      "type": ["string", "null"],
+      "description": "Tool name (PostToolUse events only)"
+    },
+
+    "tool_input_hash": {
+      "type": ["string", "null"],
+      "description": "SHA-256 of tool input JSON (PostToolUse only; for tamper detection, not content)"
+    },
+
+    "tool_result_status": {
+      "type": ["string", "null"],
+      "description": "Tool result status from payload",
+      "enum": ["success", "error", "cancelled", null]
+    },
+
+    "command": {
+      "type": ["string", "null"],
+      "description": "Platform command invoked in this session (/bug-fix, /test, etc.) — extracted from transcript"
+    },
+
+    "gate_a_status": {
+      "type": ["string", "null"],
+      "description": "Completeness gate result for this session",
+      "enum": ["PASS", "FAIL", "SKIP", null]
+    },
+
+    "gate_b_status": {
+      "type": ["string", "null"],
+      "description": "Regression gate result for this session",
+      "enum": ["PASS", "FAIL", "SKIP", null]
+    },
+
+    "platform_version": {
+      "type": ["string", "null"],
+      "description": "Platform version from .ai/.platform-version.json at session start"
+    },
+
+    "contract_hash_status": {
+      "type": ["string", "null"],
+      "description": "Contract hash check result from hash-check.js",
+      "enum": ["ok", "mismatch", "re-injected", "missing", null]
+    },
+
+    "adapter": {
+      "type": ["string", "null"],
+      "description": "Adapter in use — from .ai/.platform-version.json (Phase E telemetry, v1.1)",
+      "enum": ["claude", "copilot", "opencode", null]
+    },
+
+    "user_id": {
+      "type": ["string", "null"],
+      "description": "OS username ($USER / $USERNAME env var) — factual, not authenticated identity (Phase E telemetry, v1.1)"
+    },
+
+    "repo": {
+      "type": ["string", "null"],
+      "description": "Repository name — basename of cwd (Phase E telemetry, v1.1)"
+    },
+
+    "branch": {
+      "type": ["string", "null"],
+      "description": "Current git branch — read from .git/HEAD (Phase E telemetry, v1.1)"
+    },
+
+    "mcp_calls_count": {
+      "type": ["integer", "null"],
+      "description": "Number of MCP tool calls in this session — counted from PostToolUse log entries (Phase E telemetry, v1.1)"
+    },
+
+    "_reserved": {
+      "type": "object",
+      "description": "Reserved for future fields. Phase E promoted: adapter, user_id, repo, branch, mcp_calls_count. Still reserved: token_estimate, cost_usd, files_read_count, files_changed_count.",
+      "additionalProperties": false,
+      "properties": {
+        "token_estimate":      { "type": ["integer", "null"] },
+        "cost_usd":            { "type": ["number",  "null"] },
+        "files_read_count":    { "type": ["integer", "null"] },
+        "files_changed_count": { "type": ["integer", "null"] }
+      }
+    }
+
+  },
+
+  "additionalProperties": false
+}

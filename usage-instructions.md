@@ -2,15 +2,26 @@
 
 > Git repository · Install · Update · Uninstall · Command reference
 
+> **For step-by-step install/upgrade procedures, use the current per-platform guides — they
+> are more detailed and take precedence over this file where they differ (e.g. PowerShell
+> version requirements):**
+> [`docs/INSTALL-CLAUDE.md`](docs/INSTALL-CLAUDE.md) ·
+> [`docs/INSTALL-COPILOT.md`](docs/INSTALL-COPILOT.md) ·
+> [`docs/INSTALL-OPENCODE.md`](docs/INSTALL-OPENCODE.md) ·
+> [`docs/QUICK-START.md`](docs/QUICK-START.md) ·
+> [`docs/UPGRADE-GUIDE.md`](docs/UPGRADE-GUIDE.md)
+> This file remains the command/uninstall quick-reference and is kept version-consistent, but
+> has not been reconciled line-by-line against the newer guides — see `docs/MASTER-PROJECT-BOARD.md`.
+
 **Related docs:**
 
 - [`README.md`](README.md) — platform overview and command reference
 - [`prompt-guide.md`](prompt-guide.md) — how to write prompts for each command
-- [`project-structure.md`](project-structure.md) — what every folder and file does
-- [`contributing.md`](contributing.md) — how to add commands, standards, and docs
-- [`enterprise-ai-platform/docs/repo-onboarding.md`](enterprise-ai-platform/docs/repo-onboarding.md) — per-repo setup checklist
-- [`enterprise-ai-platform/docs/example-executions.md`](enterprise-ai-platform/docs/example-executions.md) — worked examples for each command
-- [`enterprise-ai-platform/docs/audit-and-metrics.md`](enterprise-ai-platform/docs/audit-and-metrics.md) — audit log schema and metrics
+- [`PROJECT-STRUCTURE.md`](PROJECT-STRUCTURE.md) — what every folder and file does
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to add commands, standards, and docs
+- [`docs/repo-onboarding.md`](docs/repo-onboarding.md) — per-repo setup checklist
+- [`docs/example-executions.md`](docs/example-executions.md) — worked examples for each command
+- [`docs/audit-and-metrics.md`](docs/audit-and-metrics.md) — audit log schema and metrics
 
 ---
 
@@ -20,8 +31,8 @@
 | --- | --- |
 | **URL** | `https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git` |
 | **Branch** | `main` |
-| **Version file** | `enterprise-ai-platform/VERSION` |
-| **Changelog** | `enterprise-ai-platform/CHANGELOG.md` |
+| **Version file** | `VERSION` |
+| **Changelog** | `CHANGELOG.md` |
 
 ---
 
@@ -49,8 +60,10 @@ Clone once to a local directory. All install scripts run from this clone.
 
 ```powershell
 git clone https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git D:\enterprise-ai-platform
-cd D:\enterprise-ai-platform\enterprise-ai-platform
+cd D:\enterprise-ai-platform
 ```
+
+The repo is flat — no nested subdirectory to `cd` into after cloning.
 
 To pull the latest changes later:
 
@@ -71,7 +84,7 @@ git pull origin main
 | **Git** | For cloning and updating the repo |
 | **MCP servers** | `gitlab-reader` and `redmine-reader` must be configured and connected |
 
-MCP credential setup: [`enterprise-ai-platform/docs/mcp-setup.md`](enterprise-ai-platform/docs/mcp-setup.md)
+MCP credential setup: [`docs/mcp-setup.md`](docs/mcp-setup.md)
 
 ---
 
@@ -80,7 +93,7 @@ MCP credential setup: [`enterprise-ai-platform/docs/mcp-setup.md`](enterprise-ai
 Run **once per engineer machine**. Installs the execution contract, all skill commands, and coding standards globally. Every repository on the machine benefits immediately — no per-repo install required for basic usage.
 
 ```powershell
-cd D:\enterprise-ai-platform\enterprise-ai-platform\install
+cd D:\enterprise-ai-platform\install
 .\install-claude.ps1
 ```
 
@@ -95,7 +108,9 @@ C:\Users\<you>\.claude\
 │   ├── new-development.md     ← /new-development
 │   ├── migration.md           ← /migration
 │   ├── ui-design-update.md    ← /ui-design-update
-│   └── data-correction.md     ← /data-correction
+│   ├── data-correction.md     ← /data-correction
+│   ├── test.md                ← /test
+│   └── prompt-audit.md        ← /prompt-audit
 ├── standards\
 │   ├── coding-standards.md
 │   ├── backend\               ← Java/Spring (lazy-loaded)
@@ -111,7 +126,7 @@ C:\Users\<you>\.claude\
 Run **once per repository** to add module boundaries, the audit hook, and per-repo settings. Must be done after the global install.
 
 ```powershell
-cd D:\enterprise-ai-platform\enterprise-ai-platform\install
+cd D:\enterprise-ai-platform\install
 .\install-claude.ps1 -RepoPath "C:\path\to\your\repo"
 ```
 
@@ -157,7 +172,7 @@ Copilot has no plugin system — the platform files are vendored (copied) into e
 Run once per repository that needs Copilot support. Re-run after every platform update.
 
 ```powershell
-cd D:\enterprise-ai-platform\enterprise-ai-platform\install
+cd D:\enterprise-ai-platform\install
 .\install-copilot.ps1 -RepoPath "C:\path\to\your\repo"
 ```
 
@@ -166,15 +181,20 @@ cd D:\enterprise-ai-platform\enterprise-ai-platform\install
 ```text
 <repo>\.github\
 ├── copilot-instructions.md      ← Copilot entrypoint (auto-loaded by VS Code Copilot)
-├── prompts\                     ← /bug-fix /new-development /migration /ui-design-update /data-correction
+├── prompts\                     ← /bug-fix /new-development /migration /ui-design-update /data-correction /prompt-audit
 ├── chatmodes\                   ← dropdown chat mode selectors in Copilot panel
 └── ai-platform\
     ├── .platform-version        ← vendored version stamp
-    ├── shared\contract.md       ← execution contract
+    ├── shared\
+    │   ├── contract.md          ← execution contract
+    │   ├── commands\            ← full command source (referenced by prompt/chatmode shells)
+    │   └── prompts\             ← CRISP framework (used by /prompt-audit)
     ├── standards\               ← all coding standards
     ├── templates\               ← checklist templates
     └── REPO.md                  ← module boundaries — EDIT THIS
 ```
+
+> `/test` has no prompt/chatmode shell yet — not available on Copilot. See `adapters/copilot/capability-map.yml`.
 
 **After install:**
 
@@ -198,7 +218,7 @@ cd D:\enterprise-ai-platform\enterprise-ai-platform\install
 Install Claude Code (global) and Copilot (per-repo) in a single step:
 
 ```powershell
-cd D:\enterprise-ai-platform\enterprise-ai-platform\install
+cd D:\enterprise-ai-platform\install
 .\install-both.ps1 -RepoPath "C:\path\to\your\repo"
 ```
 
@@ -214,7 +234,7 @@ Open Claude Code (VS Code or CLI) and run:
 /help
 ```
 
-Expected — all 5 skills appear:
+Expected — all 7 skills appear:
 
 ```text
 /bug-fix          Root-cause and fix a defect ...
@@ -222,6 +242,8 @@ Expected — all 5 skills appear:
 /migration        Migrate code between branches ...
 /ui-design-update UI agent — fix bugs, new components, design updates ...
 /data-correction  Analyse data issues and generate correction scripts ...
+/test             Analyse test coverage and scaffold missing tests ...
+/prompt-audit     Score a prompt against CRISP and produce a rewrite ...
 ```
 
 Check installed version:
@@ -234,7 +256,7 @@ Get-Content "$env:USERPROFILE\.claude\.platform-version"
 
 1. Open a repo that has had Copilot installed.
 2. Open the Copilot chat panel.
-3. The chat mode dropdown should show: `bug-fix` · `new-development` · `migration` · `ui-design-update` · `data-correction`.
+3. The chat mode dropdown should show: `bug-fix` · `new-development` · `migration` · `ui-design-update` · `data-correction` · `prompt-audit`. (`/test` is not yet available on Copilot — see `adapters/copilot/capability-map.yml`.)
 4. Type `/bug-fix` — Copilot should pick up the prompt from `.github\prompts\`.
 
 ---
@@ -253,7 +275,7 @@ git pull origin main
 ### Step 2 — Update Claude Code (global)
 
 ```powershell
-cd D:\enterprise-ai-platform\enterprise-ai-platform\install
+cd D:\enterprise-ai-platform\install
 .\update-platform.ps1
 ```
 
@@ -274,7 +296,7 @@ Close and reopen any active Claude Code chats/sessions to pick up the new contra
 ### Bulk update all repos (fleet)
 
 ```powershell
-cd D:\enterprise-ai-platform\enterprise-ai-platform
+cd D:\enterprise-ai-platform
 .\tools\rollout-fleet.ps1
 ```
 
@@ -297,6 +319,8 @@ Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\commands\new-development.m
 Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\commands\migration.md"
 Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\commands\ui-design-update.md"
 Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\commands\data-correction.md"
+Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\commands\test.md"
+Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\commands\prompt-audit.md"
 
 # Remove standards
 Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\standards"
@@ -379,6 +403,8 @@ All commands support:
 | `/migration` | Port code between branches | `mode=exact\|functionality` + source + `target=<branch>` |
 | `/ui-design-update` | Fix UI bugs · new components · design updates | `component=<Name>` · screenshot · `file=<path>` · design paths |
 | `/data-correction` | Analyse data issues, generate scripts | `redmine=<id>` · `table=<name>` · `collection=<name>` · free text |
+| `/test` | Analyse test coverage, scaffold missing tests | Redmine ID · MR · commit · `file=<path>` (Claude Code, OpenCode only) |
+| `/prompt-audit` | Score a prompt against CRISP, produce a rewrite | `prompt="<text>"` · `session=true` · no args (analysis-only, no approval gate) |
 
 ### Input types accepted by all commands
 
@@ -430,5 +456,5 @@ Phase 2 — Execution (after approval)
 
 ---
 
-*Enterprise AI Platform v3 · Lifetrenz Engineering*
+*Enterprise AI Platform v4.3 · Lifetrenz Engineering*
 *Repository: https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git*
