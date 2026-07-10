@@ -43,14 +43,15 @@
 3. [Install — Claude Code (Global)](#3-install--claude-code-global)
 4. [Install — Claude Code (Per-Repo)](#4-install--claude-code-per-repo)
 5. [Install — GitHub Copilot (Per-Repo)](#5-install--github-copilot-per-repo)
-6. [Install — Both at Once](#6-install--both-at-once)
-7. [Verify Installation](#7-verify-installation)
-8. [Update the Platform](#8-update-the-platform)
-9. [Uninstall — Claude Code (Global)](#9-uninstall--claude-code-global)
-10. [Uninstall — Claude Code (Per-Repo)](#10-uninstall--claude-code-per-repo)
-11. [Uninstall — GitHub Copilot (Per-Repo)](#11-uninstall--github-copilot-per-repo)
-12. [Command Quick Reference](#12-command-quick-reference)
-13. [Approval Gate — How It Works](#13-approval-gate--how-it-works)
+6. [Install — OpenCode (Per-Repo)](#6-install--opencode-per-repo)
+7. [Install — Both at Once (Claude + Copilot)](#7-install--both-at-once-claude--copilot)
+8. [Verify Installation](#8-verify-installation)
+9. [Update the Platform](#9-update-the-platform)
+10. [Uninstall — Claude Code (Global)](#10-uninstall--claude-code-global)
+11. [Uninstall — Claude Code (Per-Repo)](#11-uninstall--claude-code-per-repo)
+12. [Uninstall — GitHub Copilot (Per-Repo)](#12-uninstall--github-copilot-per-repo)
+13. [Command Quick Reference](#13-command-quick-reference)
+14. [Approval Gate — How It Works](#14-approval-gate--how-it-works)
 
 ---
 
@@ -213,7 +214,36 @@ cd D:\enterprise-ai-platform\install
 
 ---
 
-## 6. Install — Both at Once
+## 6. Install — OpenCode (Per-Repo)
+
+OpenCode has no plugin system — platform files are vendored into `.opencode/` and injected
+into `AGENTS.md`. Run once per repository that needs OpenCode support. Re-run after every
+platform update. Full detail: [`docs/INSTALL-OPENCODE.md`](docs/INSTALL-OPENCODE.md).
+
+```powershell
+cd D:\enterprise-ai-platform\install
+.\install-opencode.ps1 -RepoPath "C:\path\to\your\repo"
+```
+
+**What gets written to the repo:**
+
+```text
+<repo>\
+├── AGENTS.md                       ← Contract kernel injected here (OpenCode reads this)
+└── .opencode\
+    ├── command\                    ← 7 command shells (/bug-fix, /migration, etc.)
+    ├── ai-platform\
+    │   ├── shared\                 ← contract.md + full command specs
+    │   └── standards\              ← coding standards (vendored)
+    └── .platform-version.json      ← vendored version stamp
+```
+
+> OpenCode has no hook API — no audit trail, no contract hash-check. Use Claude Code for
+> security-critical tasks (auth, PII, Flyway on PII tables). See [docs/hitl-matrix.md](docs/hitl-matrix.md).
+
+---
+
+## 7. Install — Both at Once (Claude + Copilot)
 
 Install Claude Code (global) and Copilot (per-repo) in a single step:
 
@@ -222,9 +252,11 @@ cd D:\enterprise-ai-platform\install
 .\install-both.ps1 -RepoPath "C:\path\to\your\repo"
 ```
 
+> This covers Claude + Copilot only. Install OpenCode separately with `install-opencode.ps1` (step 6) if needed.
+
 ---
 
-## 7. Verify Installation
+## 8. Verify Installation
 
 ### Claude Code
 
@@ -261,7 +293,7 @@ Get-Content "$env:USERPROFILE\.claude\.platform-version"
 
 ---
 
-## 8. Update the Platform
+## 9. Update the Platform
 
 When a new version is released:
 
@@ -281,13 +313,15 @@ cd D:\enterprise-ai-platform\install
 
 This refreshes `~/.claude/CLAUDE.md`, `~/.claude/commands/`, and `~/.claude/standards/` without touching your module boundary files.
 
-### Step 3 — Update Copilot (per-repo, for each repo)
+### Step 3 — Update Copilot / OpenCode (per-repo, for each repo)
 
 ```powershell
 .\install-copilot.ps1 -RepoPath "C:\path\to\your\repo"
+.\install-opencode.ps1 -RepoPath "C:\path\to\your\repo"   # if that repo uses OpenCode
 ```
 
-This refreshes all vendored files in `.github\ai-platform\` and `.github\prompts\`.
+This refreshes all vendored files in `.github\ai-platform\` / `.opencode\ai-platform\` and the
+prompt/command shells. Alternatively, `.\update-platform.ps1 -RepoPath "C:\path\to\your\repo" -Adapter both` updates Claude + Copilot for that repo in one call (`-Adapter opencode` for OpenCode).
 
 ### Step 4 — Restart Claude Code sessions
 
@@ -308,7 +342,7 @@ Check which repos are behind:
 
 ---
 
-## 9. Uninstall — Claude Code (Global)
+## 10. Uninstall — Claude Code (Global)
 
 Remove the platform files from the global Claude Code config. This does **not** affect any repositories.
 
@@ -342,7 +376,7 @@ Delete everything between (and including) these two lines in ~/.claude/CLAUDE.md
 
 ---
 
-## 10. Uninstall — Claude Code (Per-Repo)
+## 11. Uninstall — Claude Code (Per-Repo)
 
 Remove the platform config from a specific repository:
 
@@ -365,7 +399,7 @@ Remove `.claude/audit/` from `.gitignore` if you added it, and commit the remova
 
 ---
 
-## 11. Uninstall — GitHub Copilot (Per-Repo)
+## 12. Uninstall — GitHub Copilot (Per-Repo)
 
 Remove the platform files from a repository's `.github\` folder:
 
@@ -389,7 +423,7 @@ Commit the removals to the repository.
 
 ---
 
-## 12. Command Quick Reference
+## 13. Command Quick Reference
 
 All commands support:
 - **Session Mode** (no args) — describe multiple tasks, skill loads once, type `done` to end.
@@ -423,7 +457,7 @@ All commands support:
 
 ---
 
-## 13. Approval Gate — How It Works
+## 14. Approval Gate — How It Works
 
 Every command runs in two phases:
 

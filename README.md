@@ -107,11 +107,12 @@ D:\enterprise-ai-platform\                 # git repo root (flattened — no nes
 │   ├── roo-code/              # [STUB] Future adapter
 │   └── vscode-agent/          # [STUB] Future adapter
 │
-├── install/                   # Installer scripts
-│   ├── install-claude.ps1     # Global + per-repo CC install
-│   ├── install-copilot.ps1    # Copilot per-repo install
+├── install/                   # Single front door -- installer scripts for all 3 platforms
+│   ├── install-claude.ps1     # Global + per-repo CC install (delegates to adapters/claude/install.ps1)
+│   ├── install-copilot.ps1    # Copilot per-repo install (delegates to adapters/copilot/install.ps1)
+│   ├── install-opencode.ps1   # OpenCode per-repo install (delegates to adapters/opencode/install.ps1)
 │   ├── install-both.ps1       # CC + Copilot combined
-│   └── _common.ps1            # Shared installer helpers
+│   └── update-platform.ps1    # Pull latest source + refresh installed adapter(s)
 │
 ├── tools/                     # Platform operations tooling
 │   ├── rollout-fleet.ps1      # Fleet rollout to all consuming repos

@@ -115,7 +115,7 @@ git -C C:\src\your-service commit -m "chore: upgrade Enterprise AI Platform to v
 For each repo with the OpenCode adapter:
 
 ```powershell
-pwsh adapters/opencode/install.ps1 -RepoPath C:\src\your-service -Force
+.\install\install-opencode.ps1 -RepoPath C:\src\your-service -Force
 ```
 
 **What changes:**

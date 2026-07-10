@@ -49,7 +49,7 @@ $promptsDir    = Join-Path $RepoPath ".github\prompts"
 $chatmodesDir  = Join-Path $RepoPath ".github\chatmodes"
 $copilotsDir   = Join-Path $RepoPath ".github"
 
-Write-Host "Enterprise AI Platform — Copilot Adapter Install"
+Write-Host "Enterprise AI Platform -- Copilot Adapter Install"
 Write-Host "Platform root : $platformRoot"
 Write-Host "Repo          : $RepoPath"
 if ($DryRun) { Write-Host "[DRY-RUN mode]" }
@@ -61,33 +61,33 @@ $contractSrc = Join-Path $platformRoot "shared\contract.md"
 $contractDst = Join-Path $aiPlatformDir "shared\contract.md"
 if (-not $DryRun) {
   $changes += Install-FileCopy $contractSrc $contractDst -Force:$Force
-} else { Write-Host "[DRY] $contractSrc → $contractDst" }
+} else { Write-Host "[DRY] $contractSrc -> $contractDst" }
 
 # ── Step 2: Copy shared commands ─────────────────────────────────────────
 $cmdSrc = Join-Path $platformRoot "shared\commands"
 $cmdDst = Join-Path $aiPlatformDir "shared\commands"
 if (-not $DryRun) {
   $changes += Install-DirectoryCopy $cmdSrc $cmdDst -Force:$Force
-} else { Write-Host "[DRY] $cmdSrc/ → $cmdDst/" }
+} else { Write-Host "[DRY] $cmdSrc/ -> $cmdDst/" }
 
 # ── Step 3: Copy shared standards ────────────────────────────────────────
 $stdSrc = Join-Path $platformRoot "shared\standards"
 $stdDst = Join-Path $aiPlatformDir "standards"
 if (-not $DryRun) {
   $changes += Install-DirectoryCopy $stdSrc $stdDst -Force:$Force
-} else { Write-Host "[DRY] $stdSrc/ → $stdDst/" }
+} else { Write-Host "[DRY] $stdSrc/ -> $stdDst/" }
 
 # ── Step 4: Copy Copilot prompt shells ──────────────────────────────────
 $promptSrc = Join-Path $platformRoot "adapters\copilot\prompts"
 if (-not $DryRun) {
   $changes += Install-DirectoryCopy $promptSrc $promptsDir -Force:$Force
-} else { Write-Host "[DRY] $promptSrc/ → $promptsDir/" }
+} else { Write-Host "[DRY] $promptSrc/ -> $promptsDir/" }
 
 # ── Step 5: Copy Copilot chatmode shells ─────────────────────────────────
 $chatSrc = Join-Path $platformRoot "adapters\copilot\chatmodes"
 if (-not $DryRun) {
   $changes += Install-DirectoryCopy $chatSrc $chatmodesDir -Force:$Force
-} else { Write-Host "[DRY] $chatSrc/ → $chatmodesDir/" }
+} else { Write-Host "[DRY] $chatSrc/ -> $chatmodesDir/" }
 
 # ── Step 6: Inject copilot-instructions.md ───────────────────────────────
 $ciSrc = Join-Path $platformRoot "adapters\copilot\copilot-instructions.md"
@@ -98,17 +98,20 @@ if (-not $DryRun) {
     -Target $ciDst `
     -MarkerStart "<!-- enterprise-ai-platform:contract:start -->" `
     -MarkerEnd   "<!-- enterprise-ai-platform:contract:end -->"
-} else { Write-Host "[DRY] Inject $ciSrc → $ciDst [marker inject]" }
+} else { Write-Host "[DRY] Inject $ciSrc -> $ciDst [marker inject]" }
 
-# ── Step 7: Write .platform-version.json ─────────────────────────────────
+# -- Step 7: Write .platform-version.json ---------------------------------
 if (-not $DryRun) {
   $VERSION  = Get-Content (Join-Path $platformRoot "VERSION") -Raw
   $VERSION  = $VERSION.Trim()
-  Update-PlatformVersion `
-    -AiDir    $aiPlatformDir `
-    -Version  $VERSION `
-    -Adapter  "copilot" `
-    -Features @{ "contract-copy" = $true; "prompt-shells" = $true }
+  $stampPath = Join-Path $aiPlatformDir ".platform-version.json"
+  $stamp = [ordered]@{
+    version     = $VERSION
+    adapter     = "copilot"
+    installedAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    features    = @{ "contract-copy" = $true; "prompt-shells" = $true }
+  }
+  $stamp | ConvertTo-Json | Set-Content -Path $stampPath -Encoding utf8
   Write-Host "Platform version written: $VERSION (copilot)"
 } else { Write-Host "[DRY] Write .platform-version.json" }
 

@@ -9,7 +9,7 @@ param(
   [string]$RepoPath = (Get-Location).Path,
   [Parameter(Mandatory)][string]$Expected
 )
-$stamp = Join-Path $RepoPath '.github\ai-platform\.platform-version'
+$stamp = Join-Path $RepoPath '.github\ai-platform\.platform-version.json'
 if (-not (Test-Path $stamp)) { Write-Host "::error:: platform not installed"; exit 1 }
 $cur = (Get-Content $stamp -Raw | ConvertFrom-Json).version
 if ($cur -ne $Expected) {

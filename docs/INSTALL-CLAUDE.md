@@ -12,10 +12,10 @@ This is the complete installation guide for the Enterprise AI Platform on Claude
 |---|---|---|---|
 | Claude Code CLI | ≥ 1.0.0 | `claude --version` | `npm install -g @anthropic-ai/claude-code` |
 | Node.js | ≥ 18.0 | `node --version` | [nodejs.org](https://nodejs.org) |
-| PowerShell | ≥ 7.0 (pwsh) | `pwsh --version` | [PowerShell releases](https://github.com/PowerShell/PowerShell/releases) |
+| PowerShell | ≥ 5.1 (Windows built-in) or pwsh 7+ | `$PSVersionTable.PSVersion` | Windows built-in; [PowerShell 7 releases](https://github.com/PowerShell/PowerShell/releases) optional |
 | Git | ≥ 2.40 | `git --version` | [git-scm.com](https://git-scm.com) |
 
-> **Windows:** Use `pwsh` (PowerShell 7+), not `powershell.exe` (5.1). The installer will fail on 5.1.
+> **Windows:** Both `powershell.exe` (5.1, built in) and `pwsh` (7+) work — the installer scripts are ASCII-only and use no version-specific syntax.
 > **Admin rights:** Not required. All files install to your user profile.
 
 ---
@@ -314,7 +314,7 @@ See [docs/rollback.md](docs/rollback.md) for all rollback scenarios.
 | `hash-check.js` fails on startup | Contract hash mismatch | Run `pwsh install/install-claude.ps1 -RepoPath .` to re-install |
 | MCP tools not working | `.mcp.json` not configured or env vars not set | See [docs/mcp-setup.md](docs/mcp-setup.md) |
 | `node: command not found` in hook | Node.js not on PATH | Install Node.js ≥18; restart terminal |
-| `pwsh: command not found` | PowerShell 7 not installed | Install from PowerShell releases |
+| `pwsh: command not found` | PowerShell 7 not installed | Not required -- run the script with `powershell.exe` (built into Windows) instead, or install pwsh 7+ |
 | Audit log not created | `.claude/audit/` directory missing | Run per-repo install again |
 
 See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for more.

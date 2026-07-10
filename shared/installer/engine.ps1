@@ -31,6 +31,7 @@ function Write-Ok([string]$msg)    { Write-Host "  OK  $msg" -ForegroundColor Gr
 function Write-Skip([string]$msg)  { Write-Host "  --  $msg (unchanged)" -ForegroundColor DarkGray }
 function Write-Warn2([string]$msg) { Write-Host "  !   $msg" -ForegroundColor Yellow }
 function Write-Fail([string]$msg)  { Write-Host "  ERR $msg" -ForegroundColor Red }
+function Write-Dry([string]$msg)   { Write-Host "  DRY $msg" -ForegroundColor Magenta }
 
 # ── Idempotency: hash-based change detection ──────────────────────────────────
 
@@ -64,14 +65,15 @@ function Install-FileCopy {
   param(
     [string]$Source,
     [string]$Target,
-    [switch]$NoBackup
+    [switch]$NoBackup,
+    [switch]$Force
   )
   $sourceContent = Get-Content $Source -Raw
   $sourceHash    = Get-StringHashHex $sourceContent
 
   if (Test-Path $Target) {
     $targetHash = Get-StringHashHex (Get-Content $Target -Raw)
-    if ($sourceHash -eq $targetHash) {
+    if (-not $Force -and $sourceHash -eq $targetHash) {
       Write-Skip $Target
       return $false  # no change
     }
@@ -91,18 +93,21 @@ function Install-FileCopy {
 function Install-DirectoryCopy {
   param(
     [string]$Source,
-    [string]$Target
+    [string]$Target,
+    [switch]$Force
   )
   if (-not (Test-Path $Source)) { throw "Source directory not found: $Source" }
   New-Item -ItemType Directory -Force -Path $Target | Out-Null
 
+  $changed = 0
   Get-ChildItem -Path $Source -File -Recurse | ForEach-Object {
     $rel    = $_.FullName.Substring($Source.Length).TrimStart('\', '/')
     $dst    = Join-Path $Target $rel
     $dstDir = Split-Path $dst -Parent
     if ($dstDir) { New-Item -ItemType Directory -Force -Path $dstDir | Out-Null }
-    Install-FileCopy -Source $_.FullName -Target $dst
+    if (Install-FileCopy -Source $_.FullName -Target $dst -Force:$Force) { $changed++ }
   }
+  return $changed
 }
 
 # ── Marker injection ──────────────────────────────────────────────────────────
@@ -186,7 +191,7 @@ function Ensure-AiDirectory([string]$repoPath) {
     if ($existing -notmatch [regex]::Escape($entry)) { $needed += $entry }
   }
   if ($needed.Count -gt 0) {
-    $block = "`n# AI Platform — runtime-only (do not commit)`n" + ($needed -join "`n")
+    $block = "`n# AI Platform -- runtime-only (do not commit)`n" + ($needed -join "`n")
     Add-Content $gitignore $block -Encoding utf8
     Write-Ok "Added .ai/ runtime entries to .gitignore"
   }
@@ -196,7 +201,7 @@ function Ensure-AiDirectory([string]$repoPath) {
 function Write-ContractHash([string]$aiDir, [string]$platformRoot) {
   $sha256File = Join-Path $platformRoot 'shared\contract.md.sha256'
   if (-not (Test-Path $sha256File)) {
-    Write-Warn2 "shared/contract.md.sha256 not found — skipping contract hash write"
+    Write-Warn2 "shared/contract.md.sha256 not found -- skipping contract hash write"
     return
   }
   $hash   = (Get-Content $sha256File -Raw).Trim()

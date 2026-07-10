@@ -35,9 +35,9 @@ if (-not (Test-Path $enginePath)) { throw "Engine not found: $enginePath" }
 
 $ocDir   = Join-Path $RepoPath ".opencode"
 $aiDir   = Join-Path $ocDir "ai-platform"
-$cmdDir  = Join-Path $ocDir "command"
+$cmdDir  = Join-Path $ocDir "commands"
 
-Write-Host "Enterprise AI Platform — OpenCode Adapter Install"
+Write-Host "Enterprise AI Platform -- OpenCode Adapter Install"
 Write-Host "Platform root : $platformRoot"
 Write-Host "Repo          : $RepoPath"
 if ($DryRun) { Write-Host "[DRY-RUN mode]" }
@@ -49,27 +49,27 @@ $contractSrc = Join-Path $platformRoot "shared\contract.md"
 $contractDst = Join-Path $aiDir "shared\contract.md"
 if (-not $DryRun) {
   $changes += Install-FileCopy $contractSrc $contractDst -Force:$Force
-} else { Write-Host "[DRY] $contractSrc → $contractDst" }
+} else { Write-Host "[DRY] $contractSrc -> $contractDst" }
 
 # ── Step 2: Copy shared commands ─────────────────────────────────────────
 $cmdSrc = Join-Path $platformRoot "shared\commands"
 $cmdDst = Join-Path $aiDir "shared\commands"
 if (-not $DryRun) {
   $changes += Install-DirectoryCopy $cmdSrc $cmdDst -Force:$Force
-} else { Write-Host "[DRY] $cmdSrc/ → $cmdDst/" }
+} else { Write-Host "[DRY] $cmdSrc/ -> $cmdDst/" }
 
 # ── Step 3: Copy shared standards ────────────────────────────────────────
 $stdSrc = Join-Path $platformRoot "shared\standards"
 $stdDst = Join-Path $aiDir "standards"
 if (-not $DryRun) {
   $changes += Install-DirectoryCopy $stdSrc $stdDst -Force:$Force
-} else { Write-Host "[DRY] $stdSrc/ → $stdDst/" }
+} else { Write-Host "[DRY] $stdSrc/ -> $stdDst/" }
 
 # ── Step 4: Copy OC command shells ───────────────────────────────────────
 $ocCmdSrc = Join-Path $platformRoot "adapters\opencode\commands"
 if (-not $DryRun) {
   $changes += Install-DirectoryCopy $ocCmdSrc $cmdDir -Force:$Force
-} else { Write-Host "[DRY] $ocCmdSrc/ → $cmdDir/" }
+} else { Write-Host "[DRY] $ocCmdSrc/ -> $cmdDir/" }
 
 # ── Step 5: Inject AGENTS.md ──────────────────────────────────────────────
 $agentsSrc = Join-Path $platformRoot "adapters\opencode\AGENTS.md"
@@ -80,16 +80,19 @@ if (-not $DryRun) {
     -Target $agentsDst `
     -MarkerStart "<!-- enterprise-ai-platform:contract:start -->" `
     -MarkerEnd   "<!-- enterprise-ai-platform:contract:end -->"
-} else { Write-Host "[DRY] Inject $agentsSrc → $agentsDst [marker inject]" }
+} else { Write-Host "[DRY] Inject $agentsSrc -> $agentsDst [marker inject]" }
 
-# ── Step 6: Write .platform-version.json ─────────────────────────────────
+# -- Step 6: Write .platform-version.json ----------------------------------
 if (-not $DryRun) {
   $VERSION = (Get-Content (Join-Path $platformRoot "VERSION") -Raw).Trim()
-  Update-PlatformVersion `
-    -AiDir    $aiDir `
-    -Version  $VERSION `
-    -Adapter  "opencode" `
-    -Features @{ "agents-md" = $true; "command-shells" = $true }
+  $stampPath = Join-Path $ocDir ".platform-version.json"
+  $stamp = [ordered]@{
+    version     = $VERSION
+    adapter     = "opencode"
+    installedAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    features    = @{ "agents-md" = $true; "command-shells" = $true }
+  }
+  $stamp | ConvertTo-Json | Set-Content -Path $stampPath -Encoding utf8
   Write-Host "Platform version written: $VERSION (opencode)"
 } else { Write-Host "[DRY] Write .platform-version.json" }
 

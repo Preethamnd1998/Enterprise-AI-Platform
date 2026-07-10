@@ -15,7 +15,7 @@ GitHub Copilot does not have a plugin system, so the platform content is **vendo
 | GitHub Copilot | Business or Enterprise | GitHub settings | — |
 | VS Code | Any recent | `code --version` | — |
 | GitHub Copilot VS Code extension | ≥ 1.200 | VS Code Extensions | — |
-| PowerShell | ≥ 7.0 (pwsh) | `pwsh --version` | [PowerShell releases](https://github.com/PowerShell/PowerShell/releases) |
+| PowerShell | ≥ 5.1 (Windows built-in) or pwsh 7+ | `$PSVersionTable.PSVersion` | Windows built-in; [PowerShell 7 releases](https://github.com/PowerShell/PowerShell/releases) optional |
 
 ### Copilot Custom Instructions Requirement
 

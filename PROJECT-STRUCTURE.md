@@ -134,7 +134,8 @@ adapters/claude/
 ├── hooks/
 │   ├── audit.js             # PostToolUse + Stop hook: writes JSONL audit log
 │   └── hash-check.js        # PreToolUse hook: verifies contract kernel hash
-├── install.ps1              # Claude adapter installer (uses shared installer engine)
+├── install.ps1              # Claude adapter installer -- canonical implementation
+│                            #   (uses shared installer engine; install/install-claude.ps1 delegates here)
 ├── install.sh               # Bash equivalent for Linux/macOS CI
 ├── upgrade.ps1              # Upgrade helper (removes legacy hooks on update)
 └── file-map.yml             # Source → destination mapping for installer
@@ -149,7 +150,8 @@ adapters/copilot/
 │   └── <slug>.prompt.md
 ├── chatmodes/               # 6 .chatmode.md files (dropdown in Copilot Chat)
 │   └── <slug>.chatmode.md
-├── install.ps1              # Copilot installer (alias for install/install-copilot.ps1)
+├── install.ps1              # Copilot adapter installer -- canonical implementation
+│                            #   (uses shared installer engine; install/install-copilot.ps1 delegates here)
 ├── capability-map.yml       # Capability assessment vs Claude Code
 └── file-map.yml             # Source → destination mapping
 ```
@@ -163,10 +165,15 @@ adapters/opencode/
 ├── AGENTS.md                # Contract kernel section injected into consuming repos
 ├── commands/                # 7 thin command shells (≤20 lines each)
 │   └── <slug>.md
-├── install.ps1              # OpenCode installer
+├── install.ps1              # OpenCode adapter installer -- canonical implementation
+│                            #   (uses shared installer engine; install/install-opencode.ps1 delegates here)
 ├── capability-map.yml       # Capability assessment
 └── file-map.yml             # Source → destination mapping
 ```
+
+> **Single front door:** all three canonical `adapters/*/install.ps1` scripts are idempotent and
+> hash-checked (`shared/installer/engine.ps1`). Engineers should invoke them via the thin wrappers
+> in `install/` rather than calling `adapters/*/install.ps1` directly -- see below.
 
 ### `adapters/{cursor,windsurf,continue,cline,roo-code,vscode-agent}/` (Stubs)
 
@@ -181,15 +188,21 @@ These stubs are activated when their evidence gate is satisfied. See `adapters/<
 
 ---
 
-## `install/` — Installer Scripts
+## `install/` — Installer Scripts (single front door)
+
+The one place engineers run installers from, for all three supported platforms. Every script
+here is a thin wrapper that forwards `-RepoPath -Force -DryRun` to the corresponding
+`adapters/<platform>/install.ps1` (the canonical, idempotent, hash-checked implementation).
+Nothing here re-implements install logic — that lives only in `adapters/*/install.ps1` and
+`shared/installer/engine.ps1`.
 
 ```
 install/
-├── _common.ps1              # Shared helpers: Get-PlatformRoot, Write-Step, Copy-Tree, etc.
-├── install-claude.ps1       # Global + per-repo Claude Code installation
-├── install-copilot.ps1      # Per-repo Copilot installation (vendoring)
-├── install-both.ps1         # Combined CC + Copilot installation
-├── update-platform.ps1      # Update existing installs to new platform version
+├── install-claude.ps1       # -> adapters/claude/install.ps1   (global + per-repo)
+├── install-copilot.ps1      # -> adapters/copilot/install.ps1  (per-repo, vendoring)
+├── install-opencode.ps1     # -> adapters/opencode/install.ps1 (per-repo, vendoring)
+├── install-both.ps1         # Claude + Copilot in one step
+├── update-platform.ps1      # Pulls platform source, then delegates to tools/update-platform.ps1
 └── .github/                 # Snapshot of what install-copilot.ps1 writes to repos
     ├── ai-platform/         # (Reference copy — not the canonical source)
     ├── chatmodes/
@@ -209,7 +222,8 @@ tools/
 ├── generate-copilot.ps1     # Generate Copilot prompt/chatmode shells from command stubs
 ├── check-drift.ps1          # Detect drift between installed files and platform source
 ├── migrate-settings.ps1     # Migrate settings.json from denylist (v3.0) to allowlist (v3.1)
-├── update-platform.ps1      # Update all repos in repos.txt to latest version
+├── update-platform.ps1      # Update one repo's installed adapter(s) (claude/copilot/opencode/both)
+│                            #   to the platform source version -- install/update-platform.ps1 delegates here
 └── flatten-repo.sh          # Bash utility (historical — not actively used)
 ```
 

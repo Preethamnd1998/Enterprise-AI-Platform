@@ -10,7 +10,7 @@
 |---|---|---|---|
 | Claude Code CLI | ≥ 1.0.0 | Primary AI platform | `npm install -g @anthropic-ai/claude-code` |
 | Node.js | ≥ 18 | Runs hook scripts (`audit.js`, `hash-check.js`) | [nodejs.org](https://nodejs.org) |
-| PowerShell | ≥ 7.0 (pwsh) | Runs installer scripts | [github.com/PowerShell](https://github.com/PowerShell/PowerShell/releases) |
+| PowerShell | ≥ 5.1 (Windows built-in) or pwsh 7+ | Runs installer scripts | Windows built-in; [github.com/PowerShell](https://github.com/PowerShell/PowerShell/releases) optional |
 | Git | ≥ 2.40 | Version control; installer uses `git` status | [git-scm.com](https://git-scm.com) |
 
 ## Platform-specific
@@ -18,7 +18,7 @@
 ### Windows 11 (primary development environment)
 | Tool | Version | Notes |
 |---|---|---|
-| PowerShell 7+ (`pwsh`) | ≥ 7.4 | Required for installer scripts. PowerShell 5.1 (`powershell.exe`) is NOT supported. |
+| PowerShell | 5.1 (`powershell.exe`, built in) or 7.4+ (`pwsh`) | Installer scripts are ASCII-only and run on either. |
 | Windows Terminal | Any | Recommended for best Claude Code experience |
 | Developer Mode | NOT required | Installer uses file copies, not symlinks (SP-07) |
 | Admin privileges | NOT required | Normal user account sufficient |
@@ -54,10 +54,10 @@ Run this before installing to verify prerequisites:
 
 ```powershell
 # Check required tools
-node --version      # Expected: v18.x or higher
-pwsh --version      # Expected: 7.x
-git --version       # Expected: 2.40 or higher
-claude --version    # Expected: 1.x
+node --version               # Expected: v18.x or higher
+$PSVersionTable.PSVersion    # Expected: 5.1+ (Windows built-in) or 7.x (pwsh)
+git --version                # Expected: 2.40 or higher
+claude --version             # Expected: 1.x
 ```
 
 ## CI/CD runner requirements

@@ -14,9 +14,9 @@ param(
 $root    = Get-PlatformRoot
 $version = Get-PlatformVersion $root
 
-Write-Step "Enterprise AI Platform v$version — Claude adapter install"
-if ($DryRun)  { Write-Warn2 "DRY RUN — no files will be written" }
-if ($Force)   { Write-Warn2 "FORCE — skipping idempotency check" }
+Write-Step "Enterprise AI Platform v$version -- Claude adapter install"
+if ($DryRun)  { Write-Warn2 "DRY RUN -- no files will be written" }
+if ($Force)   { Write-Warn2 "FORCE -- skipping idempotency check" }
 
 # ─── GLOBAL INSTALL ──────────────────────────────────────────────────────────
 Write-Step "Global: contract kernel + commands + standards -> ~/.claude/"
@@ -118,7 +118,7 @@ if (-not (Test-Path $repoClaude)) {
     Write-Dry "Would create .claude/CLAUDE.md (template)"
   }
 } else {
-  Write-Skip ".claude/CLAUDE.md (already exists — module boundaries preserved)"
+  Write-Skip ".claude/CLAUDE.md (already exists -- module boundaries preserved)"
 }
 
 # 8. Update .ai/.platform-version.json

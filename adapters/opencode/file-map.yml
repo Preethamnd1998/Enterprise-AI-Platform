@@ -30,7 +30,7 @@ entries:
 
   # ── OC command shells ─────────────────────────────────────────────────────
   - source: "adapters/opencode/commands/"
-    target: ".opencode/command/"
+    target: ".opencode/commands/"
     action: copy_directory
     notes: "Thin shells referencing .opencode/ai-platform/shared/commands/"
 

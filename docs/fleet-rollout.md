@@ -106,5 +106,5 @@ Each MR opened by `rollout-fleet.ps1` follows this lifecycle:
 - The script never merges — all MRs require human approval and merge
 - `repos.txt` lines starting with `#` or blank lines are ignored
 - If `glab` is not installed, the branch is pushed but the MR must be opened manually
-- Run with `-Mode claude` or `-Mode copilot` to install only one adapter
+- Run with `-Mode claude`, `-Mode copilot`, or `-Mode opencode` to install only one adapter
 - Use `-Branch <name>` to override the default branch name (`chore/ai-platform-v<VERSION>`)

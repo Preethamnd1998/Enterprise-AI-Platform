@@ -24,7 +24,7 @@
 #>
 param(
   [string]$RepoPath = (Get-Location).Path,
-  [ValidateSet('claude','copilot','both')][string]$Adapter = 'both',
+  [ValidateSet('claude','copilot','opencode','both')][string]$Adapter = 'both',
   [string]$PlatformRoot = '',
   [switch]$Force,
   [switch]$DryRun
@@ -46,7 +46,7 @@ if (-not $PlatformRoot -or -not (Test-Path (Join-Path $PlatformRoot "shared\cont
 
 $sourceVersion = (Get-Content (Join-Path $PlatformRoot "VERSION") -Raw).Trim()
 
-Write-Host "Enterprise AI Platform — Update"
+Write-Host "Enterprise AI Platform -- Update"
 Write-Host "Platform root : $PlatformRoot (v$sourceVersion)"
 Write-Host "Repo          : $RepoPath"
 Write-Host "Adapter       : $Adapter"
@@ -60,16 +60,19 @@ function Get-InstalledVersion([string]$pvPath) {
   } catch { return $null }
 }
 
-$claudePv  = Join-Path $RepoPath ".ai\.platform-version.json"
-$copilotPv = Join-Path $RepoPath ".github\ai-platform\.platform-version.json"
+$claudePv   = Join-Path $RepoPath ".ai\.platform-version.json"
+$copilotPv  = Join-Path $RepoPath ".github\ai-platform\.platform-version.json"
+$opencodePv = Join-Path $RepoPath ".opencode\.platform-version.json"
 
-$claudeVer  = Get-InstalledVersion $claudePv
-$copilotVer = Get-InstalledVersion $copilotPv
+$claudeVer   = Get-InstalledVersion $claudePv
+$copilotVer  = Get-InstalledVersion $copilotPv
+$opencodeVer = Get-InstalledVersion $opencodePv
 
 Write-Host ""
-Write-Host "Installed Claude  : $(if ($claudeVer) { $claudeVer } else { '(not installed)' })"
-Write-Host "Installed Copilot : $(if ($copilotVer) { $copilotVer } else { '(not installed)' })"
-Write-Host "Source version    : $sourceVersion"
+Write-Host "Installed Claude   : $(if ($claudeVer) { $claudeVer } else { '(not installed)' })"
+Write-Host "Installed Copilot  : $(if ($copilotVer) { $copilotVer } else { '(not installed)' })"
+Write-Host "Installed OpenCode : $(if ($opencodeVer) { $opencodeVer } else { '(not installed)' })"
+Write-Host "Source version     : $sourceVersion"
 Write-Host ""
 
 # ── Update Claude adapter ──────────────────────────────────────────────────
@@ -77,10 +80,10 @@ if ($Adapter -in 'claude','both') {
   if ($claudeVer -eq $sourceVersion -and -not $Force) {
     Write-Host "Claude: up to date ($claudeVer)"
   } else {
-    $reason = if ($claudeVer) { "v$claudeVer → v$sourceVersion" } else { "not installed" }
+    $reason = if ($claudeVer) { "v$claudeVer -> v$sourceVersion" } else { "not installed" }
     Write-Host "Claude: updating ($reason)"
+    $installScript = Join-Path $PlatformRoot "adapters\claude\install.ps1"
     if (-not $DryRun) {
-      $installScript = Join-Path $PlatformRoot "adapters\claude\install.ps1"
       & $installScript -RepoPath $RepoPath
       Write-Host "Claude: updated to v$sourceVersion"
     } else {
@@ -94,12 +97,29 @@ if ($Adapter -in 'copilot','both') {
   if ($copilotVer -eq $sourceVersion -and -not $Force) {
     Write-Host "Copilot: up to date ($copilotVer)"
   } else {
-    $reason = if ($copilotVer) { "v$copilotVer → v$sourceVersion" } else { "not installed" }
+    $reason = if ($copilotVer) { "v$copilotVer -> v$sourceVersion" } else { "not installed" }
     Write-Host "Copilot: updating ($reason)"
+    $installScript = Join-Path $PlatformRoot "adapters\copilot\install.ps1"
     if (-not $DryRun) {
-      $installScript = Join-Path $PlatformRoot "adapters\copilot\install.ps1"
       & $installScript -RepoPath $RepoPath
       Write-Host "Copilot: updated to v$sourceVersion"
+    } else {
+      Write-Host "[DRY-RUN] Would run: $installScript -RepoPath $RepoPath"
+    }
+  }
+}
+
+# -- Update OpenCode adapter -------------------------------------------------
+if ($Adapter -in 'opencode','both') {
+  if ($opencodeVer -eq $sourceVersion -and -not $Force) {
+    Write-Host "OpenCode: up to date ($opencodeVer)"
+  } else {
+    $reason = if ($opencodeVer) { "v$opencodeVer -> v$sourceVersion" } else { "not installed" }
+    Write-Host "OpenCode: updating ($reason)"
+    $installScript = Join-Path $PlatformRoot "adapters\opencode\install.ps1"
+    if (-not $DryRun) {
+      & $installScript -RepoPath $RepoPath
+      Write-Host "OpenCode: updated to v$sourceVersion"
     } else {
       Write-Host "[DRY-RUN] Would run: $installScript -RepoPath $RepoPath"
     }

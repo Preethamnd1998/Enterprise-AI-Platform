@@ -9,12 +9,12 @@
 #>
 param(
   [Parameter(Mandatory)][string]$ReposFile,
-  [ValidateSet('claude','copilot','both')][string]$Mode = 'both',
+  [ValidateSet('claude','copilot','opencode','both')][string]$Mode = 'both',
   [string]$WorkDir = (Join-Path $env:TEMP 'ai-platform-fleet'),
   [string]$Branch,
   [switch]$DryRun
 )
-. (Join-Path $PSScriptRoot '..\install\_common.ps1')
+. (Join-Path $PSScriptRoot '..\shared\installer\engine.ps1')
 
 $platformRoot = Get-PlatformRoot
 $version = Get-PlatformVersion $platformRoot
@@ -27,9 +27,9 @@ if (-not (Test-Path $ReposFile))  { throw "repos.txt not found: $ReposFile" }
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 
 $repos = Get-Content $ReposFile | Where-Object { $_ -and -not $_.StartsWith('#') }
-if (-not $repos) { Write-Warn2 "repos.txt is empty — nothing to do"; exit 0 }
+if (-not $repos) { Write-Warn2 "repos.txt is empty -- nothing to do"; exit 0 }
 
-if ($DryRun) { Write-Step "DRY-RUN mode — no git writes or MRs will be created" }
+if ($DryRun) { Write-Step "DRY-RUN mode -- no git writes or MRs will be created" }
 
 $ok = 0; $skipped = 0; $fail = @()
 
@@ -56,7 +56,7 @@ foreach ($url in $repos) {
 
     $status = git -C $dir status --porcelain
     if (-not $status) {
-      Write-Warn2 "  No changes after install — repo may already be up to date"
+      Write-Warn2 "  No changes after install -- repo may already be up to date"
       $skipped++; continue
     }
 
@@ -71,7 +71,7 @@ foreach ($url in $repos) {
         --description "Automated fleet rollout (v$version, mode=$Mode). Reviewer: inspect .claude/CLAUDE.md and .github/ai-platform/ for correctness." `
         --yes
     } else {
-      Write-Warn2 "  glab not found — branch pushed, open MR manually"
+      Write-Warn2 "  glab not found -- branch pushed, open MR manually"
     }
     $ok++; Write-Ok "$name done"
   } catch {
@@ -80,6 +80,6 @@ foreach ($url in $repos) {
 }
 
 Write-Host ""
-Write-Step "Rollout complete: $ok succeeded · $skipped skipped · $($fail.Count) failed"
+Write-Step "Rollout complete: $ok succeeded, $skipped skipped, $($fail.Count) failed"
 if ($fail) { $fail | ForEach-Object { Write-Warn2 "  FAILED: $_" } }
 if ($DryRun) { Write-Step "Re-run without -DryRun to execute." }

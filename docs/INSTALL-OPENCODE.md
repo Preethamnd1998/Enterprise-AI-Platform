@@ -13,7 +13,7 @@ OpenCode is a terminal-native AI coding assistant. The platform supports OpenCod
 | Tool | Minimum | Check | Install |
 |---|---|---|---|
 | OpenCode | Latest | `opencode --version` | [opencode.ai](https://opencode.ai) |
-| PowerShell | ≥ 7.0 (pwsh) | `pwsh --version` | [PowerShell releases](https://github.com/PowerShell/PowerShell/releases) |
+| PowerShell | ≥ 5.1 (Windows built-in) or pwsh 7+ | `$PSVersionTable.PSVersion` | Windows built-in; [PowerShell 7 releases](https://github.com/PowerShell/PowerShell/releases) optional |
 | Git | ≥ 2.40 | `git --version` | — |
 
 ---
@@ -65,8 +65,12 @@ cd enterprise-ai-platform
 ### Step 2 — Run the OpenCode Installer
 
 ```powershell
-pwsh adapters/opencode/install.ps1 -RepoPath C:\src\your-service
+.\install\install-opencode.ps1 -RepoPath C:\src\your-service
 ```
+
+`install/install-opencode.ps1` is a thin wrapper around `adapters/opencode/install.ps1` (the
+canonical implementation) -- it is the single documented entry point, alongside
+`install/install-claude.ps1` and `install/install-copilot.ps1`.
 
 The installer:
 1. Copies `shared/contract.md` to `.opencode/ai-platform/shared/contract.md`
@@ -87,7 +91,7 @@ OpenCode adapter install complete. Files changed: 24
 
 **Dry-run first (recommended):**
 ```powershell
-pwsh adapters/opencode/install.ps1 -RepoPath C:\src\your-service -DryRun
+.\install\install-opencode.ps1 -RepoPath C:\src\your-service -DryRun
 ```
 
 ### Step 3 — Verify Installation
@@ -190,7 +194,7 @@ If your repo already has an `AGENTS.md`, the installer merges the platform secti
 git -C <platform-repo> pull
 
 # Re-run installer (Force to refresh all files)
-pwsh adapters/opencode/install.ps1 -RepoPath C:\src\your-service -Force
+.\install\install-opencode.ps1 -RepoPath C:\src\your-service -Force
 
 # Commit the updated files
 git -C C:\src\your-service add AGENTS.md .opencode/

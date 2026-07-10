@@ -15,37 +15,37 @@ capabilities:
   - id: cap-01
     name: "/bug-fix command"
     status: supported
-    notes: ".opencode/command/bug-fix.md shell"
+    notes: ".opencode/commands/bug-fix.md shell"
 
   - id: cap-02
     name: "/migration command"
     status: supported
-    notes: ".opencode/command/migration.md shell"
+    notes: ".opencode/commands/migration.md shell"
 
   - id: cap-03
     name: "/new-development command"
     status: supported
-    notes: ".opencode/command/new-development.md shell"
+    notes: ".opencode/commands/new-development.md shell"
 
   - id: cap-04
     name: "/data-correction command"
     status: supported
-    notes: ".opencode/command/data-correction.md shell"
+    notes: ".opencode/commands/data-correction.md shell"
 
   - id: cap-05
     name: "/ui-design-update command"
     status: supported
-    notes: ".opencode/command/ui-design-update.md shell"
+    notes: ".opencode/commands/ui-design-update.md shell"
 
   - id: cap-06
     name: "/test command"
     status: supported
-    notes: ".opencode/command/test.md shell (Phase C)"
+    notes: ".opencode/commands/test.md shell (Phase C)"
 
   - id: cap-07
     name: "/prompt-audit command"
     status: supported
-    notes: ".opencode/command/prompt-audit.md shell (Phase D). Depends on shared/prompts/ being copied by file-map.yml (fixed in v4.3.0 hardening pass)."
+    notes: ".opencode/commands/prompt-audit.md shell (Phase D). Depends on shared/prompts/ being copied by file-map.yml (fixed in v4.3.0 hardening pass)."
 
   # ── Contract ──────────────────────────────────────────────────────────────
   - id: cap-08

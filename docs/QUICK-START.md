@@ -11,10 +11,10 @@ This guide installs the platform on Claude Code (the primary platform) and walks
 Before you start, verify:
 
 ```powershell
-node --version      # Must be v18 or higher
-pwsh --version      # Must be 7.0 or higher (not powershell.exe)
-git --version       # Must be 2.40 or higher
-claude --version    # Claude Code CLI must be installed
+node --version                    # Must be v18 or higher
+$PSVersionTable.PSVersion         # 5.1 (Windows built-in) or pwsh 7+ both work
+git --version                     # Must be 2.40 or higher
+claude --version                  # Claude Code CLI must be installed
 ```
 
 If anything is missing, see [docs/prerequisites.md](docs/prerequisites.md).
