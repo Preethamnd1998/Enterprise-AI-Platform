@@ -4,7 +4,7 @@ Engine lives in the `enterprise-ai-platform` plugin. This file declares ONLY the
 repo-specific facts the engine needs. Keep it short and stable (it is cached).
 
 ## Repository metadata
-- Stack: <Java 21 / Spring Boot 3 | Angular 17 | SQL/Flyway>
+- Stack: <Java 21 / Spring Boot 3 | Angular 17 | Flutter 3 / Dart 3 | SQL/Flyway>
 - GitLab project: <group/project>
 - Default integration branch: <develop>
 - Active release branches: <release/2.4, release/2.3>
@@ -16,12 +16,14 @@ unless a real reference does.
 - com.<org>.<module-a>
 - com.<org>.<module-b>
 - (Angular) libs/<feature-a>, libs/<feature-b>
+- (Flutter) lib/features/<feature-a>, lib/features/<feature-b>
 
 ## Shared / allowed cross-module packages
 Closure MAY follow references into these (common/shared code):
 - com.<org>.common.*
 - com.<org>.shared.*
 - (Angular) libs/shared/*, libs/ui/*
+- (Flutter) lib/shared/*, lib/core/*
 
 ## Forbidden boundaries (never auto-expand into)
 - com.<org>.billing.*

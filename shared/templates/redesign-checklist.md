@@ -11,11 +11,12 @@ Component / Screen: __________
 ☐ Accessibility (ARIA, contrast, focus order)   ☐ Responsive verified
 
 ## Enterprise standards
-☐ Existing LT components reused   ☐ Existing patterns reused   ☐ Angular standards followed
+☐ Existing LT components/widgets reused   ☐ Existing patterns reused   ☐ Angular/Flutter standards followed
 ☐ No new UI dependency introduced
 
 ## Functionality preservation
-☐ @Input / @Output preserved   ☐ Form bindings preserved   ☐ Existing validations preserved
+☐ @Input / @Output preserved (Angular) or callbacks/keys preserved (Flutter)
+☐ Form bindings preserved   ☐ Existing validations preserved
 ☐ Existing permissions preserved   ☐ Existing APIs unchanged   ☐ Existing workflows unchanged
 
 ## Result

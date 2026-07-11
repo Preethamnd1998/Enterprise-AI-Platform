@@ -10,6 +10,7 @@ TODO: Describe the service purpose.
 <!-- List the main technologies used. -->
 - Backend: TODO (e.g. Java 17 / Spring Boot 3.x)
 - Frontend: TODO (e.g. Angular 17)
+- Mobile: TODO (e.g. Flutter 3.x / Dart 3.x)
 - Database: TODO (e.g. PostgreSQL 15, MongoDB 6)
 - Messaging: TODO (e.g. Kafka, RabbitMQ, or none)
 

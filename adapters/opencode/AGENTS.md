@@ -2,7 +2,7 @@
      The block between the contract:start/end markers is replaced by the installer on each install.
      Content outside the markers (repo profile section) is preserved. -->
 
-<!-- enterprise-ai-platform:contract:start -->
+<!-- enterprise-ai-platform:kernel:start -->
 # Enterprise AI Platform v4 — Agent Instructions (OpenCode)
 
 This repo uses the Enterprise AI Platform. The single source of rules is the vendored
@@ -22,7 +22,7 @@ Invoke with the command name as the first word of your message:
 `bug-fix`, `migration`, `new-development`, `data-correction`, `ui-design-update`, `test`, `prompt-audit`
 
 Full definitions: `.opencode/ai-platform/shared/commands/<name>.md`
-<!-- enterprise-ai-platform:contract:end -->
+<!-- enterprise-ai-platform:kernel:end -->
 
 ## Repo profile
 <!-- Customize this section per repo. It is preserved across platform updates. -->

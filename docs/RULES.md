@@ -17,7 +17,7 @@ The contract loads rules by situation (§5 lazy loading):
 | Rule | Summary |
 |---|---|
 | **CR-01** Completeness | Confirm the full change set is in scope before reviewing. Partial review creates false confidence. |
-| **CR-02** Layer coverage | Verify all applicable layers (Controller · Service · Repository · DTO · Mapper · Entity · Enum · Constants · Validator · SQL · Flyway · Angular · UI Service · Model · Route · Permission · Translation · Audit · Tests). Missing layer = Gate A failure. |
+| **CR-02** Layer coverage | Verify all applicable layers (Controller · Service · Repository · DTO · Mapper · Entity · Enum · Constants · Validator · SQL · Flyway · Angular · UI Service · Model · Route · Flutter Widget · State Management · Mobile Route · Permission · Translation · Audit · Tests). Missing layer = Gate A failure. |
 | **CR-03** No silent scope creep | If review reveals scope beyond the original change set, STOP. Document and request approval before expanding. |
 | **CR-04** Regression evidence | Gate B claims must cite specific existing behavior being preserved. "No regression" is a checklist result, not a conclusion. |
 | **CR-05** Security red flags | Flag for human review: authentication/authorization, session/token handling, data access controls, Flyway on sensitive tables, external-facing API signatures. |

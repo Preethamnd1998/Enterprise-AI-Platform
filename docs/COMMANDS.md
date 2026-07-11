@@ -14,7 +14,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 | [Migration](#migration) | `/migration` | Code migration: branch, cherry-pick, or exact | Claude, Copilot | A+ |
 | [New Development](#new-development) | `/new-development` | Implement a new feature or story | Claude, Copilot | A+ |
 | [Data Correction](#data-correction) | `/data-correction` | Safe DB data corrections with rollback | Claude, Copilot | A+ |
-| [UI Design Update](#ui-design-update) | `/ui-design-update` | Angular UI redesign from spec or screenshot | Claude, Copilot | A+ |
+| [UI Design Update](#ui-design-update) | `/ui-design-update` | Angular or Flutter UI redesign from spec or screenshot | Claude, Copilot | A+ |
 | [Test](#test) | `/test` | Generate or audit tests for a change set | Claude, Copilot, OpenCode | C+ |
 | [Prompt Audit](#prompt-audit) | `/prompt-audit` | Score and improve a prompt using CRISP | Claude, Copilot, OpenCode | D+ |
 
@@ -75,6 +75,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 - `shared/standards/migration/semantic-git.md`
 - `shared/standards/migration/cherry-pick-rules.md`
 - `shared/standards/migration/branch-migration.md`
+- `shared/standards/backend/*.md`, `shared/standards/frontend/*.md`, `shared/standards/mobile/*.md` (whichever layers are touched)
 - `shared/commands/migration-intelligence.md` (§15)
 
 **Related:** `docs/boundary-examples.md`, `shared/templates/migration-checklist.md`
@@ -129,7 +130,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 
 **Source:** `shared/commands/ui-design-update.md`
 
-**Purpose:** Implement an Angular UI redesign based on a specification, Redmine ticket, screenshot, or existing MR. Loads only the frontend standards relevant to the components touched.
+**Purpose:** Implement an Angular (web) or Flutter (mobile) UI redesign based on a specification, Redmine ticket, screenshot, or existing MR. Detects the stack automatically and loads only the standards relevant to the components/widgets touched.
 
 **Standards loaded lazily (as needed):**
 - `shared/standards/frontend/component.md`
@@ -137,8 +138,11 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 - `shared/standards/frontend/custom-components.md`
 - `shared/standards/frontend/pagination.md`
 - `shared/standards/frontend/service.md`
+- `shared/standards/mobile/widget.md`
+- `shared/standards/mobile/flutter.md`
+- `shared/standards/mobile/state-management.md`
 
-**Output:** Component diffs (TypeScript + HTML + SCSS), route/permission updates if required, translation key additions.
+**Output:** Component diffs (TypeScript + HTML + SCSS) or Flutter widget diffs (Dart), route/permission updates if required, translation/localization key additions.
 
 **Related:** `shared/templates/redesign-checklist.md`
 

@@ -2,6 +2,27 @@
 
 All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs).
 
+## [Unreleased] — Flutter / Dart Mobile Support
+
+### Added
+- `shared/standards/mobile/` — new standards directory for Flutter/Dart: `flutter.md` (stack + rules), `widget.md`, `service.md`, `state-management.md` (Bloc), `routing.md` (go_router), `models.md` (freezed/json_serializable). Mirrors the existing `backend/`/`frontend/` layout.
+- Flutter/Dart detection (`pubspec.yaml`, `*.dart`, `lib/`) added to `shared/contract.md` §5 lazy standards loading, alongside Java/Spring and Angular/TS.
+- Flutter layer coverage (Widget, State Management, Mobile Route) added to Gate A (`shared/contract.md` §7) and to `shared/rules/code-review.md` (CR-02).
+- `flutter test` / `mocktail` / `bloc_test` convention added to `shared/rules/testing.md` (TR-05) and `shared/standards/testing.md` (stack detection, naming conventions, generated-code exclusions for `*.g.dart`/`*.freezed.dart`).
+- `/test` command: `pubspec.yaml` stack detection and a Flutter scaffold example.
+- `/ui-design-update` command: full parallel Flutter track — stack detection (Angular vs Flutter), a Flutter MUST-PRESERVE list (callbacks, keys, Bloc/Cubit wiring, routes, localization), and the same never-touch-business-logic boundary as Angular's `.component.ts` rule (Flutter: never touch Bloc/Cubit/repository files).
+- `/migration` command now loads mobile standards for touched layers, same as backend/frontend.
+- Flutter/mobile checklist items added to `shared/templates/migration-checklist.md` and `shared/templates/redesign-checklist.md`.
+- `shared/templates/coverage.yml` — `flutter` stack thresholds, LCOV report path, and generated-Dart allow-list entries.
+- `shared/company-profile.md` — Flutter (Dart) noted as a secondary stack; `lib/features/<feature>/` module boundary convention added.
+- Documentation updated for consistency: `PROJECT-STRUCTURE.md`, `docs/COMMANDS.md`, `docs/RULES.md`, `docs/boundary-examples.md` (Example D — Flutter), `docs/example-executions.md`, `docs/INSTALL-CLAUDE.md`, `docs/INSTALL-COPILOT.md`, `docs/USAGE.md`, `docs/coverage-gate.md`, `docs/platform-version-schema.md`, `prompt-guide.md`, `usage-instructions.md`, `.claude-plugin/plugin.json`.
+
+### Changed
+- Vendored dogfood copy `install/.github/ai-platform/shared/` re-synced from `shared/` to match.
+
+### Notes
+- Contract kernel (between the `enterprise-ai-platform:kernel:start/end` markers) is unchanged — no SHA-256 recompute needed; all edits are in the non-kernel body of `shared/contract.md`.
+
 ## [4.3.0] - 2026-07-07 — Phase F: Rollout & Polish
 
 ### Added

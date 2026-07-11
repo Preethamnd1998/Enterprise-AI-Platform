@@ -76,10 +76,12 @@ $agentsSrc = Join-Path $platformRoot "adapters\opencode\AGENTS.md"
 $agentsDst = Join-Path $RepoPath "AGENTS.md"
 if (-not $DryRun) {
   $changes += Install-MarkerInject `
-    -Source $agentsSrc `
-    -Target $agentsDst `
-    -MarkerStart "<!-- enterprise-ai-platform:contract:start -->" `
-    -MarkerEnd   "<!-- enterprise-ai-platform:contract:end -->"
+    -SourceFile $agentsSrc `
+    -TargetFile $agentsDst `
+    -StartMarker 'enterprise-ai-platform:contract:start' `
+    -EndMarker   'enterprise-ai-platform:contract:end' `
+    -KernelMarkerStart '<!-- enterprise-ai-platform:kernel:start -->' `
+    -KernelMarkerEnd   '<!-- enterprise-ai-platform:kernel:end -->'
 } else { Write-Host "[DRY] Inject $agentsSrc -> $agentsDst [marker inject]" }
 
 # -- Step 6: Write .platform-version.json ----------------------------------

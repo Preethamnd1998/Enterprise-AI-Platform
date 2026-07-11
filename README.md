@@ -1,8 +1,8 @@
 # Enterprise AI Platform
 
-**Version:** v4.3.0 | **Status:** Production | **Platforms:** Claude Code · GitHub Copilot · OpenCode
+**Version:** v4.3.0 | **Status:** Production | **Platforms:** Claude Code · GitHub Copilot · OpenCode · Antigravity
 
-A portable, multi-LLM AI engineering assistant platform for enterprise development teams. One shared configuration. Four supported platforms. Seven commands. Consistent behavior everywhere.
+A portable, multi-LLM AI engineering assistant platform for enterprise development teams. One shared configuration. Five supported platforms. Seven commands. Consistent behavior everywhere.
 
 ---
 
@@ -25,6 +25,7 @@ The Enterprise AI Platform enforces a single execution contract across all AI co
 | **Claude Code** | ✅ Full | ✅ | ✅ | ✅ | All 7 |
 | **GitHub Copilot** | ✅ Partial | ❌ | ❌ | Read-only PAT | 7 (via chatmodes) |
 | **OpenCode** | ✅ Partial | ❌ | ❌ | Limited | 7 (via AGENTS.md) |
+| **Antigravity** | ✅ Partial | ❌ | ❌ | ⚠️ Prompt-only (no allowlist) | 7 (via AGENTS.md + workflows) |
 | Cursor | 🔵 Stub | — | — | — | — |
 | Windsurf | 🔵 Stub | — | — | — | — |
 | Continue | 🔵 Stub | — | — | — | — |
@@ -33,6 +34,8 @@ The Enterprise AI Platform enforces a single execution contract across all AI co
 | VS Code Agent | 🔵 Stub | — | — | — | — |
 
 > For sensitive tasks (auth, PII, migrations), use **Claude Code** — it is the only platform with a full security posture. See [HITL Matrix](docs/hitl-matrix.md).
+>
+> **Antigravity MCP note (confirmed 2026-07):** Antigravity has no declarative read-only MCP allowlist like Claude Code's `settings.json` deny-list. It gates MCP tool calls with a per-call approval prompt, plus an optional per-server `alwaysAllow` bypass list — human-supervised, not policy-enforced. See `adapters/antigravity/capability-map.yml` (cap-10/cap-11) for sources.
 
 ---
 
@@ -88,7 +91,7 @@ D:\enterprise-ai-platform\                 # git repo root (flattened — no nes
 ├── shared/                    # Single source of truth for all shared assets
 │   ├── contract.md            # Execution contract (kernel injected to ~/.claude/CLAUDE.md)
 │   ├── commands/              # 7 command definitions (shared by all platforms)
-│   ├── standards/             # Coding standards (backend/, frontend/, migration/)
+│   ├── standards/             # Coding standards (backend/, frontend/, mobile/, migration/)
 │   ├── rules/                 # Governance rules (coding-style, testing, security, code-review)
 │   ├── prompts/               # CRISP framework, prompt quality scoring
 │   ├── templates/             # Per-repo AI context templates (AI_PROJECT.md etc.)
@@ -100,6 +103,7 @@ D:\enterprise-ai-platform\                 # git repo root (flattened — no nes
 │   ├── claude/                # Claude Code: config, hooks, installers
 │   ├── copilot/               # GitHub Copilot: chatmodes, prompts, instructions
 │   ├── opencode/              # OpenCode: AGENTS.md, command shells
+│   ├── antigravity/           # Antigravity: AGENTS.md, .agents/workflows shells
 │   ├── cursor/                # [STUB] Future adapter
 │   ├── windsurf/              # [STUB] Future adapter
 │   ├── continue/              # [STUB] Future adapter
@@ -107,10 +111,11 @@ D:\enterprise-ai-platform\                 # git repo root (flattened — no nes
 │   ├── roo-code/              # [STUB] Future adapter
 │   └── vscode-agent/          # [STUB] Future adapter
 │
-├── install/                   # Single front door -- installer scripts for all 3 platforms
+├── install/                   # Single front door -- installer scripts for all 4 platforms
 │   ├── install-claude.ps1     # Global + per-repo CC install (delegates to adapters/claude/install.ps1)
 │   ├── install-copilot.ps1    # Copilot per-repo install (delegates to adapters/copilot/install.ps1)
 │   ├── install-opencode.ps1   # OpenCode per-repo install (delegates to adapters/opencode/install.ps1)
+│   ├── install-antigravity.ps1 # Antigravity per-repo install (delegates to adapters/antigravity/install.ps1)
 │   ├── install-both.ps1       # CC + Copilot combined
 │   └── update-platform.ps1    # Pull latest source + refresh installed adapter(s)
 │

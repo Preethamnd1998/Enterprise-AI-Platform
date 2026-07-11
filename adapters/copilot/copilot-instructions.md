@@ -2,7 +2,7 @@
      The block between the contract:start/end markers is replaced by the installer on each install.
      Content outside the markers (repo profile section) is preserved by the installer. -->
 
-<!-- enterprise-ai-platform:contract:start -->
+<!-- enterprise-ai-platform:kernel:start -->
 # Enterprise AI Platform v3 — Copilot Instructions
 
 This repo uses the Enterprise AI Platform. The single source of rules is the vendored
@@ -20,7 +20,7 @@ non-trivial task. Standards live under `.github/ai-platform/standards/` and are 
 ## Reusable prompts (Copilot Chat)
 Invoke with `/<name>` in Chat: `/bug-fix`, `/migration`, `/new-development`, `/data-correction`, `/ui-design-update`, `/test`, `/prompt-audit`.
 (Copilot uses `/` for prompt files; `#` is for context like `#codebase`/`#file`.)
-<!-- enterprise-ai-platform:contract:end -->
+<!-- enterprise-ai-platform:kernel:end -->
 
 ## Repo profile
 <!-- Customize this section per repo. It is preserved across platform updates. -->

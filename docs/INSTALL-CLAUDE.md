@@ -49,6 +49,7 @@ This is the complete installation guide for the Enterprise AI Platform on Claude
 │   ├── coding-standards.md
 │   ├── backend/
 │   ├── frontend/
+│   ├── mobile/
 │   └── migration/
 └── .platform-version              # Install stamp
 
@@ -133,7 +134,7 @@ Open `.claude/CLAUDE.md` in your repo and fill in the module boundaries for your
 ```markdown
 ## Repo: your-service-name
 
-This repo is a [Spring Boot service / Angular frontend / etc.].
+This repo is a [Spring Boot service / Angular frontend / Flutter mobile app / etc.].
 
 ### Module boundaries
 - `com.lifetrenz.yourservice.controller` — HTTP layer only; no business logic

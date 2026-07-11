@@ -11,6 +11,7 @@ all layers). A partial review is worse than no review — it creates false confi
 For every change, verify ALL applicable layers are present and correct:
 Controller · Service · Repository · DTO · Mapper · Entity · Enum · Constants ·
 Validator · SQL · Flyway · Angular Component · UI Service · Model · Route ·
+Flutter Widget · State Management (Bloc/Cubit/Provider) · Mobile Route ·
 Permission · Translation · Audit logic · Tests.
 A missing layer is a Gate A failure.
 

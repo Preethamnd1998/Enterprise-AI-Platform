@@ -49,7 +49,8 @@
   "standardsHashes": {
     "coding-standards.md": "<sha256>",
     "backend/controller.md": "<sha256>",
-    "backend/service.md": "<sha256>"
+    "backend/service.md": "<sha256>",
+    "mobile/widget.md": "<sha256>"
   }
 }
 ```

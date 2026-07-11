@@ -5,6 +5,21 @@ For upgrade instructions, see [UPGRADE-GUIDE.md](UPGRADE-GUIDE.md).
 
 ---
 
+## Unreleased — Flutter / Dart Mobile Support
+
+**Theme:** Extending every command to a third stack (Flutter/Dart mobile) alongside Java/Spring and Angular.
+
+**What's new:**
+- **`shared/standards/mobile/`** — new Flutter/Dart standards set (widget, service/repository, state management, routing, models), mirroring `backend/`/`frontend/`.
+- **Stack-aware `/ui-design-update`** — detects Angular vs Flutter and applies the matching MUST-PRESERVE list and file-touch boundary (never touch Bloc/Cubit/repository files, same principle as never touching `.component.ts`).
+- **All commands stack-aware** — `/bug-fix`, `/migration`, `/new-development`, `/data-correction`, `/test`, `/prompt-audit` all detect and load `mobile/*` standards via `pubspec.yaml`/`*.dart` signals, same lazy-loading discipline as the existing stacks.
+- **Coverage gate** — `flutter` stack thresholds and generated-Dart (`*.g.dart`, `*.freezed.dart`) exclusions added to `shared/templates/coverage.yml`.
+- **Documentation** — every reference doc touched by the Java/Angular convention (COMMANDS, RULES, boundary examples, install guides, usage guides) now includes the Flutter equivalent.
+
+**Breaking changes:** None. Existing Java/Angular-only repos are unaffected — mobile standards only load when Flutter signals are detected in the change set.
+
+---
+
 ## v4.3.0 — Rollout & Polish (2026-07-07)
 
 **Theme:** Making the platform deployable at fleet scale and extensible to future tools.

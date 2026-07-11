@@ -24,7 +24,7 @@
 #>
 param(
   [string]$RepoPath = (Get-Location).Path,
-  [ValidateSet('claude','copilot','opencode','both')][string]$Adapter = 'both',
+  [ValidateSet('claude','copilot','opencode','antigravity','both')][string]$Adapter = 'both',
   [string]$PlatformRoot = '',
   [switch]$Force,
   [switch]$DryRun
@@ -62,17 +62,20 @@ function Get-InstalledVersion([string]$pvPath) {
 
 $claudePv   = Join-Path $RepoPath ".ai\.platform-version.json"
 $copilotPv  = Join-Path $RepoPath ".github\ai-platform\.platform-version.json"
-$opencodePv = Join-Path $RepoPath ".opencode\.platform-version.json"
+$opencodePv     = Join-Path $RepoPath ".opencode\.platform-version.json"
+$antigravityPv  = Join-Path $RepoPath ".agents\.platform-version.json"
 
-$claudeVer   = Get-InstalledVersion $claudePv
-$copilotVer  = Get-InstalledVersion $copilotPv
-$opencodeVer = Get-InstalledVersion $opencodePv
+$claudeVer      = Get-InstalledVersion $claudePv
+$copilotVer     = Get-InstalledVersion $copilotPv
+$opencodeVer    = Get-InstalledVersion $opencodePv
+$antigravityVer = Get-InstalledVersion $antigravityPv
 
 Write-Host ""
-Write-Host "Installed Claude   : $(if ($claudeVer) { $claudeVer } else { '(not installed)' })"
-Write-Host "Installed Copilot  : $(if ($copilotVer) { $copilotVer } else { '(not installed)' })"
-Write-Host "Installed OpenCode : $(if ($opencodeVer) { $opencodeVer } else { '(not installed)' })"
-Write-Host "Source version     : $sourceVersion"
+Write-Host "Installed Claude      : $(if ($claudeVer) { $claudeVer } else { '(not installed)' })"
+Write-Host "Installed Copilot     : $(if ($copilotVer) { $copilotVer } else { '(not installed)' })"
+Write-Host "Installed OpenCode    : $(if ($opencodeVer) { $opencodeVer } else { '(not installed)' })"
+Write-Host "Installed Antigravity : $(if ($antigravityVer) { $antigravityVer } else { '(not installed)' })"
+Write-Host "Source version        : $sourceVersion"
 Write-Host ""
 
 # ── Update Claude adapter ──────────────────────────────────────────────────
@@ -120,6 +123,23 @@ if ($Adapter -in 'opencode','both') {
     if (-not $DryRun) {
       & $installScript -RepoPath $RepoPath
       Write-Host "OpenCode: updated to v$sourceVersion"
+    } else {
+      Write-Host "[DRY-RUN] Would run: $installScript -RepoPath $RepoPath"
+    }
+  }
+}
+
+# -- Update Antigravity adapter -----------------------------------------------
+if ($Adapter -in 'antigravity','both') {
+  if ($antigravityVer -eq $sourceVersion -and -not $Force) {
+    Write-Host "Antigravity: up to date ($antigravityVer)"
+  } else {
+    $reason = if ($antigravityVer) { "v$antigravityVer -> v$sourceVersion" } else { "not installed" }
+    Write-Host "Antigravity: updating ($reason)"
+    $installScript = Join-Path $PlatformRoot "adapters\antigravity\install.ps1"
+    if (-not $DryRun) {
+      & $installScript -RepoPath $RepoPath
+      Write-Host "Antigravity: updated to v$sourceVersion"
     } else {
       Write-Host "[DRY-RUN] Would run: $installScript -RepoPath $RepoPath"
     }

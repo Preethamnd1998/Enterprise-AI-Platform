@@ -13,7 +13,7 @@
 |---|---|
 | Company name | Lifetrenz |
 | Industry | Healthcare technology |
-| Primary language | Java (Spring Boot) + Angular |
+| Primary language | Java (Spring Boot) + Angular; Flutter (Dart) for mobile |
 | Compliance | HIPAA-adjacent (patient data handled — see AI_SECURITY.md per repo) |
 
 ## Platform Defaults (override per-repo in AI_PROJECT.md)
@@ -36,6 +36,7 @@ These module boundaries apply across ALL Lifetrenz repos unless overridden in pe
 - `com.lifetrenz.<service>.repository` — data access only
 - `com.lifetrenz.<service>.dto` — data transfer objects (no logic)
 - `com.lifetrenz.<service>.entity` — JPA entities (no business logic)
+- `lib/features/<feature>/` (Flutter apps) — feature-first module; presentation/, Bloc, repository per feature
 
 ## Company-Wide Banned Patterns
 

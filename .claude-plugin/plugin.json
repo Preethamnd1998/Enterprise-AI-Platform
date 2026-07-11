@@ -1,7 +1,7 @@
 {
   "name": "enterprise-ai-platform",
   "version": "4.3.0",
-  "description": "Token-efficient, deterministic AI commands for enterprise Java/Spring Boot/Angular repositories. Provides /bug-fix, /migration, /new-development, /data-correction, /ui-design-update, /test, /prompt-audit. Single reasoning agent, lazy standards loading, MCP read-only allowlist, fail-closed security, no agent chains.",
+  "description": "Token-efficient, deterministic AI commands for enterprise Java/Spring Boot/Angular/Flutter repositories. Provides /bug-fix, /migration, /new-development, /data-correction, /ui-design-update, /test, /prompt-audit. Single reasoning agent, lazy standards loading, MCP read-only allowlist, fail-closed security, no agent chains.",
   "author": {
     "name": "Lifetrenz Engineering"
   },
@@ -26,6 +26,9 @@
     "spring-boot",
     "angular",
     "java",
+    "flutter",
+    "dart",
+    "mobile",
     "bug-fix",
     "deterministic",
     "read-only-mcp"

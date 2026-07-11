@@ -94,10 +94,12 @@ $ciSrc = Join-Path $platformRoot "adapters\copilot\copilot-instructions.md"
 $ciDst = Join-Path $copilotsDir "copilot-instructions.md"
 if (-not $DryRun) {
   $changes += Install-MarkerInject `
-    -Source $ciSrc `
-    -Target $ciDst `
-    -MarkerStart "<!-- enterprise-ai-platform:contract:start -->" `
-    -MarkerEnd   "<!-- enterprise-ai-platform:contract:end -->"
+    -SourceFile $ciSrc `
+    -TargetFile $ciDst `
+    -StartMarker 'enterprise-ai-platform:contract:start' `
+    -EndMarker   'enterprise-ai-platform:contract:end' `
+    -KernelMarkerStart '<!-- enterprise-ai-platform:kernel:start -->' `
+    -KernelMarkerEnd   '<!-- enterprise-ai-platform:kernel:end -->'
 } else { Write-Host "[DRY] Inject $ciSrc -> $ciDst [marker inject]" }
 
 # -- Step 7: Write .platform-version.json ---------------------------------

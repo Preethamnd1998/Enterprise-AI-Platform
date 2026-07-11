@@ -75,7 +75,8 @@ When `gate_mode: enforce` in `.ai-platform/coverage.yml`:
 ## Allow-list
 
 Files matching `allow_list` patterns are excluded from the coverage gate.
-Defaults cover generated code, mappers, environment files, Spring config.
+Defaults cover generated code, mappers, environment files, Spring config, and Flutter
+generated Dart (`*.g.dart`, `*.freezed.dart`).
 
 To add a path: edit `.ai-platform/coverage.yml` in the consuming repo.
 Do NOT modify the template in `shared/templates/coverage.yml` for repo-specific exclusions.

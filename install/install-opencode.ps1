@@ -6,7 +6,7 @@
   Thin entry point -- delegates to adapters/opencode/install.ps1, the maintained
   implementation (idempotent, hash-checked, shared installer engine).
   Copies shared/ to .opencode/ai-platform/, injects AGENTS.md, and installs
-  .opencode/command/ shells. OpenCode has no hook API -- no audit trail.
+  .opencode/commands/ shells. OpenCode has no hook API -- no audit trail.
 
 .EXAMPLE  .\install-opencode.ps1 -RepoPath C:\src\my-service
 .EXAMPLE  .\install-opencode.ps1 -RepoPath C:\src\my-service -DryRun

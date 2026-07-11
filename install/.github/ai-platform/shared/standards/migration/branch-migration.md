@@ -66,6 +66,8 @@ Always identify:
 * SQL
 * Flyway
 * Angular Components
+* Flutter Widgets
+* State management (Bloc/Cubit/Provider)
 * Routes
 * Permissions
 * Tests
@@ -111,6 +113,20 @@ or
 Angular Component
     ↓
 Service
+    ↓
+API
+    ↓
+Controller
+```
+
+or
+
+```text
+Flutter Widget
+    ↓
+Bloc / Cubit
+    ↓
+Repository
     ↓
 API
     ↓

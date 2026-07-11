@@ -76,6 +76,13 @@ shared/
 │   │   ├── pagination.md
 │   │   ├── angular.md
 │   │   └── others.md
+│   ├── mobile/              # Flutter/Dart standards
+│   │   ├── flutter.md
+│   │   ├── widget.md
+│   │   ├── service.md
+│   │   ├── state-management.md
+│   │   ├── routing.md
+│   │   └── models.md
 │   └── migration/          # Git/cherry-pick migration standards
 │       ├── semantic-git.md
 │       ├── cherry-pick-rules.md
@@ -171,7 +178,26 @@ adapters/opencode/
 └── file-map.yml             # Source → destination mapping
 ```
 
-> **Single front door:** all three canonical `adapters/*/install.ps1` scripts are idempotent and
+### `adapters/antigravity/`
+
+```
+adapters/antigravity/
+├── AGENTS.md                # Contract kernel section injected into consuming repos (own outer
+│                            #   marker: contract:antigravity:start/end -- coexists with OpenCode's
+│                            #   plain contract:start/end block in the same root AGENTS.md file)
+├── commands/                # 7 thin workflow shells (description: frontmatter, ≤20 lines each)
+│   └── <slug>.md
+├── install.ps1              # Antigravity adapter installer -- canonical implementation
+│                            #   (uses shared installer engine; install/install-antigravity.ps1 delegates here)
+├── capability-map.yml       # Capability assessment (lower confidence -- vendor docs are new/thin)
+└── file-map.yml             # Source → destination mapping
+```
+
+Installs to `.agents/ai-platform/` (contract, commands, standards, prompts) and
+`.agents/workflows/` (the 7 slash-command shells, filename -> `/name`). No hook API, no MCP
+path fully confirmed yet -- see `capability-map.yml` gaps.
+
+> **Single front door:** all four canonical `adapters/*/install.ps1` scripts are idempotent and
 > hash-checked (`shared/installer/engine.ps1`). Engineers should invoke them via the thin wrappers
 > in `install/` rather than calling `adapters/*/install.ps1` directly -- see below.
 
@@ -190,7 +216,7 @@ These stubs are activated when their evidence gate is satisfied. See `adapters/<
 
 ## `install/` — Installer Scripts (single front door)
 
-The one place engineers run installers from, for all three supported platforms. Every script
+The one place engineers run installers from, for all supported platforms. Every script
 here is a thin wrapper that forwards `-RepoPath -Force -DryRun` to the corresponding
 `adapters/<platform>/install.ps1` (the canonical, idempotent, hash-checked implementation).
 Nothing here re-implements install logic — that lives only in `adapters/*/install.ps1` and
@@ -201,6 +227,7 @@ install/
 ├── install-claude.ps1       # -> adapters/claude/install.ps1   (global + per-repo)
 ├── install-copilot.ps1      # -> adapters/copilot/install.ps1  (per-repo, vendoring)
 ├── install-opencode.ps1     # -> adapters/opencode/install.ps1 (per-repo, vendoring)
+├── install-antigravity.ps1  # -> adapters/antigravity/install.ps1 (per-repo, vendoring)
 ├── install-both.ps1         # Claude + Copilot in one step
 ├── update-platform.ps1      # Pulls platform source, then delegates to tools/update-platform.ps1
 └── .github/                 # Snapshot of what install-copilot.ps1 writes to repos
@@ -222,7 +249,7 @@ tools/
 ├── generate-copilot.ps1     # Generate Copilot prompt/chatmode shells from command stubs
 ├── check-drift.ps1          # Detect drift between installed files and platform source
 ├── migrate-settings.ps1     # Migrate settings.json from denylist (v3.0) to allowlist (v3.1)
-├── update-platform.ps1      # Update one repo's installed adapter(s) (claude/copilot/opencode/both)
+├── update-platform.ps1      # Update one repo's installed adapter(s) (claude/copilot/opencode/antigravity/both)
 │                            #   to the platform source version -- install/update-platform.ps1 delegates here
 └── flatten-repo.sh          # Bash utility (historical — not actively used)
 ```

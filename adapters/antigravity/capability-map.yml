@@ -1,0 +1,121 @@
+# adapters/antigravity/capability-map.yml
+# Capability matrix for the Antigravity (Google) adapter.
+# Source: antigravity.google/docs, Google Codelabs "Autonomous AI Developer Pipelines"
+# (.agents/agents.md, .agents/skills/, .agents/workflows/ convention), community writeups.
+# Confidence is lower than Claude Code/OpenCode — Antigravity's docs are new and thinner;
+# entries below are marked "unconfirmed" where evidence is a community source, not the
+# vendor's own reference.
+# 2026-07-11: cap-10/cap-11 (MCP config + per-tool allowlist) re-verified against Google
+# Cloud docs, Google Cloud Community, Composio, and the Google AI Developer forum —
+# no longer "unconfirmed"; see notes on each entry and gaps_vs_claude_code below.
+
+version: "4.3"
+adapter: antigravity
+platform: "Google Antigravity (Desktop IDE + CLI)"
+updated: "2026-07-11"
+
+capabilities:
+
+  # ── Commands ──────────────────────────────────────────────────────────────
+  - id: cap-01
+    name: "/bug-fix command"
+    status: supported
+    notes: ".agents/workflows/bug-fix.md shell (description: frontmatter, filename -> /bug-fix)"
+
+  - id: cap-02
+    name: "/migration command"
+    status: supported
+    notes: ".agents/workflows/migration.md shell"
+
+  - id: cap-03
+    name: "/new-development command"
+    status: supported
+    notes: ".agents/workflows/new-development.md shell"
+
+  - id: cap-04
+    name: "/data-correction command"
+    status: supported
+    notes: ".agents/workflows/data-correction.md shell"
+
+  - id: cap-05
+    name: "/ui-design-update command"
+    status: supported
+    notes: ".agents/workflows/ui-design-update.md shell"
+
+  - id: cap-06
+    name: "/test command"
+    status: supported
+    notes: ".agents/workflows/test.md shell"
+
+  - id: cap-07
+    name: "/prompt-audit command"
+    status: supported
+    notes: ".agents/workflows/prompt-audit.md shell. Depends on shared/prompts/ copied alongside."
+
+  # ── Contract ──────────────────────────────────────────────────────────────
+  - id: cap-08
+    name: "Shared contract injection"
+    status: degraded
+    notes: "Contract injected into root AGENTS.md between markers. Antigravity's own docs say AGENTS.md takes precedence over GEMINI.md when both exist."
+
+  - id: cap-09
+    name: "Contract hash-check"
+    status: unsupported
+    notes: "No PreToolUse-equivalent hook API documented for Antigravity as of 2026-07."
+
+  # ── MCP ───────────────────────────────────────────────────────────────────
+  - id: cap-10
+    name: "MCP server config"
+    status: supported
+    notes: "CONFIRMED 2026-07 (independent sources: Google Cloud docs, Google Cloud Community/Medium, Composio, Google AI Developer forum): a single mcp_config.json, edited via Antigravity Settings -> Customizations -> 'Open MCP Config' (raw JSON: mcpServers{...}, serverUrl not url). Exact absolute path still varies slightly across sources (reports include ~/.gemini/config/mcp_config.json) -- treat the Settings-UI edit flow as the reliable access method, not a hardcoded path."
+
+  - id: cap-11
+    name: "MCP per-tool allowlist"
+    status: unsupported
+    notes: "CONFIRMED 2026-07: Antigravity has NO static/declarative read-only tool allowlist equivalent to Claude Code's settings.json deny-list. Its actual model is per-call human approval (an 'Accept' prompt shown when an agent first calls an MCP tool) plus an optional per-server 'alwaysAllow': [tool names] array to bypass the prompt for specific tools going forward (opt-in trust, not a security boundary; no read-only-vs-write distinction is enforced by the platform). A forum-reported bug shows the approval prompt can sometimes be skipped/hang. Sources: Composio how-to, Dazbo/Medium MCP config guide, Google AI Developer forum threads on auto-approving/skipped MCP approval prompts."
+
+  # ── Rules / standards ────────────────────────────────────────────────────
+  - id: cap-12
+    name: "Lazy standards loading"
+    status: supported
+    notes: "Standards copied to .agents/ai-platform/standards/, read on demand by the agent per the contract — same inert-storage pattern as OpenCode (not natively auto-loaded by the tool)."
+
+  - id: cap-13
+    name: "Native workspace rules (.agents/rules/)"
+    status: unsupported
+    notes: "Antigravity supports its own granular .agents/rules/*.md rules mechanism natively. Not used by this adapter — standards stay lazily-read via the contract instead of auto-loaded, matching platform-wide behavior. Revisit if always-on rule enforcement is wanted."
+
+  # ── Sessions / Memory ─────────────────────────────────────────────────────
+  - id: cap-14
+    name: "Session memory"
+    status: unsupported
+    notes: "Agent Manager reportedly maintains its own evolving AGENTS.md notes from MCP queries; not integrated with this platform's install — flagged as a possible future collision (see gaps below)."
+
+  - id: cap-15
+    name: "Subagent orchestration"
+    status: unsupported
+    notes: "No native subagent API surfaced in current docs."
+
+  # ── Observability ─────────────────────────────────────────────────────────
+  - id: cap-16
+    name: "Audit log"
+    status: unsupported
+    notes: "No hook/event API documented. Audit trail remains Claude Code only."
+
+  # ── Installer ─────────────────────────────────────────────────────────────
+  - id: cap-17
+    name: "Idempotent installer"
+    status: supported
+    notes: "adapters/antigravity/install.ps1 copies shared/ to .agents/ai-platform/, mirrors adapters/opencode/install.ps1 structure."
+
+  - id: cap-18
+    name: "Feature flags"
+    status: supported
+    notes: "Installer writes .agents/ai-platform/.platform-version.json"
+
+gaps_vs_claude_code:
+  - "No hook API -> no audit.js equivalent, no contract hash pre-check."
+  - "No subagent control -> subagent rules unenforceable."
+  - "AGENTS.md filename is shared with the OpenCode adapter (both are 'AGENTS.md' at repo root). Fixed by giving this adapter a distinct outer marker (enterprise-ai-platform:contract:antigravity:start/end vs OpenCode's plain contract:start/end) so both blocks coexist in one file instead of clobbering each other. Confirmed live: installing this adapter after OpenCode into the same repo originally overwrote OpenCode's block before this fix."
+  - "Antigravity's Agent Manager is reported to auto-write its own content into AGENTS.md over time (a separate mechanism from this installer's marker injection). Not yet verified whether it respects marker boundaries — if it doesn't, repeated Agent Manager writes could land outside the markers and get silently preserved (harmless) or, in the worst case, inside them and get clobbered on the next platform install. Flag for follow-up once real usage data exists."
+  - "CONFIRMED gap (was 'unconfirmed' pre-2026-07): Antigravity has no declarative read-only MCP allowlist. It relies on a per-call approval prompt (+ optional 'alwaysAllow' bypass list), which is weaker automation than Claude Code's settings.json deny-list and is not fail-closed the same way — a user who clicks Accept (or a tool added to alwaysAllow) is not blocked from write-capable MCP calls the way SEC-02 requires on Claude Code. Treat this adapter as 'human-supervised, not policy-enforced' for MCP until Antigravity ships a config-level allowlist."

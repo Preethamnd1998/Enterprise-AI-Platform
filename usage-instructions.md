@@ -116,6 +116,7 @@ C:\Users\<you>\.claude\
 │   ├── coding-standards.md
 │   ├── backend\               ← Java/Spring (lazy-loaded)
 │   ├── frontend\              ← Angular/TS (lazy-loaded)
+│   ├── mobile\                ← Flutter/Dart (lazy-loaded)
 │   └── migration\             ← Git rules (lazy-loaded)
 └── settings.json              ← global write deny-list
 ```

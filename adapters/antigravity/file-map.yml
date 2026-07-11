@@ -1,0 +1,52 @@
+# adapters/antigravity/file-map.yml
+# Maps platform source files → consuming repo targets for the Antigravity adapter.
+# Antigravity (Google) reads AGENTS.md at repo root (same convention as OpenCode) and
+# discovers custom slash commands as workflow files under .agents/workflows/.
+
+version: "4.3"
+adapter: antigravity
+
+entries:
+
+  # ── Shared contract (copied for command files to reference) ───────────────
+  - source: "shared/contract.md"
+    target: ".agents/ai-platform/shared/contract.md"
+    action: copy
+
+  # ── Commands ──────────────────────────────────────────────────────────────
+  - source: "shared/commands/"
+    target: ".agents/ai-platform/shared/commands/"
+    action: copy_directory
+
+  # ── Standards ─────────────────────────────────────────────────────────────
+  - source: "shared/standards/"
+    target: ".agents/ai-platform/standards/"
+    action: copy_directory
+
+  # ── Prompt framework (referenced by prompt-audit.md) ───────────────────────
+  - source: "shared/prompts/"
+    target: ".agents/ai-platform/shared/prompts/"
+    action: copy_directory
+
+  # ── Antigravity workflow shells (custom slash commands) ────────────────────
+  - source: "adapters/antigravity/commands/"
+    target: ".agents/workflows/"
+    action: copy_directory
+    notes: "Thin shells with 'description:' frontmatter, referencing .agents/ai-platform/shared/commands/. Filename -> /name slash command."
+
+  # ── AGENTS.md — global AI instructions ────────────────────────────────────
+  - source: "adapters/antigravity/AGENTS.md"
+    target: "AGENTS.md"
+    action: marker_inject
+    markers:
+      start: "enterprise-ai-platform:contract:antigravity:start"
+      end:   "enterprise-ai-platform:contract:antigravity:end"
+      kernel_start: "<!-- enterprise-ai-platform:kernel:start -->"
+      kernel_end:   "<!-- enterprise-ai-platform:kernel:end -->"
+    notes: "Injected between markers. Repo-specific content outside markers is preserved. Uses an adapter-specific outer marker name (distinct from OpenCode's plain contract:start/end) so both adapters' blocks can coexist in the same AGENTS.md without one clobbering the other."
+
+  # ── Platform version ──────────────────────────────────────────────────────
+  - source: "_generated_"
+    target: ".agents/.platform-version.json"
+    action: generate
+    notes: "Written by installer with version, adapter=antigravity, features{}"

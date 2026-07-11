@@ -21,7 +21,7 @@ function Get-PlatformRoot {
 
 function Get-PlatformVersion([string]$root) {
   $vf = Join-Path $root 'VERSION'
-  if (Test-Path $vf) { return (Get-Content $vf -Raw).Trim() } else { return 'unknown' }
+  if (Test-Path $vf) { return (Get-Content $vf -Raw -Encoding UTF8).Trim() } else { return 'unknown' }
 }
 
 # ── Output helpers ────────────────────────────────────────────────────────────
@@ -68,16 +68,16 @@ function Install-FileCopy {
     [switch]$NoBackup,
     [switch]$Force
   )
-  $sourceContent = Get-Content $Source -Raw
+  $sourceContent = Get-Content $Source -Raw -Encoding UTF8
   $sourceHash    = Get-StringHashHex $sourceContent
 
   if (Test-Path $Target) {
-    $targetHash = Get-StringHashHex (Get-Content $Target -Raw)
+    $targetHash = Get-StringHashHex (Get-Content $Target -Raw -Encoding UTF8)
     if (-not $Force -and $sourceHash -eq $targetHash) {
       Write-Skip $Target
       return $false  # no change
     }
-    if (-not $NoBackup) { Backup-File $Target }
+    if (-not $NoBackup) { Backup-File $Target | Out-Null }
   } else {
     $targetDir = Split-Path $Target -Parent
     if ($targetDir) { New-Item -ItemType Directory -Force -Path $targetDir | Out-Null }
@@ -122,7 +122,7 @@ function Install-MarkerInject {
     [string]$KernelMarkerEnd   = $null
   )
 
-  $sourceContent = Get-Content $SourceFile -Raw
+  $sourceContent = Get-Content $SourceFile -Raw -Encoding UTF8
 
   # If kernel markers specified, extract just the kernel section
   $injectContent = $sourceContent
@@ -139,7 +139,7 @@ function Install-MarkerInject {
   $endTag   = "<!-- $EndMarker -->"
 
   if (Test-Path $TargetFile) {
-    $existing = Get-Content $TargetFile -Raw
+    $existing = Get-Content $TargetFile -Raw -Encoding UTF8
     if ($existing -match [regex]::Escape($startTag)) {
       # Replace in-markers (idempotent update)
       $newSection  = "$startTag`n$injectContent`n$endTag"
@@ -153,13 +153,13 @@ function Install-MarkerInject {
         return $false
       }
 
-      Backup-File $TargetFile
+      Backup-File $TargetFile | Out-Null
       Set-Content $TargetFile $newExisting -Encoding utf8
       Write-Ok "Updated markers in: $TargetFile"
       return $true
     } else {
       # Append markers (first-time inject)
-      Backup-File $TargetFile
+      Backup-File $TargetFile | Out-Null
       $append = "`n`n$startTag`n$injectContent`n$endTag"
       Add-Content $TargetFile $append -Encoding utf8
       Write-Ok "Injected markers into: $TargetFile"
@@ -186,7 +186,7 @@ function Ensure-AiDirectory([string]$repoPath) {
   $gitignore = Join-Path $repoPath '.gitignore'
   $entries   = @('.ai/.session-verified', '.ai/.contract-hash', '.ai/.standards-hash')
   $needed    = @()
-  $existing  = if (Test-Path $gitignore) { Get-Content $gitignore -Raw } else { '' }
+  $existing  = if (Test-Path $gitignore) { Get-Content $gitignore -Raw -Encoding UTF8 } else { '' }
   foreach ($entry in $entries) {
     if ($existing -notmatch [regex]::Escape($entry)) { $needed += $entry }
   }
@@ -204,7 +204,7 @@ function Write-ContractHash([string]$aiDir, [string]$platformRoot) {
     Write-Warn2 "shared/contract.md.sha256 not found -- skipping contract hash write"
     return
   }
-  $hash   = (Get-Content $sha256File -Raw).Trim()
+  $hash   = (Get-Content $sha256File -Raw -Encoding UTF8).Trim()
   $target = Join-Path $aiDir '.contract-hash'
   Set-Content $target $hash -Encoding utf8 -NoNewline
   Write-Ok "Written: .ai/.contract-hash"
@@ -227,7 +227,7 @@ function Update-PlatformVersion {
 
   # Load existing or create blank record
   if (Test-Path $targetPath) {
-    $record = Get-Content $targetPath -Raw | ConvertFrom-Json
+    $record = Get-Content $targetPath -Raw -Encoding UTF8 | ConvertFrom-Json
     # Convert to ordered hashtable for mutation
     $rec = @{}
     $record.PSObject.Properties | ForEach-Object { $rec[$_.Name] = $_.Value }
@@ -284,7 +284,7 @@ function Update-PlatformVersion {
 
 function Get-ContractKernelHash([string]$contractPath) {
   if (-not (Test-Path $contractPath)) { return $null }
-  $content = Get-Content $contractPath -Raw
+  $content = Get-Content $contractPath -Raw -Encoding UTF8
   $start   = '<!-- enterprise-ai-platform:kernel:start -->'
   $end     = '<!-- enterprise-ai-platform:kernel:end -->'
   $si = $content.IndexOf($start)

@@ -4,7 +4,7 @@
   1. Pulls the platform repo (optionally to a specific -Tag).
   2. With no -RepoPath: refreshes only the global Claude Code assets (~/.claude/).
   3. With -RepoPath: delegates to tools/update-platform.ps1 to refresh the requested
-     adapter(s) (claude, copilot, opencode, or all three) in that repo.
+     adapter(s) (claude, copilot, opencode, antigravity, or all of them) in that repo.
 .EXAMPLE  .\update-platform.ps1                                          # global Claude refresh only
 .EXAMPLE  .\update-platform.ps1 -RepoPath C:\src\my-service -Tag v4.4.0
 .EXAMPLE  .\update-platform.ps1 -RepoPath C:\src\my-service -Adapter opencode
@@ -12,7 +12,7 @@
 param(
   [string]$RepoPath = '',
   [string]$Tag = '',
-  [ValidateSet('claude','copilot','opencode','both')][string]$Adapter = 'both',
+  [ValidateSet('claude','copilot','opencode','antigravity','both')][string]$Adapter = 'both',
   [switch]$Force,
   [switch]$DryRun
 )

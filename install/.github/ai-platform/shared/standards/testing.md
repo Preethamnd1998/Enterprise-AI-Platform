@@ -19,11 +19,13 @@ The `/test` command detects the test stack automatically from project files. No 
 | `package.json` + `jest.config.*` | Node.js / React | Jest (`npm test`) |
 | `package.json` + `vitest.config.*` | Vite / Vue | Vitest (`npm run test`) |
 | `package.json` alone | Node.js generic | npm test |
+| `pubspec.yaml` | Flutter / Dart | `flutter test` |
 | `playwright.config.*` | E2E | Playwright (optional — Playwright plugin soft dep, BUG-D3) |
 | `cypress.config.*` | E2E | Cypress (optional) |
 
-**Multiple stacks:** If both `pom.xml` and `angular.json` exist (full-stack repo), run both.
-Report as two separate gap sections in the output.
+**Multiple stacks:** If `pom.xml`/`angular.json`/`pubspec.yaml` co-exist (e.g. a Spring Boot
+backend, an Angular web app, and a Flutter mobile app), run all detected stacks.
+Report as separate gap sections in the output, one per stack.
 
 **No match:** Emit `STACK_UNKNOWN` in the output contract. Do not guess or scan.
 
@@ -87,11 +89,12 @@ Warning: <K> changed files have no test coverage.
 | Java | `*Test.java` | `*IT.java` | `*E2ETest.java` |
 | Angular/TS | `*.spec.ts` | `*.integration.spec.ts` | `*.e2e-spec.ts` |
 | Node/Jest | `*.test.js` / `*.test.ts` | `*.integration.test.ts` | `*.e2e.test.ts` |
+| Flutter/Dart | `*_test.dart` (`test/`) | `*_test.dart` (`integration_test/`) | `*_test.dart` (`integration_test/`, driven by `patrol`/`integration_test` package) |
 
 **/test command scope by default:**
-- Unit tests only: `*Test.java`, `*.spec.ts`, `*.test.*`
+- Unit tests only: `*Test.java`, `*.spec.ts`, `*.test.*`, `*_test.dart` (under `test/`)
 - Integration tests: only when `mode=integration` or `agents=2` specified
-- E2E: only when `mode=e2e` specified (Playwright/Cypress must be installed)
+- E2E: only when `mode=e2e` specified (Playwright/Cypress, or Flutter `integration_test/`, must be installed)
 
 ---
 
@@ -161,10 +164,10 @@ The `/test` command must NEVER:
 
 | Edge case | Behavior |
 |---|---|
-| Monorepo (multiple pom.xml / angular.json) | Detect all; report separately per module |
+| Monorepo (multiple pom.xml / angular.json / pubspec.yaml) | Detect all; report separately per module |
 | Test file exists but covers different class | Treat as gap; note the mismatch |
 | Coverage tool not installed | Emit `COVERAGE_TOOL_UNAVAILABLE`; proceed without coverage numbers |
 | Test class already has 80%+ coverage | Note "well covered"; suggest no new tests needed |
 | Changed file is a test file itself | Skip gap analysis for it; include in "existing tests" list |
-| Generated code (`*Generated.java`, `*.g.ts`) | Exclude from gap analysis; note exclusion |
-| `@Ignore` / `xit()` / `xdescribe()` disabled tests | Flag as "test exists but disabled" — not counted as coverage |
+| Generated code (`*Generated.java`, `*.g.ts`, `*.g.dart`, `*.freezed.dart`) | Exclude from gap analysis; note exclusion |
+| `@Ignore` / `xit()` / `xdescribe()` / `skip: true` disabled tests | Flag as "test exists but disabled" — not counted as coverage |

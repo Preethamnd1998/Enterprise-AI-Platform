@@ -55,3 +55,18 @@ but must STOP at `billing.*` unless a real reference crosses (then report it, do
 ## Conventions
 - refund-payment.component.{ts,html,scss} ; refund.service.ts ; refund-routing.module.ts
 ```
+
+## Example D — Flutter (feature-first)
+```
+## Module boundaries
+- lib/features/refund
+- lib/features/patient_registration
+## Shared / allowed cross-module packages
+- lib/shared/*
+- lib/core/*         (theming, DI setup, base widgets)
+## Forbidden boundaries
+- lib/features/billing/*
+## Conventions
+- refund_screen.dart ; refund_bloc.dart / refund_state.dart / refund_event.dart
+- refund_repository.dart ; refund_model.dart (freezed)
+```

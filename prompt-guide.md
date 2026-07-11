@@ -185,15 +185,16 @@ Use **Session Mode** when you have several related tasks — standards load once
 
 ---
 
-## BE vs UI — how to tell the AI which layer
+## BE vs UI vs Mobile — how to tell the AI which layer
 
 | Your task is in | Add this to the prompt |
 | --------------- | ---------------------- |
 | Backend (Java/Spring) | nothing — stack trace or Redmine links to BE files automatically |
 | Frontend (Angular) | `component=<Name>` or use Format B |
+| Mobile (Flutter) | `component=<Name>` (resolves `.dart` widget files) — say `"this is a Flutter task"` if ambiguous |
 | Both layers | `component=WardManagement redmine=42391` |
 
-> If the AI guesses the wrong layer, just say `"this is a BE task"` or `"this is a UI task"` at the start.
+> If the AI guesses the wrong layer, just say `"this is a BE task"`, `"this is a UI task"`, or `"this is a Flutter task"` at the start.
 
 ---
 

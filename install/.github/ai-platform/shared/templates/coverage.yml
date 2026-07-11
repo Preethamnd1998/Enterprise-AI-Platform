@@ -24,6 +24,9 @@ thresholds:
   node:
     line:   0
     branch: 0
+  flutter:
+    line:   0
+    branch: 0
 
 # ── Allow-list ────────────────────────────────────────────────────────────
 # Files matching these patterns are excluded from the coverage gate.
@@ -35,6 +38,8 @@ allow_list:
   - "src/environments/**"                  # Angular environment files
   - "src/main/java/**/config/**"           # Spring configuration classes
   - "src/main/java/**/Application.java"    # Spring boot entry point
+  - "lib/**/*.g.dart"                      # generated Dart (json_serializable, etc.)
+  - "lib/**/*.freezed.dart"                # generated Dart (freezed unions)
 
 # ── Reporting ─────────────────────────────────────────────────────────────
 # Where coverage reports are written. Used by the CI gate to read results.
@@ -42,6 +47,7 @@ report_paths:
   java:    "target/site/jacoco/jacoco.xml"
   angular: "coverage/lcov.info"
   node:    "coverage/lcov.info"
+  flutter: "coverage/lcov.info"
 
 # ── Notes ─────────────────────────────────────────────────────────────────
 # - This file is read by the platform CI job; do not rename it.

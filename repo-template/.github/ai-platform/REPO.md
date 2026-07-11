@@ -3,7 +3,7 @@
 Mirror of `.claude/CLAUDE.md` for Copilot. Declares ONLY repo-specific facts.
 
 ## Metadata
-- Stack: <Java 21 / Spring Boot 3 | Angular 17 | SQL/Flyway>
+- Stack: <Java 21 / Spring Boot 3 | Angular 17 | Flutter 3 / Dart 3 | SQL/Flyway>
 - GitLab project: <group/project>
 - Default integration branch: <develop>
 - Active release branches: <release/2.4>
@@ -12,10 +12,12 @@ Mirror of `.claude/CLAUDE.md` for Copilot. Declares ONLY repo-specific facts.
 ## Module boundaries (migration mode=functionality)
 - com.<org>.<module-a>
 - libs/<feature-a>
+- lib/features/<feature-a>
 
 ## Shared / allowed cross-module packages
 - com.<org>.common.*
 - libs/shared/*
+- lib/shared/*
 
 ## Forbidden boundaries (never auto-expand into)
 - com.<org>.billing.*

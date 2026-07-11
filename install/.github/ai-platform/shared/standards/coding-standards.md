@@ -1,6 +1,6 @@
 # Coding Standards & Style Guide
 
-Applies to ALL code in this project — Java (BE) and TypeScript (UI).
+Applies to ALL code in this project — Java (BE), TypeScript (UI), and Dart (Flutter mobile).
 
 ---
 
@@ -80,6 +80,15 @@ private loadPatientList(): void {
 | Constants | `UPPER_SNAKE_CASE` (in constant classes) | `AppGlobalConstant.PATIENT_GET` |
 | Interfaces / Models | `PascalCase` | `PatientDTO`, `PageDTO` |
 
+### Dart / Flutter
+| Entity | Convention | Example |
+|---|---|---|
+| Classes / Widgets | `PascalCase` | `PatientListScreen` |
+| Files | `snake_case` | `patient_list_screen.dart` |
+| Methods / variables | `camelCase`, verb-first for methods | `loadPatients`, `onSave` |
+| Constants | `camelCase` (Dart convention — no `UPPER_SNAKE_CASE`) | `apiTimeoutSeconds` |
+| Models / DTOs | `PascalCase`, split request/response when shapes diverge | `PatientRequest`, `PatientResponse` |
+
 ---
 
 ## 4. Constants — No Magic Strings or Numbers
@@ -135,6 +144,11 @@ public class AutoFollowUpRuleCheckingServiceImpl implements AutoFollowUpRuleChec
 - Use `console.error()` only for unexpected errors in catch blocks.
 - Do NOT use `console.log()` in production code — remove all debug logs before committing.
 - Toast messages (via `AppUtils`) are the UI-layer equivalent of info logs for user-facing events.
+
+### Dart / Flutter
+- Use the project's logger (e.g. `logger` package) — never `print()` in production code; `debugPrint()` is acceptable only in debug-only code paths guarded by `kDebugMode`.
+- Never log request/response bodies that may contain PII or tokens.
+- `SnackBar`/`Toast` shown via a shared helper is the UI-layer equivalent of info logs for user-facing events.
 
 ---
 
@@ -197,6 +211,11 @@ try {
 - Always implement `onError` in `ApiCallBack`.
 - Use `AppUtils.showErrorViaToast` for user-facing errors.
 - Set `loading = false` in `onError` to unblock the UI.
+
+### Dart / Flutter
+- Catch `DioException` (or the project's HTTP client's exception type) at the repository boundary; never let raw exceptions/stack traces reach the UI as display text.
+- Emit an explicit error state from the Bloc/Cubit (`MyFeatureError(message)`) — never leave the UI in a stuck loading state on failure.
+- Do NOT swallow exceptions with empty catch blocks.
 
 ```typescript
 onError(err: any, type: any, other?: any): void {

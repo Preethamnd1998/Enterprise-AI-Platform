@@ -49,7 +49,7 @@ Analyse test coverage for a change set, produce a gap report, and scaffold missi
 ### Phase 1 — Stack Detection (read-only)
 
 1. Detect test stack per `shared/standards/testing.md §1`.
-   - Search for `pom.xml`, `build.gradle`, `angular.json`, `package.json` with test config.
+   - Search for `pom.xml`, `build.gradle`, `angular.json`, `package.json`, `pubspec.yaml` with test config.
    - Multiple stacks = multiple detection results.
    - No match = emit `STACK_UNKNOWN` and stop.
 
@@ -57,6 +57,7 @@ Analyse test coverage for a change set, produce a gap report, and scaffold missi
    - Java: `mvn test` + JaCoCo (if configured in pom.xml)
    - Angular: `ng test` + Istanbul/Karma coverage
    - Node: `npm test` + Jest coverage
+   - Flutter: `flutter test` + `lcov` (if `coverage` package configured in pubspec.yaml)
 
 ### Phase 2 — Change Set Resolution
 
@@ -93,6 +94,7 @@ For each gap identified:
    - Java: `@ExtendWith(MockitoExtension.class)`, `@Test` stubs for each public method
    - Angular: `TestBed.configureTestingModule(...)`, `it('should ...')` stubs
    - Node: `describe(...)`, `it(...)` stubs
+   - Flutter: `group(...)`/`test(...)` stubs for Bloc/repository logic (via `package:test` + `mocktail`/`bloc_test`); `testWidgets('should ...', ...)` stubs for widgets
 3. Do NOT run the tests (analysis only). State the command to run.
 4. Do NOT modify production code.
 
@@ -182,6 +184,42 @@ IMPLEMENTATION PLAN
     - TestBed.configureTestingModule with WardService
     - it('should be created') stub
     - it('should call ...') stub per public method
+
+APPROVAL GATE
+  Proceed with implementation? [yes/no/modify]
+```
+
+### Example C — Flutter gap detected
+
+```
+STACK DETECTED
+  Flutter 3 / Dart 3 | flutter test | pubspec.yaml
+
+CHANGED FILES (2)
+  lib/features/ward/ward_bloc.dart
+  lib/features/ward/ward_repository.dart
+
+EXISTING TESTS (0)
+  none found
+
+COVERAGE GAP REPORT
+  Files changed:    2
+  Files with tests: 0
+  Missing tests:
+    - ward_bloc.dart       → no test found (expected: test/features/ward/ward_bloc_test.dart)
+    - ward_repository.dart → no test found (expected: test/features/ward/ward_repository_test.dart)
+
+  Warning: 2 changed files have no test coverage.
+
+GATE A: PASS  GATE B: PASS
+
+IMPLEMENTATION PLAN
+  New file: test/features/ward/ward_repository_test.dart
+    - mocktail Dio mock scaffold
+    - test: getItems_returnsList()
+  New file: test/features/ward/ward_bloc_test.dart
+    - bloc_test scaffold
+    - test: emits [Loading, Loaded] when load succeeds
 
 APPROVAL GATE
   Proceed with implementation? [yes/no/modify]

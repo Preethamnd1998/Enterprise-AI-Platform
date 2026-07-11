@@ -118,9 +118,10 @@ appropriate root above, once each:
 - Any code        → `<root>/coding-standards.md`
 - Java / Spring   → `<root>/backend/<layer>.md` (only layers touched: controller, service, repository, entity, dto-mapper-enum, common-api, spring)
 - Angular / TS    → `<root>/frontend/<topic>.md` (only topics touched: component, service, custom-components, pagination, others, angular)
+- Flutter / Dart  → `<root>/mobile/<topic>.md` (only topics touched: widget, service, state-management, routing, models, flutter) — detect via `pubspec.yaml`, `*.dart` files, or `lib/`/`test/` Flutter project layout
 - SQL / Flyway    → `<root>/backend/repository.md` + `<root>/migration/` DB sections
 - Migration task  → `<root>/migration/semantic-git.md`, `<root>/migration/cherry-pick-rules.md`
-A Java-only task must not read `frontend/`, and vice versa. Reuse within the session; never re-read.
+A Java-only task must not read `frontend/` or `mobile/`, and vice versa. Reuse within the session; never re-read.
 
 **Lazy rules loading** (Phase D+ — linked, never inlined):
 Rules root (same root as standards, sub-path `rules/`):
@@ -141,7 +142,8 @@ Ignore: node_modules, dist, build, target, coverage, logs, generated/binary/vend
 ## 7. Validation gate A — Completeness (functionality, not file count)
 Verify every APPLICABLE layer is present: Controller · Service · Repository · DTO · Mapper ·
 Entity · Enum · Constants · Validator · SQL · Flyway (exists + correctly ordered) ·
-Angular Component · UI Service · Model · Route · Permission · Translation · Audit logic · Tests.
+Angular Component · UI Service · Model · Route · Flutter Widget · State Management (Bloc/Cubit/Provider) ·
+Mobile Route · Permission · Translation · Audit logic · Tests.
 PASS only when every applicable item is satisfied and no referenced symbol is missing on target.
 
 ## 8. Validation gate B — Regression (distinct from completeness; both mandatory)

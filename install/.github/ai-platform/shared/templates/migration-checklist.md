@@ -13,6 +13,10 @@ Target branch: __________
 ☐ Component   ☐ UI Service   ☐ Model   ☐ Route   ☐ Shared component
 ☐ Permissions   ☐ Translations
 
+## Mobile dependencies (Flutter, applicable only)
+☐ Widget/Screen   ☐ State management (Bloc/Cubit/Provider)   ☐ Repository   ☐ Model
+☐ Route (go_router)   ☐ Permissions   ☐ Localization
+
 ## Database
 ☐ Flyway (exists)   ☐ Flyway ordering correct   ☐ SQL / query
 ☐ Stored proc / function / view   ☐ Index

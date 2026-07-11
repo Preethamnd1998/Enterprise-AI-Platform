@@ -54,6 +54,7 @@ Copilot content is vendored directly into each consuming repo:
 │   │   │   ├── coding-standards.md
 │   │   │   ├── backend/
 │   │   │   ├── frontend/
+│   │   │   ├── mobile/
 │   │   │   └── migration/
 │   │   ├── templates/                 # Checklist templates
 │   │   ├── REPO.md                    # Per-repo module boundaries (edit this)

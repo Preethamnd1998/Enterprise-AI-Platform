@@ -264,6 +264,15 @@ coverage-gate:
         echo "INFO: Angular coverage report found at $NG_REPORT"
       fi
 
+      # Flutter / LCOV
+      FLUTTER_REPORT=$(grep -A2 'flutter:' "$CONFIG" | grep -oP '(?<=: ).*lcov.*' | head -1 || echo "coverage/lcov.info")
+      if [ ! -f "$FLUTTER_REPORT" ]; then
+        echo "WARN: Flutter coverage report not found at $FLUTTER_REPORT (stack not built or not a Flutter project)"
+        WARN=1
+      else
+        echo "INFO: Flutter coverage report found at $FLUTTER_REPORT"
+      fi
+
       if [ "$WARN" -eq 1 ]; then
         echo ""
         echo "Coverage gate result: WARN"

@@ -29,6 +29,9 @@ Use the project's detected test framework (see `standards/testing.md §1`):
 - Java: JUnit 5 + Mockito. Never introduce TestNG unless the project already uses it.
 - Angular: Jasmine + Karma. Never introduce Jest unless the project already uses it.
 - Node: Jest. Never introduce Mocha unless the project already uses it.
+- Flutter/Dart: `flutter test` (`package:test` + `package:flutter_test`), `mocktail` or `mockito`
+  for mocks, `testWidgets` for widget tests. Never introduce a second mocking package unless
+  the project already uses it.
 
 ## TR-06 — Coverage phase policy
 In **Phase C** (current): coverage gate is in warn mode. A 0% coverage file emits a warning

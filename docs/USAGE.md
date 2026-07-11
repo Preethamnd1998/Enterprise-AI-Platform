@@ -43,7 +43,7 @@ Run OpenCode in your repo root. The `AGENTS.md` file is injected automatically a
 | Port changes to another branch | `/migration branch=<b> target=<t> mode=exact` |
 | Reimplement a feature on another branch | `/migration branch=<b> target=<t> mode=functionality` |
 | DB data needs correcting | `/data-correction redmine=<id>` |
-| Angular UI changes from spec | `/ui-design-update redmine=<id>` |
+| Angular or Flutter UI changes from spec | `/ui-design-update redmine=<id>` |
 | Generate tests for a change | `/test mr=!<n>` |
 | Score and improve a prompt | `/prompt-audit` |
 

@@ -76,6 +76,23 @@ Token impact:  Minor
 
 ---
 
+## `/ui-design-update component=WardVitalsCard "spacing looks wrong on small screens"`
+
+- **Input:** Flutter widget name + bug description (mobile stack auto-detected from `.dart` files)
+- **MCP:** `get_file_contents(ward_vitals_card.dart)` — 1 call
+- **Context:** widget `build()` method + surrounding tree (full); Bloc/repository at signature-only depth; lazy `mobile/widget.md`
+- **Validation:** Flutter MUST-PRESERVE list — callbacks/keys/BlocBuilder scoping preserved; Bloc/Cubit/repository untouched
+- **Output:** analysis · widget-tree diff (Dart) · checklist PASS · ~4–7k tokens
+
+```text
+Prompt Quality: 75/100 (Good)
+Strengths:     Component named · bug description given
+Missing:       Screenshot of the layout issue
+Token impact:  Minor
+```
+
+---
+
 ## `/migration mode=exact mr=!5678 target=release/2.4`
 
 - **Input:** MR ID + mode + target branch
