@@ -1,6 +1,6 @@
 # Project Structure
 
-**Version:** v4.3.0
+**Version:** v4.4.0
 
 Every file and directory in the Enterprise AI Platform repository, with its purpose.
 
@@ -47,7 +47,7 @@ shared/
 ├── contract.md.sha256      # Expected SHA-256 of the contract kernel section
 ├── company-profile.md      # Company-specific customisation seam (F10 partial)
 │
-├── commands/               # Command definitions (7 active commands)
+├── commands/               # Command definitions (8 active commands)
 │   ├── registry.yml        # Single source of truth for all command registrations
 │   ├── bug-fix.md          # /bug-fix command specification
 │   ├── migration.md        # /migration command specification
@@ -56,7 +56,8 @@ shared/
 │   ├── data-correction.md  # /data-correction command specification
 │   ├── ui-design-update.md # /ui-design-update command specification
 │   ├── test.md             # /test command specification
-│   └── prompt-audit.md     # /prompt-audit command specification
+│   ├── prompt-audit.md     # /prompt-audit command specification
+│   └── dev.md              # /dev command specification (AI Developer Agent)
 │
 ├── standards/              # Coding standards (lazy-loaded per language/layer)
 │   ├── coding-standards.md # General coding standards (any language)

@@ -18,7 +18,7 @@ non-trivial task. Standards live under `.github/ai-platform/standards/` and are 
 - Read-only by default. Never push, merge, or modify GitLab/Redmine/DB through tools.
 
 ## Reusable prompts (Copilot Chat)
-Invoke with `/<name>` in Chat: `/bug-fix`, `/migration`, `/new-development`, `/data-correction`, `/ui-design-update`, `/test`, `/prompt-audit`.
+Invoke with `/<name>` in Chat: `/bug-fix`, `/migration`, `/new-development`, `/data-correction`, `/ui-design-update`, `/test`, `/prompt-audit`, `/dev`.
 (Copilot uses `/` for prompt files; `#` is for context like `#codebase`/`#file`.)
 <!-- enterprise-ai-platform:kernel:end -->
 

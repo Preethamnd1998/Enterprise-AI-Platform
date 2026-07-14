@@ -174,6 +174,24 @@ The command auto-detects the task type — you don't have to specify "bug" or "n
 
 ---
 
+## `/dev`
+
+```text
+# Single Agent Mode (default) — execute a task file end to end
+/dev file=PLAN.md
+
+# Multi-Agent Mode — parent may use up to 3 sub-agents when it helps
+/dev multi file=PLAN.md
+
+# Scan the context/ folder for the task material instead of a named file
+/dev context
+```
+
+> The task Markdown file (not a Redmine ID or stack trace) is the primary input. Only `context/`
+> files the task explicitly references are read — never the whole folder.
+
+---
+
 ## Session Mode vs Direct Mode
 
 ```text

@@ -1,6 +1,6 @@
 # Platform Capability Matrix
 
-**Version:** v4.3.0 | **Updated:** 2026-07-07
+**Version:** v4.4.0 | **Updated:** 2026-07-13
 
 This document defines what the Enterprise AI Platform can do on each supported platform. Use this matrix to choose the right platform for a given task.
 
@@ -12,7 +12,7 @@ This document defines what the Enterprise AI Platform can do on each supported p
 |---|---|---|---|
 | **Status** | ✅ Full | ✅ Partial | ✅ Partial |
 | **Contract kernel** | ✅ `~/.claude/CLAUDE.md` | ✅ `copilot-instructions.md` | ✅ `AGENTS.md` |
-| **All 7 commands** | ✅ | ✅ | ✅ |
+| **All 8 commands** | ✅ | ✅ | ✅ |
 | **Coding standards** | ✅ Lazy-loaded | ✅ Vendored | ✅ Copied |
 | **Rules (4 files)** | ✅ Lazy-loaded | ✅ Vendored | ✅ Copied |
 | **MCP read-only tools** | ✅ 28 tools (allowlist) | ⚠️ Credential-only | ⚠️ Credential-only |
@@ -44,6 +44,7 @@ This document defines what the Enterprise AI Platform can do on each supported p
 | `/ui-design-update` | ✅ | ✅ chatmode + prompt | ✅ command shell |
 | `/test` | ✅ | ✅ | ✅ command shell |
 | `/prompt-audit` | ✅ | ✅ chatmode + prompt | ✅ command shell |
+| `/dev` | ✅ | ✅ chatmode + prompt | ✅ command shell |
 
 ---
 

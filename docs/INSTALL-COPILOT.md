@@ -65,14 +65,16 @@ Copilot content is vendored directly into each consuming repo:
 │   │   ├── new-development.prompt.md
 │   │   ├── data-correction.prompt.md
 │   │   ├── ui-design-update.prompt.md
-│   │   └── prompt-audit.prompt.md
+│   │   ├── prompt-audit.prompt.md
+│   │   └── dev.prompt.md
 │   └── chatmodes/                     # Chatmode files (dropdown in Copilot Chat)
 │       ├── bug-fix.chatmode.md
 │       ├── migration.chatmode.md
 │       ├── new-development.chatmode.md
 │       ├── data-correction.chatmode.md
 │       ├── ui-design-update.chatmode.md
-│       └── prompt-audit.chatmode.md
+│       ├── prompt-audit.chatmode.md
+│       └── dev.chatmode.md
 ```
 
 ---
@@ -192,7 +194,7 @@ If neither chatmodes nor prompt files are available, paste the command invocatio
 | Capability | Status | Notes |
 |---|---|---|
 | Contract kernel | ✅ Via `copilot-instructions.md` | Loaded by Copilot for every chat |
-| All 7 commands | ✅ Via chatmodes + prompts | Available in dropdown and `@` prefix |
+| All 8 commands | ✅ Via chatmodes + prompts | Available in dropdown and `@` prefix |
 | Coding standards | ✅ Vendored | Copilot reads from `.github/ai-platform/standards/` |
 | Approval gate | ✅ Contract enforces it | AI must wait for your approval |
 | MCP read-only | ⚠️ Credential-only | No allowlist enforcement; use read-only tokens |

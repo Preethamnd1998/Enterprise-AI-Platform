@@ -53,6 +53,11 @@ capabilities:
     status: supported
     notes: "Prompt file at .github/prompts/prompt-audit.prompt.md; chatmode at .github/chatmodes/prompt-audit.chatmode.md. Depends on shared/commands/ and shared/prompts/ being copied by file-map.yml (fixed in v4.3.0 hardening pass)."
 
+  - id: cap-18
+    name: "/dev command (AI Developer Agent)"
+    status: supported
+    notes: "Prompt file at .github/prompts/dev.prompt.md; chatmode at .github/chatmodes/dev.chatmode.md (Phase G). Single Agent Mode default; multi opts into Multi-Agent Mode, capped at 3 sub-agents — see cap-14 (no native Copilot subagent API), so Multi-Agent Mode here is self-managed sequencing, not true parallel orchestration."
+
   # ── Contract ──────────────────────────────────────────────────────────────
   - id: cap-08
     name: "Shared contract injection"

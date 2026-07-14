@@ -52,6 +52,11 @@ capabilities:
     status: supported
     notes: ".agents/workflows/prompt-audit.md shell. Depends on shared/prompts/ copied alongside."
 
+  - id: cap-19
+    name: "/dev command (AI Developer Agent)"
+    status: supported
+    notes: ".agents/commands/dev.md shell (Phase G). Single Agent Mode default; multi opts into Multi-Agent Mode, capped at 3 sub-agents — see cap-15 (no native subagent API), so Multi-Agent Mode here is self-managed sequencing, not true parallel orchestration."
+
   # ── Contract ──────────────────────────────────────────────────────────────
   - id: cap-08
     name: "Shared contract injection"

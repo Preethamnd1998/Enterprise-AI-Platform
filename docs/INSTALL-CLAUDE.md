@@ -37,14 +37,15 @@ This is the complete installation guide for the Enterprise AI Platform on Claude
 ~/.claude/                         # Global (one install per machine)
 ├── CLAUDE.md                      # Contract kernel — loaded every CC session
 ├── settings.json                  # MCP allowlist + hook configuration
-├── commands/                      # All 7 platform commands
+├── commands/                      # All 8 platform commands
 │   ├── bug-fix.md
 │   ├── migration.md
 │   ├── new-development.md
 │   ├── data-correction.md
 │   ├── ui-design-update.md
 │   ├── test.md
-│   └── prompt-audit.md
+│   ├── prompt-audit.md
+│   └── dev.md
 ├── standards/                     # Coding standards (lazy-loaded)
 │   ├── coding-standards.md
 │   ├── backend/
@@ -85,7 +86,7 @@ pwsh install/install-claude.ps1
 
 The installer:
 1. Injects the contract kernel into `~/.claude/CLAUDE.md` (creates or updates within markers)
-2. Copies 7 commands to `~/.claude/commands/`
+2. Copies 8 commands to `~/.claude/commands/`
 3. Copies standards to `~/.claude/standards/`
 4. Writes the MCP allowlist to `~/.claude/settings.json` (skips if already exists — merge manually if needed)
 5. Writes `.platform-version` stamp

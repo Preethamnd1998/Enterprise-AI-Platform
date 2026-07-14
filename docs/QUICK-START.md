@@ -34,7 +34,7 @@ cd enterprise-ai-platform
 
 ## Step 2 — Global Install (once per machine)
 
-The global install injects the contract kernel into `~/.claude/CLAUDE.md` and installs all 7 commands for every Claude Code session on this machine.
+The global install injects the contract kernel into `~/.claude/CLAUDE.md` and installs all 8 commands for every Claude Code session on this machine.
 
 ```powershell
 pwsh install/install-claude.ps1
@@ -149,6 +149,7 @@ Then run a command:
 | `/ui-design-update` | `/ui-design-update redmine=654` | Apply a UI design change |
 | `/test` | `/test` | Analyse test coverage and suggest tests |
 | `/prompt-audit` | `/prompt-audit` | Score and improve your prompt quality |
+| `/dev` | `/dev file=PLAN.md` | Execute a task Markdown file end to end |
 
 **Common arguments:**
 - `redmine=<id>` — discover scope from a Redmine ticket

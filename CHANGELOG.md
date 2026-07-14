@@ -2,6 +2,24 @@
 
 All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs).
 
+## [4.4.0] - 2026-07-13 — Phase G: AI Developer Agent
+
+### Added
+- `shared/commands/dev.md` — new `/dev` command (8th platform command). Executes a supplied task Markdown file (a plan, spec, or ticket write-up, e.g. `PLAN.md`) end to end: read it, read only the `context/` files it explicitly references, build an execution plan, implement, validate, and report. Supports two modes: Single Agent (default — strictly no sub-agents, sequential execution) and Multi-Agent (`multi` — parent agent may create up to 3 sub-agents when they provide clear value; parent always owns planning, distribution, coordination, conflict resolution, validation, and the final report). Multi-Agent Mode is a scoped invocation of the existing contract C4 opt-in subagent allowance (max 3), not a new orchestration mechanism. Git stays read-only per contract §2 / `GOVERNANCE.md` §2 unless the user explicitly instructs otherwise in-session.
+- `shared/commands/registry.yml` — registered `dev` (`id: dev`, `phase_available: G`, `status: active`, `supported_platforms: [claude, copilot, opencode]`).
+- Adapter shells for all `supported_platforms`: `adapters/opencode/commands/dev.md`, `adapters/copilot/prompts/dev.prompt.md`, `adapters/copilot/chatmodes/dev.chatmode.md`. Bonus shell also added for the Antigravity adapter (`adapters/antigravity/commands/dev.md`), matching that adapter's existing all-7-commands parity even though it is not tracked in `registry.yml` `supported_platforms` (pre-existing pattern for that adapter).
+- `adapters/opencode/capability-map.yml` (cap-18), `adapters/antigravity/capability-map.yml` (cap-19), `adapters/copilot/capability-map.yml` (cap-18) — capability entries for `/dev`, noting each adapter's existing subagent-orchestration limitation (cap-14/cap-15) applies to Multi-Agent Mode: self-managed sequencing, not true parallel orchestration, outside Claude Code.
+- `docs/COMMANDS.md` — Command Index row + full `## AI Developer Agent` reference section (invocation, modes table, input forms, phases).
+- `docs/PLATFORM-CAPABILITY-MATRIX.md` — `/dev` row added to Command Support by Platform table; command count updated 7 → 8.
+- `.claude-plugin/plugin.json` / `.claude-plugin/marketplace.json` — `/dev` added to command lists and descriptions; version synced to 4.4.0.
+
+### Changed
+- `VERSION` — `4.3.0` → `4.4.0`.
+
+### Notes
+- Contract kernel (between the `enterprise-ai-platform:kernel:start/end` markers) is unchanged — no SHA-256 recompute needed; `/dev` reuses the existing kernel's C4 subagent opt-in and §14 approval gate rather than introducing new kernel rules.
+- Followed `GOVERNANCE.md` §1 7-step new-command process; shells for all `supported_platforms` were built in the same pass, so `registry.yml` went straight to `status: active` (step 6) without an intermediate `planned` state.
+
 ## [Unreleased] — Flutter / Dart Mobile Support
 
 ### Added

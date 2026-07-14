@@ -22,9 +22,9 @@ OpenCode is a terminal-native AI coding assistant. The platform supports OpenCod
 
 | Component | Version |
 |---|---|
-| Platform | v4.3.0 |
+| Platform | v4.4.0 |
 | AGENTS.md approach | SP-04 confirmed |
-| Command shells | 7 commands (≤20 lines each — thin glue) |
+| Command shells | 8 commands (≤20 lines each — thin glue) |
 | MCP | Supported (no allowlist enforcement) |
 
 ---
@@ -47,7 +47,8 @@ OpenCode is a terminal-native AI coding assistant. The platform supports OpenCod
 │   │   ├── data-correction.md
 │   │   ├── ui-design-update.md
 │   │   ├── test.md
-│   │   └── prompt-audit.md
+│   │   ├── prompt-audit.md
+│   │   └── dev.md
 │   └── .platform-version.json             # Install stamp
 ```
 
@@ -161,7 +162,7 @@ Each command shell in `.opencode/command/` is a thin glue file (≤20 lines) tha
 | Capability | Status | Notes |
 |---|---|---|
 | Contract kernel | ✅ Via AGENTS.md | Injected between markers; preserved on upgrade |
-| All 7 commands | ✅ Via command shells | Available as `/command-name` |
+| All 8 commands | ✅ Via command shells | Available as `/command-name` |
 | Coding standards | ✅ Copied | Available in `.opencode/ai-platform/standards/` |
 | Approval gate | ✅ Contract enforces it | AI must wait for your approval |
 | MCP | ✅ Supported | No per-tool allowlist enforcement |

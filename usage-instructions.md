@@ -111,7 +111,8 @@ C:\Users\<you>\.claude\
 │   ├── ui-design-update.md    ← /ui-design-update
 │   ├── data-correction.md     ← /data-correction
 │   ├── test.md                ← /test
-│   └── prompt-audit.md        ← /prompt-audit
+│   ├── prompt-audit.md        ← /prompt-audit
+│   └── dev.md                 ← /dev
 ├── standards\
 │   ├── coding-standards.md
 │   ├── backend\               ← Java/Spring (lazy-loaded)
@@ -183,7 +184,7 @@ cd D:\enterprise-ai-platform\install
 ```text
 <repo>\.github\
 ├── copilot-instructions.md      ← Copilot entrypoint (auto-loaded by VS Code Copilot)
-├── prompts\                     ← /bug-fix /new-development /migration /ui-design-update /data-correction /prompt-audit
+├── prompts\                     ← /bug-fix /new-development /migration /ui-design-update /data-correction /prompt-audit /dev
 ├── chatmodes\                   ← dropdown chat mode selectors in Copilot panel
 └── ai-platform\
     ├── .platform-version        ← vendored version stamp
@@ -232,7 +233,7 @@ cd D:\enterprise-ai-platform\install
 <repo>\
 ├── AGENTS.md                       ← Contract kernel injected here (OpenCode reads this)
 └── .opencode\
-    ├── command\                    ← 7 command shells (/bug-fix, /migration, etc.)
+    ├── command\                    ← 8 command shells (/bug-fix, /migration, etc.)
     ├── ai-platform\
     │   ├── shared\                 ← contract.md + full command specs
     │   └── standards\              ← coding standards (vendored)
@@ -267,7 +268,7 @@ Open Claude Code (VS Code or CLI) and run:
 /help
 ```
 
-Expected — all 7 skills appear:
+Expected — all 8 skills appear:
 
 ```text
 /bug-fix          Root-cause and fix a defect ...
@@ -277,6 +278,7 @@ Expected — all 7 skills appear:
 /data-correction  Analyse data issues and generate correction scripts ...
 /test             Analyse test coverage and scaffold missing tests ...
 /prompt-audit     Score a prompt against CRISP and produce a rewrite ...
+/dev              Execute a task Markdown file end to end (Single/Multi-Agent) ...
 ```
 
 Check installed version:
@@ -289,7 +291,7 @@ Get-Content "$env:USERPROFILE\.claude\.platform-version"
 
 1. Open a repo that has had Copilot installed.
 2. Open the Copilot chat panel.
-3. The chat mode dropdown should show: `bug-fix` · `new-development` · `migration` · `ui-design-update` · `data-correction` · `prompt-audit`. (`/test` is not yet available on Copilot — see `adapters/copilot/capability-map.yml`.)
+3. The chat mode dropdown should show: `bug-fix` · `new-development` · `migration` · `ui-design-update` · `data-correction` · `prompt-audit` · `dev`. (`/test` is not yet available on Copilot — see `adapters/copilot/capability-map.yml`.)
 4. Type `/bug-fix` — Copilot should pick up the prompt from `.github\prompts\`.
 
 ---
@@ -431,6 +433,10 @@ All commands support:
 - **Direct Mode** — provide args directly, executes one task.
 - **`auto=true`** — skip the approval gate (except `/data-correction` script execution, which is always manual).
 
+`/dev` is the one exception to Session Mode: it always operates on a concrete task file, not a
+described task, so it asks one clarifying question for `file=` if none is given rather than
+opening an interactive session.
+
 | Command | Purpose | Key inputs |
 | --- | --- | --- |
 | `/bug-fix` | Root-cause and fix a defect | `redmine=<id>` · stack trace · screenshot · `file=<path>` |
@@ -440,6 +446,7 @@ All commands support:
 | `/data-correction` | Analyse data issues, generate scripts | `redmine=<id>` · `table=<name>` · `collection=<name>` · free text |
 | `/test` | Analyse test coverage, scaffold missing tests | Redmine ID · MR · commit · `file=<path>` (Claude Code, OpenCode only) |
 | `/prompt-audit` | Score a prompt against CRISP, produce a rewrite | `prompt="<text>"` · `session=true` · no args (analysis-only, no approval gate) |
+| `/dev` | Execute a task Markdown file end to end | `file=<path.md>` · `context` · `multi` for Multi-Agent Mode (≤3 sub-agents) |
 
 ### Input types accepted by all commands
 

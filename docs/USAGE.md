@@ -46,6 +46,7 @@ Run OpenCode in your repo root. The `AGENTS.md` file is injected automatically a
 | Angular or Flutter UI changes from spec | `/ui-design-update redmine=<id>` |
 | Generate tests for a change | `/test mr=!<n>` |
 | Score and improve a prompt | `/prompt-audit` |
+| Execute a task plan/spec file end to end | `/dev file=PLAN.md` |
 
 ---
 

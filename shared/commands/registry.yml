@@ -4,7 +4,7 @@
 # Installers generate adapter-specific shells from this registry.
 # D1/D2 fix: /planning and /ui-redesign are NOT listed here (they were phantom commands in v3.0).
 
-version: "4.3.0"
+version: "4.4.0"
 
 commands:
   - id: bug-fix
@@ -71,6 +71,18 @@ commands:
     supported_platforms: [claude, copilot, opencode]
     phase_available: D
     status: active
+
+  - id: dev
+    slug: dev
+    title: "AI Developer Agent"
+    invoke: "/dev"
+    source: "shared/commands/dev.md"
+    supported_platforms: [claude, copilot, opencode]
+    phase_available: G
+    status: active
+    # Shells created for all 3 supported_platforms in the same pass — see
+    # adapters/opencode/commands/dev.md, adapters/antigravity/commands/dev.md (bonus),
+    # adapters/copilot/prompts/dev.prompt.md + chatmodes/dev.chatmode.md.
 
 # REMOVED — phantom commands (D2 defect, v3.0.0):
 # /planning — was a Copilot chatmode, not a real platform command; removed in v3.1

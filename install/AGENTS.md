@@ -20,7 +20,7 @@ non-trivial task. Standards live under `.opencode/ai-platform/standards/` and ar
 
 ## Available commands
 Invoke with the command name as the first word of your message:
-`bug-fix`, `migration`, `new-development`, `data-correction`, `ui-design-update`, `test`, `prompt-audit`
+`bug-fix`, `migration`, `new-development`, `data-correction`, `ui-design-update`, `test`, `prompt-audit`, `dev`
 
 Full definitions: `.opencode/ai-platform/shared/commands/<name>.md`
 <!-- enterprise-ai-platform:contract:end -->

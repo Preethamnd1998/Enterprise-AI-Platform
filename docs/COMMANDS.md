@@ -1,6 +1,6 @@
 # Command Reference — Enterprise AI Platform
 
-**Version:** v4.3.0 | **Registry:** `shared/commands/registry.yml`
+**Version:** v4.4.0 | **Registry:** `shared/commands/registry.yml`
 
 All commands are defined in `shared/` and have exactly one implementation. Adapter-specific shells (Copilot chatmodes/prompts, OpenCode command files) are thin wrappers that reference the shared source.
 
@@ -17,6 +17,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 | [UI Design Update](#ui-design-update) | `/ui-design-update` | Angular or Flutter UI redesign from spec or screenshot | Claude, Copilot | A+ |
 | [Test](#test) | `/test` | Generate or audit tests for a change set | Claude, Copilot, OpenCode | C+ |
 | [Prompt Audit](#prompt-audit) | `/prompt-audit` | Score and improve a prompt using CRISP | Claude, Copilot, OpenCode | D+ |
+| [AI Developer Agent](#ai-developer-agent) | `/dev` | Execute a task Markdown file (plan/spec/ticket) end to end | Claude, Copilot, OpenCode | G+ |
 
 ---
 
@@ -183,6 +184,51 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 | 0–29 | Unusable | No actionable signal; discovery will fail |
 
 See [PROMPT-GUIDELINES.md](PROMPT-GUIDELINES.md) for the full CRISP framework.
+
+---
+
+## AI Developer Agent
+
+**Invoke:** `/dev [multi] file=<path.md>[,<path2.md>] | context [auto=true]`
+
+**Source:** `shared/commands/dev.md`
+
+**Purpose:** Execute a task Markdown file (a plan, spec, or ticket write-up such as `PLAN.md`)
+end to end — read it, read only the `context/` files it explicitly references, build an
+execution plan, implement, validate, and report. Unlike the other commands, `/dev` does not
+discover its own task: the task file (or `context` folder contents) is always the primary
+instruction document.
+
+**Modes:**
+
+| Mode | Invocation | Behavior |
+|---|---|---|
+| Single Agent (default) | `/dev file=PLAN.md` | One agent does planning, implementation, testing, validation, and reporting sequentially. Never creates sub-agents. |
+| Multi-Agent | `/dev multi file=PLAN.md` | Parent agent may create up to 3 sub-agents when they provide clear value; parent still owns planning, distribution, coordination, conflict resolution, validation, and the final report. |
+
+An unsupported mode word (anything other than absent or `multi`) is rejected with an error
+listing the two valid modes.
+
+**Input forms:**
+
+| Input | Example |
+|---|---|
+| Task file | `file=PLAN.md` |
+| Multiple task files | `file=PLAN.md,PLAN-2.md` |
+| Context folder scan | `context` (contract §1 shorthand — external folder via `context/context.path`) |
+| Task-referenced context | Task file's own `## Context` section listing specific `context/*.md` files — only those are read, never the whole directory |
+
+**Phases:**
+
+1. **Input Resolution** — read the task file(s); read only task-referenced `context/` files
+2. **Discovery & Analysis** — build the PARTS → PHASES → TASKS execution plan
+3. **Approval Gate** — present plan; wait for `approve` / `yes` / `proceed`
+4. **Execution** — implement each task in sequence, validating (Gate A + Gate B) before moving on; run builds/tests where applicable; retry a simple failure up to 3 times before stopping to report
+5. **Execution Summary** — plan, diffs, both gates, audit line
+
+**Git stays read-only:** never commit, push, merge, or create a PR/MR unless the user explicitly instructs it in-session (contract §2 / GOVERNANCE.md §2).
+
+**Related:** `docs/PLATFORM-CAPABILITY-MATRIX.md`, `shared/contract.md` §1 (context shorthand)
 
 ---
 

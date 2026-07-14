@@ -1,8 +1,8 @@
 # Enterprise AI Platform
 
-**Version:** v4.3.0 | **Status:** Production | **Platforms:** Claude Code · GitHub Copilot · OpenCode · Antigravity
+**Version:** v4.4.0 | **Status:** Production | **Platforms:** Claude Code · GitHub Copilot · OpenCode · Antigravity
 
-A portable, multi-LLM AI engineering assistant platform for enterprise development teams. One shared configuration. Five supported platforms. Seven commands. Consistent behavior everywhere.
+A portable, multi-LLM AI engineering assistant platform for enterprise development teams. One shared configuration. Five supported platforms. Eight commands. Consistent behavior everywhere.
 
 ---
 
@@ -50,6 +50,7 @@ The Enterprise AI Platform enforces a single execution contract across all AI co
 | `/ui-design-update` | Apply a UI design change | CC, Copilot |
 | `/test` | Generate tests and report coverage gaps | CC, Copilot, OC |
 | `/prompt-audit` | Score prompt quality and suggest improvements | CC, Copilot, OC |
+| `/dev` | Execute a task Markdown file end to end (Single/Multi-Agent) | CC, Copilot, OC |
 
 All commands accept `key=value` arguments. Common keys: `redmine=<id>`, `mr=!<n>`, `commit=<sha>`, `branch=<b>`, `auto=true`.
 
@@ -218,7 +219,7 @@ Do not add commands, rules, or standards without following the governance proces
 
 ## Versioning
 
-Semantic Versioning (SemVer). Current: **v4.3.0**.
+Semantic Versioning (SemVer). Current: **v4.4.0**.
 
 | Phase | Version | What changed |
 |---|---|---|
@@ -228,6 +229,7 @@ Semantic Versioning (SemVer). Current: **v4.3.0**.
 | Phase D | v4.1 | /ai/ templates, rules, /prompt-audit, pre-flight block |
 | Phase E | v4.2 | GOVERNANCE.md, telemetry, HITL matrix, pause-turn cap |
 | Phase F | v4.3 | Lazy kernel refactor, company-profile seam, fleet rollout, adapter stubs |
+| Phase G | v4.4 | `/dev` command (AI Developer Agent) — Single Agent default, opt-in Multi-Agent (≤3 sub-agents) |
 
 ---
 

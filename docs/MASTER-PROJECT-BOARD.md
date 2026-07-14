@@ -4,7 +4,7 @@
 **Authority:** This is the ONLY authority for sprint/phase operational status (per `GOVERNANCE.md`).
 For engineering rationale see `IMPLEMENTATION-LOG.md`; for execution rules see `shared/contract.md`.
 
-**As of:** 2026-07-08 · **Platform version:** 4.3.0 · **Current phase:** F (complete) · **Current status:** RC1 hardening
+**As of:** 2026-07-13 · **Platform version:** 4.4.0 · **Current phase:** G (complete) · **Current status:** RC1 hardening
 
 ---
 
@@ -20,9 +20,10 @@ For engineering rationale see `IMPLEMENTATION-LOG.md`; for execution rules see `
 | 6 | E | v4.2 | CI & marketplace — governance-lite, telemetry, HITL matrix | ✅ COMPLETE |
 | 6 (late) | F | v4.3 | Rollout & polish — company seam, fleet rollout, future adapter stubs | ✅ COMPLETE |
 | — | RC1 | v4.3.0 | Repository hardening pass — audit + remediation before release candidate | 🔶 IN PROGRESS |
+| 7 | G | v4.4 | AI Developer Agent — `/dev` command (Single Agent default, opt-in Multi-Agent ≤3 sub-agents), shells across Claude/Copilot/OpenCode | ✅ COMPLETE |
 
 Full phase-by-phase acceptance criteria and validation commands: [`docs/phase-dod.md`](docs/phase-dod.md).
-Forward-looking items beyond v4.3.0: [`ROADMAP.md`](ROADMAP.md).
+Forward-looking items beyond v4.4.0: [`ROADMAP.md`](ROADMAP.md).
 
 ---
 

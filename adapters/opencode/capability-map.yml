@@ -47,6 +47,11 @@ capabilities:
     status: supported
     notes: ".opencode/commands/prompt-audit.md shell (Phase D). Depends on shared/prompts/ being copied by file-map.yml (fixed in v4.3.0 hardening pass)."
 
+  - id: cap-18
+    name: "/dev command (AI Developer Agent)"
+    status: supported
+    notes: ".opencode/commands/dev.md shell (Phase G). Single Agent Mode default; multi opts into Multi-Agent Mode, capped at 3 sub-agents — same cap-14 limitation applies (no native OC subagent API, so Multi-Agent Mode here means the single OC agent self-managing sequential sub-tasks, not true parallel orchestration)."
+
   # ── Contract ──────────────────────────────────────────────────────────────
   - id: cap-08
     name: "Shared contract injection"

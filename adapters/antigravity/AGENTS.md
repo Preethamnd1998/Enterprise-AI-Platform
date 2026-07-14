@@ -20,7 +20,7 @@ non-trivial task. Standards live under `.agents/ai-platform/standards/` and are 
 
 ## Available commands
 Invoke as a slash command: `/bug-fix`, `/migration`, `/new-development`, `/data-correction`,
-`/ui-design-update`, `/test`, `/prompt-audit`.
+`/ui-design-update`, `/test`, `/prompt-audit`, `/dev`.
 Workflow shells: `.agents/workflows/<name>.md`
 Full definitions: `.agents/ai-platform/shared/commands/<name>.md`
 <!-- enterprise-ai-platform:kernel:end -->

@@ -249,6 +249,46 @@ Write-Host "PASS: all expected feature flags verified"
 
 ---
 
+## Phase G — AI Developer Agent (v4.4)
+**Sprint:** 7 | **Owner:** Platform Engineering
+
+### Acceptance Criteria
+- [ ] `shared/commands/dev.md` present, follows `bug-fix.md` template structure (GOVERNANCE.md §1)
+- [ ] `shared/commands/registry.yml` has `dev` entry with `status: active`
+- [ ] Shells exist for every `supported_platforms` entry: `adapters/opencode/commands/dev.md`, `adapters/copilot/prompts/dev.prompt.md`, `adapters/copilot/chatmodes/dev.chatmode.md`
+- [ ] Single Agent Mode default confirmed: no sub-agents created without `multi`
+- [ ] Multi-Agent Mode capped at 3 sub-agents (contract C4 opt-in, scoped to `/dev`)
+- [ ] Invalid mode word rejected with the two valid modes listed
+- [ ] Contract kernel unchanged — no SHA-256 recompute needed
+- [ ] Platform version = `4.4.0`
+
+### Validation Commands
+```powershell
+# 1. Command file + registry entry present
+if (-not (Test-Path "shared/commands/dev.md")) { Write-Error "FAIL: shared/commands/dev.md missing" }
+$reg = Get-Content "shared/commands/registry.yml" -Raw
+if ($reg -notmatch "id:\s*dev") { Write-Error "FAIL: dev not registered in registry.yml" }
+if ($reg -notmatch "id:\s*dev[\s\S]*?status:\s*active") { Write-Error "FAIL: dev status is not active" }
+
+# 2. Shells present for all supported_platforms
+$shells = @(
+  "adapters/opencode/commands/dev.md",
+  "adapters/copilot/prompts/dev.prompt.md",
+  "adapters/copilot/chatmodes/dev.chatmode.md"
+)
+foreach ($f in $shells) {
+    if (-not (Test-Path $f)) { Write-Error "FAIL: $f missing" }
+}
+
+# 3. Kernel unchanged (no hash recompute expected for this phase)
+$expected = Get-Content "shared/contract.md.sha256" -Raw
+Write-Host "Kernel hash on file: $expected (compare against tools/compute-contract-hash.ps1 output if contract.md kernel section was touched)"
+```
+
+**Gate B:** All prior phase validation commands pass. No contract kernel content regression — `/dev` reuses existing C4 subagent opt-in and §14 approval gate rather than adding new kernel rules.
+
+---
+
 ## Quick Reference — Phase DoD Summary
 
 | Phase | Target | Sprint | Key Gate | Pass Condition |
@@ -260,6 +300,7 @@ Write-Host "PASS: all expected feature flags verified"
 | D | v4.1 | Sprint 5 | Subagent limit enforced | `testing.md §2` present + hook installed |
 | E | v4.2 | Sprint 6 | CI full pass + marketplace | `bash ci/validate.sh` exits 0 |
 | F | v4.3 | Sprint 6 | Contract refactor + BUG-H3 | Kernel ≤30 lines + legacy hook gone |
+| G | v4.4 | Sprint 7 | `/dev` command + shells across all supported platforms | `dev` registry entry active + all shells present |
 
 ---
 
