@@ -15,6 +15,14 @@ to end: read it, read only the context it points to, build an execution plan, im
 validate, and report. `/dev` does not discover its own task — the task file (or `context`
 folder contents) is always the primary instruction document.
 
+> **Unattended execution:** this specification governs an interactive session where a human is
+> present to approve the gate below. For the same workflow run as its own OS process with no
+> human in the loop, see `autonomous-runner/` at the platform repo root
+> (`ai-runner dev --repo <path> --task <path.md>`) — it reuses this file, `shared/contract.md`,
+> and `shared/standards/`/`shared/rules/` at runtime rather than duplicating them, and enforces
+> its own bounded-subagent limit (`--agent-limit`, default 1) in place of the Multi-Agent Mode
+> approval flow below, since there is no human present to approve a subagent in real time.
+
 ---
 
 ## Mode Detection

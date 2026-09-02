@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-platform.lifetrenz.com/schemas/autonomous-runner-audit-log-entry.json",
+  "title": "AutonomousRunnerAuditLogEntry",
+  "description": "Schema for one JSONL line in <repo>/.ai-runner-state/audit/<taskId>.audit.jsonl, written by autonomous-runner/src/audit.ts. This is a DELIBERATELY SEPARATE schema from shared/schemas/audit-schema.json — that one describes Claude Code hook events observed during an interactive session (event enum: Stop/PostToolUse/SubagentStop); this one describes an unattended Analyze->Plan->Execute->Validate->Fix loop's own lifecycle. Neither is a subset or superset of the other; a reader should never assume a line from one validates against the other's schema.",
+  "type": "object",
+
+  "required": ["ts", "schema_version", "taskId", "event"],
+
+  "properties": {
+    "ts": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp when the entry was written"
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Version of THIS schema (autonomous-runner's own — unrelated to shared/schemas/audit-schema.json's schema_version)",
+      "enum": ["1.0"]
+    },
+    "taskId": {
+      "type": "string",
+      "description": "The run's taskId — matches the .state.json file of the same name"
+    },
+    "event": {
+      "type": "string",
+      "description": "Lifecycle event name",
+      "enum": [
+        "loop_start",
+        "loop_resume",
+        "phase_start",
+        "phase_end",
+        "phase_skip",
+        "iteration_start",
+        "validate_result",
+        "loop_end"
+      ]
+    }
+  },
+
+  "additionalProperties": true,
+  "additionalPropertiesNote": "Deliberately permissive (unlike shared/schemas/audit-schema.json's additionalProperties:false) — each event above carries a different, event-specific payload (e.g. validate_result carries pass/buildPass/testPass/reviewPass/errors; loop_resume carries resumedFromPhase/startPhase/startIteration; phase_end/phase_start carry phase/iteration/costUsd/toolCalls/subagentInvocations). See autonomous-runner/src/loopController.ts and cli.ts for the exact fields each event writes. String field values are truncated to 500 characters and passed through secret redaction (autonomous-runner/src/safety.ts#redactSecrets, autonomous-runner/src/audit.ts#sanitize) before being written — never trust this log to contain complete tool inputs or any credential."
+}

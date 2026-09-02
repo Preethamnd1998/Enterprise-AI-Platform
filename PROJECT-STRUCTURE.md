@@ -17,6 +17,9 @@ D:\enterprise-ai-platform\
 ├── install/                # Installer scripts
 ├── tools/                  # Fleet operations and maintenance tooling
 ├── repo-template/          # Templates copied into consuming repos
+├── autonomous-runner/      # Standalone Node/TS CLI: unattended execution mode of the /dev
+│                           #   workflow (see § below) — reuses shared/ content, does not
+│                           #   duplicate it; not a slash command, has its own CI job
 ├── docs/                   # All reference guides (GOVERNANCE.md, QUICK-START.md, INSTALL-*.md, etc.)
 ├── ci/                     # CI/CD scripts
 ├── context/                # Local context-folder config (not part of the platform source)
@@ -254,6 +257,40 @@ tools/
 │                            #   to the platform source version -- install/update-platform.ps1 delegates here
 └── flatten-repo.sh          # Bash utility (historical — not actively used)
 ```
+
+---
+
+## `autonomous-runner/` — Unattended `/dev` Execution Mode
+
+A standalone Node.js/TypeScript CLI (`ai-runner dev --repo <path> --task <path.md>`) that runs
+the same Analyze → Plan → Execute → Validate → Fix workflow as the interactive `/dev` command
+(`shared/commands/dev.md`), unattended, as its own OS process — bounded by explicit
+iteration/attempt/timeout/agentLimit limits instead of relying on a human watching the session.
+It is a **second front door onto the same workflow**, not a second platform: it reuses
+`shared/contract.md`'s kernel, `shared/commands/dev.md`'s spec, `shared/standards/`,
+`shared/rules/`, `shared/company-profile.md` and `shared/knowledge/`, and
+`adapters/claude/config/settings.json`'s MCP allowlist directly from this repo at runtime —
+nothing under `shared/` is copied or re-described inside it.
+
+```
+autonomous-runner/
+├── src/                     # loopController.ts (the bounded state machine), worker.ts (SDK
+│                            #   query() wrapper), validator.ts, contextLoader.ts (reads
+│                            #   shared/* per contract.md §5/F10), safety.ts (canUseTool gate,
+│                            #   reconciled with settings.json), contractIntegrity.ts (hash
+│                            #   check equivalent to hash-check.js), resume.ts, cli.ts
+├── schemas/audit-schema.json # Own, deliberately separate schema from
+│                            #   shared/schemas/audit-schema.json (that one describes Claude
+│                            #   Code hook events; this describes the unattended loop's own
+│                            #   lifecycle — neither is a subset of the other)
+├── test/                    # vitest suite — runs with no network/API key required
+└── README.md                # Install, flags (including --agent-limit), safety model
+```
+
+Not listed in `shared/commands/registry.yml` — that registry is specifically the interactive
+slash-command list installers generate adapter shells from, and this has no adapter shell (it's
+a CLI, invoked directly). `shared/commands/dev.md` carries a short pointer to it instead. CI
+builds/typechecks/tests it via the `autonomous-runner-build-test` job in `.gitlab-ci.yml`.
 
 ---
 

@@ -101,6 +101,29 @@ no-business-logic-in-adapters:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "main"'
 
+# Builds, typechecks, and tests autonomous-runner/ (the unattended /dev execution mode) as part
+# of the platform's own pipeline — it is reused platform content at runtime (contract.md,
+# dev.md, standards/, rules/, settings.json's MCP allowlist) but its own TS/Node code, so it
+# gets its own build/test job rather than being folded into the markdown-only validate jobs above.
+autonomous-runner-build-test:
+  stage: validate
+  image: node:22-alpine
+  script:
+    - cd autonomous-runner
+    - npm ci
+    - npm run build
+    - npm run typecheck
+    - npm test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - autonomous-runner/**/*
+        - shared/contract.md
+        - shared/contract.md.sha256
+        - shared/commands/dev.md
+        - adapters/claude/config/settings.json
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
 # Verifies contract kernel hash matches shared/contract.md.sha256
 contract-hash-verify:
   stage: security

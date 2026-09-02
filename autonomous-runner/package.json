@@ -1,0 +1,32 @@
+{
+  "name": "@enterprise-ai-platform/autonomous-runner",
+  "version": "0.1.0",
+  "description": "Standalone autonomous AI Developer Agent loop (Analyze -> Plan -> Execute -> Validate -> Fix) built on the Claude Agent SDK. Executes the platform's /dev workflow (shared/commands/dev.md) unattended against any target Git repository.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "bin": {
+    "ai-runner": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

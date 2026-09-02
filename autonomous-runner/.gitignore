@@ -1,0 +1,14 @@
+# Reproducible installs for this package — override the platform root .gitignore's blanket ignore
+!package-lock.json
+
+# Build output
+dist/
+
+# Runtime state written while the runner executes against a target repo
+.ai-runner-state/
+*.log
+
+# Local env
+.env
+.env.*
+!.env.example
