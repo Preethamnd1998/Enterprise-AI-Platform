@@ -21,7 +21,7 @@
 | Setting | Default |
 |---|---|
 | Approval gate | Required (auto=true opt-in) |
-| MCP servers | gitlab-reader, redmine-reader, canary_mongo_db, postgres-reader |
+| MCP servers | gitlab-reader, redmine-reader, canary_mongo_db, postgres-reader, knowledge-graph (optional — see `shared/mcp/knowledge-graph-setup.md`) |
 | Issue tracker | Redmine (redmine= argument key) |
 | Source control | GitLab (mr= argument key) |
 | Merge request tool | glab CLI |
@@ -51,12 +51,34 @@ Patterns that must never be introduced in any Lifetrenz repo:
 Platform security issues: preetham.nd@lifetrenz.com
 See GOVERNANCE.md §4 for the full escalation procedure.
 
+## Custom Flow & Architecture Knowledge
+
+`shared/knowledge/` holds Lifetrenz-specific reference material — company
+domain knowledge, not generic platform standards. Load only the file(s)
+relevant to the task at hand (same lazy-loading discipline as §5 standards);
+never bulk-load this directory.
+
+| Topic | Path | Covers |
+|---|---|---|
+| ABDM integration | `shared/knowledge/custom-flows/abdm/` | Backend + frontend ABDM (govt health-ID) integration |
+| BOM (Bill of Materials) | `shared/knowledge/custom-flows/bom/` | Functionality KB, non-stock indent consumption, stock reduction, adding BOM to bill, casesheet/OPD clinical integration |
+| Pagination & global filter | `shared/knowledge/custom-flows/pagination-global-filter/` | Global filter/search architecture, pagination architecture |
+| Upload framework | `shared/knowledge/custom-flows/upload/` | Core upload framework architecture, RCM new-upload knowledge |
+| Architecture reference | `shared/knowledge/architecture/` | Service map, dependencies, environments/promotion flow, project list, Redmine (projects/status-workflow/MR-tracking), running locally |
+
+A task touching one of these domains (e.g. an ABDM bug, a BOM feature, a new
+paginated list) should read the matching file(s) here **in addition to** the
+usual `shared/standards/` layer files — this is domain knowledge, standards
+are code-shape knowledge; both apply together.
+
 ---
 <!-- SEAM NOTE (F10):
      Generic platform core lives in: shared/contract.md, shared/standards/, shared/rules/,
      shared/commands/, shared/prompts/, shared/templates/
      Company profile lives in: THIS FILE (shared/company-profile.md)
+     Company domain/architecture knowledge lives in: shared/knowledge/ (see table above)
      Per-repo profile lives in: .ai/AI_PROJECT.md, .ai/AI_ARCHITECTURE.md, etc.
      The AI loads THIS file once per session when a Lifetrenz repo context is active.
-     Installers for other companies would replace this file with their own profile.
+     Installers for other companies would replace this file (and shared/knowledge/)
+     with their own profile/domain knowledge.
      This is the F10 extensibility seam — the platform is portable. -->

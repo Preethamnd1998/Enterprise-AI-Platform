@@ -77,6 +77,12 @@ For each issue the user provides in this session:
 ## Phase 1 — Data Discovery & Analysis (SELECT queries only, no writes)
 
 1. **Understand the data model:**
+   - **Knowledge graph first (kernel F-KG):** if a `knowledge-graph` MCP
+     server is connected, try `get_database_impact` first — it returns
+     inferred tables read/written for a service/entity/API without a live
+     query, useful for scoping which tables actually matter before touching
+     the real database. Its table names are `inferred`, not `verified` —
+     confirm against the live schema below before writing any correction.
    - Run `collection-schema` or equivalent for Mongo collections involved.
    - Run schema-inspection SELECT queries for SQL tables involved.
    - Trace foreign key relationships and collection references.

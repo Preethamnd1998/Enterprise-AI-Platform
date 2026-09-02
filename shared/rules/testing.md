@@ -2,6 +2,9 @@
 <!-- shared/rules/testing.md — v4.1 -->
 <!-- Lazy-loaded when a change includes new or modified code. Complements standards/testing.md. -->
 <!-- Linked from contract §5 (lazy rules loading). Never inlined. -->
+<!-- For test *design/implementation technique* (as opposed to these enforcement
+     rules), see the knowledge base at standards/testing/README.md — load only
+     the topic file(s) the task touches, never the whole directory. -->
 
 ## TR-01 — Never delete existing tests
 Existing tests must not be removed, commented out, or disabled without a documented reason

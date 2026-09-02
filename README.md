@@ -1,8 +1,8 @@
 # Enterprise AI Platform
 
-**Version:** v4.4.0 | **Status:** Production | **Platforms:** Claude Code · GitHub Copilot · OpenCode · Antigravity
+**Version:** v4.10.0 | **Status:** Production | **Platforms:** Claude Code · GitHub Copilot · OpenCode · Antigravity
 
-A portable, multi-LLM AI engineering assistant platform for enterprise development teams. One shared configuration. Five supported platforms. Eight commands. Consistent behavior everywhere.
+A portable, multi-LLM AI engineering assistant platform for enterprise development teams. One shared configuration. Five supported platforms. 13 commands. Consistent behavior everywhere.
 
 ---
 
@@ -51,8 +51,13 @@ The Enterprise AI Platform enforces a single execution contract across all AI co
 | `/test` | Generate tests and report coverage gaps | CC, Copilot, OC |
 | `/prompt-audit` | Score prompt quality and suggest improvements | CC, Copilot, OC |
 | `/dev` | Execute a task Markdown file end to end (Single/Multi-Agent) | CC, Copilot, OC |
+| `/planning` | Turn a requirement into `PLAN.md` + `TEST-CASES.xlsx` — no code produced | CC, OC |
+| `/plan-reviewer` | Score an existing plan against real evidence (code/DB/logs/BRD); revise if not approved | CC, OC |
+| `/redmine-bulk-report` | Batch-triage a list of Redmine IDs into one dated report with evidence-gated root causes | CC, OC |
+| `/usage-report` | Report or clear the system-wide prompt/session log | CC |
+| `/knowledge-capture` | Turn what was just implemented into a durable `shared/knowledge/` file | CC, OC |
 
-All commands accept `key=value` arguments. Common keys: `redmine=<id>`, `mr=!<n>`, `commit=<sha>`, `branch=<b>`, `auto=true`.
+All commands accept `key=value` arguments. Common keys: `redmine=<id>`, `mr=!<n>`, `commit=<sha>`, `branch=<b>`, `auto=true`. Output paths for `/planning`, `/plan-reviewer`, `/knowledge-capture`, the usage log, and the AI context folder are all configurable in `paths.env` (repo root) — see that file's comments.
 
 ---
 
@@ -83,16 +88,35 @@ See [docs/QUICK-START.md](docs/QUICK-START.md) for a full walkthrough.
 
 ---
 
+## Knowledge Graph MCP (optional)
+
+If a `knowledge-graph` MCP server is connected, the contract kernel's
+**Knowledge-graph first (F-KG)** rule directs every command to query it —
+`search_knowledge`, `get_context_pack`, `trace_business_flow`, and 9 other
+tools — before falling back to a Grep/Glob/repository scan. It returns exact
+files, classes, methods, and confidence-tagged (VERIFIED/INFERRED/UNRESOLVED)
+call chains in one or two calls instead of several scan-and-read rounds,
+which is where the token savings come from. It's optional: nothing in this
+platform requires it, every command falls back to its normal scan-based
+discovery when it isn't connected. See
+[shared/mcp/knowledge-graph-setup.md](shared/mcp/knowledge-graph-setup.md)
+for the full pipeline (an external indexer builds the graph database; this
+platform only ever reads it through the MCP server, read-only).
+
+---
+
 ## Architecture
 
 ```
 D:\enterprise-ai-platform\                 # git repo root (flattened — no nested subdirectory)
 ├── README.md · CONTRIBUTING.md · PROJECT-STRUCTURE.md · CHANGELOG.md · SECURITY.md · VERSION
+├── paths.env                  # Local output-path config (plan/knowledge/usage-log/context) — edit after pulling
 ├── docs/                      # All other reference guides (INSTALL-*.md, GOVERNANCE.md, etc.)
 ├── shared/                    # Single source of truth for all shared assets
 │   ├── contract.md            # Execution contract (kernel injected to ~/.claude/CLAUDE.md)
-│   ├── commands/              # 7 command definitions (shared by all platforms)
-│   ├── standards/             # Coding standards (backend/, frontend/, mobile/, migration/)
+│   ├── commands/              # 13 command definitions (shared by all platforms)
+│   ├── standards/             # Coding standards (backend/, frontend/, mobile/, migration/, testing/)
+│   ├── knowledge/             # Company/domain knowledge (custom-flows/, architecture/) — lazy-loaded, indexed in company-profile.md
 │   ├── rules/                 # Governance rules (coding-style, testing, security, code-review)
 │   ├── prompts/               # CRISP framework, prompt quality scoring
 │   ├── templates/             # Per-repo AI context templates (AI_PROJECT.md etc.)
@@ -175,10 +199,12 @@ D:\enterprise-ai-platform\                 # git repo root (flattened — no nes
 When a Claude Code session starts, the platform kernel is already injected into `~/.claude/CLAUDE.md`. The AI reads it before your first message. The kernel defines:
 
 1. **No-scan rule** — AI reads only files in the change set, never the whole repo
-2. **Depth-1 expansion** — only direct symbol references are expanded
-3. **Lazy standards** — standards files loaded only for languages in the change set
-4. **Approval gate** — Phase 1 = analysis only; implementation requires your approval
-5. **MCP read-only** — write-capable tools are denied at the settings level
+2. **Knowledge graph first** — if a `knowledge-graph` MCP server is connected, query it before any Grep/Glob scan (see the section above)
+3. **Depth-1 expansion** — only direct symbol references are expanded
+4. **Lazy standards** — standards files loaded only for languages in the change set
+5. **Company knowledge** — domain/flow knowledge under `shared/knowledge/` loaded only when the task touches that domain
+6. **Approval gate** — Phase 1 = analysis only; implementation requires your approval
+7. **MCP read-only** — write-capable tools are denied at the settings level
 
 The `shared/contract.md.sha256` file stores the expected kernel hash. The `hash-check.js` hook verifies it before every tool use.
 
@@ -219,7 +245,7 @@ Do not add commands, rules, or standards without following the governance proces
 
 ## Versioning
 
-Semantic Versioning (SemVer). Current: **v4.4.0**.
+Semantic Versioning (SemVer). Current: **v4.10.0**.
 
 | Phase | Version | What changed |
 |---|---|---|
@@ -230,6 +256,14 @@ Semantic Versioning (SemVer). Current: **v4.4.0**.
 | Phase E | v4.2 | GOVERNANCE.md, telemetry, HITL matrix, pause-turn cap |
 | Phase F | v4.3 | Lazy kernel refactor, company-profile seam, fleet rollout, adapter stubs |
 | Phase G | v4.4 | `/dev` command (AI Developer Agent) — Single Agent default, opt-in Multi-Agent (≤3 sub-agents) |
+| Phase H | v4.5 | Drift fix: `/planning` + `planning-engine.md` backported into source |
+| Phase I | v4.6 | `/plan-reviewer` — evidence-gated plan scoring, revision loop |
+| Phase I | v4.7 | `/redmine-bulk-report` — bulk Redmine triage with evidence-gated RCA |
+| Phase I | v4.8 | `/usage-report` + `usage-logger.js` — system-wide prompt/session logging |
+| Phase I | v4.9 | `/knowledge-capture` — post-implementation knowledge capture into `shared/knowledge/` |
+| Phase J | v4.10 | Contract governance: mandatory `coding-standards.md`, company-knowledge lazy-load kernel rule |
+
+See [CHANGELOG.md](CHANGELOG.md) for the full detail behind each of these, plus the standards/knowledge-base sync work (Knowledge Repo integration) and the knowledge-graph-first reinforcement across commands that isn't its own version bump.
 
 ---
 

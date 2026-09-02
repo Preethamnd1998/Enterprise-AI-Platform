@@ -79,7 +79,11 @@ If `target` is missing: ask before proceeding.
 1. Resolve input via **Input Resolution**. Produce CHANGE SET: `{ files[], hunks[], symbolsTouched[] }`.
 2. Diff semantic filter: drop whitespace-only, comment-only, brace/format-only, import-reorder hunks. Keep `functionalHunks[]` + `symbolsTouched[]`.
 3. Standards (lazy): Read `migration/semantic-git.md`, `migration/cherry-pick-rules.md`, backend/frontend/mobile standards for affected layers. Skip if cached.
-4. For `mode=exact`: check compile-gap symbols on `target`. For `mode=functionality`: map capability closure against module boundary.
+4. For `mode=exact`: check compile-gap symbols on `target`. For `mode=functionality`: map
+   capability closure against module boundary — **knowledge graph first (kernel F-KG):**
+   if a `knowledge-graph` MCP server is connected, use `find_dependencies`/`find_callers`/
+   `trace_business_flow` on `symbolsTouched[]` to establish cross-service impact before a
+   broader repo scan; it's the fastest way to see what else a full-capability port touches.
 5. Detect signature drift between source and `target`.
 
 Output analysis blocks (contract §12):

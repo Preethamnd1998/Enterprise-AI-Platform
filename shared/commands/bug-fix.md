@@ -76,11 +76,20 @@ For each bug the user provides in this session:
 ## Phase 1 — Discovery & Analysis (read-only, no changes)
 
 1. Resolve input via **Input Resolution** above.
-2. Identify OWN-package frames from the trace/description.
-3. `get_file_contents` for own-package frames (≤ 3). `get_file_blame` on the failing line.
-4. Standards (lazy): Read the standard for the failing layer + `coding-standards.md`. Skip if cached.
-5. Determine root cause (confidence > 90%).
-6. Identify depth-1 symbol the failing line calls.
+2. **Knowledge graph first (kernel F-KG):** if a `knowledge-graph` MCP server is
+   connected, use it before any file scan — `search_knowledge`/`get_context_pack`
+   to locate the failing area, then `get_api_context`/`trace_business_flow`/
+   `find_dependencies`/`get_source_evidence` for exact file/class/method
+   pointers and confidence-tagged call chains. This resolves most of steps
+   3–6 below in 1–2 calls. Fall back to the steps below only when the server
+   isn't connected, a query comes back unresolved, or a fact needs source
+   verification — keep each fact's confidence (VERIFIED/INFERRED/UNRESOLVED).
+3. Identify OWN-package frames from the trace/description.
+4. `get_file_contents` for own-package frames (≤ 3, or fewer if the graph
+   already resolved most of it). `get_file_blame` on the failing line.
+5. Standards (lazy): Read the standard for the failing layer + `coding-standards.md`. Skip if cached.
+6. Determine root cause (confidence > 90%).
+7. Identify depth-1 symbol the failing line calls.
 
 Output the analysis blocks (contract §12):
 

@@ -75,10 +75,17 @@ A feature is not in the repo yet — discover the **insertion point** (the neare
 analog feature to extend), not "the feature". Read structure/signatures, never implementations.
 
 1. Resolve requirements via **Input Resolution** above. Fetch project/wiki if linked.
-2. ONE `search_repositories` for the closest existing analog capability.
+2. **Knowledge graph first (kernel F-KG):** if a `knowledge-graph` MCP server
+   is connected, use `search_knowledge`/`get_context_pack` and
+   `find_service`/`get_service_context` to locate the nearest existing analog
+   capability and its structure before scanning the repo — it returns the
+   exact files/classes to open. Fall back to step 3 only when the server
+   isn't connected or the query comes back unresolved.
+3. ONE `search_repositories` for the closest existing analog capability
+   (skip if step 2 already resolved it).
    Get file list + signatures via `get_repository_tree` (single module, shallow) + `get_file_contents` (signatures only).
-3. Standards (lazy): Read `coding-standards.md` + standards for layers the feature will touch. Skip if cached.
-4. Enumerate every layer to create/modify. Build the PARTS → PHASES → TASKS breakdown.
+4. Standards (lazy): Read `coding-standards.md` + standards for layers the feature will touch. Skip if cached.
+5. Enumerate every layer to create/modify. Build the PARTS → PHASES → TASKS breakdown.
 
 Output the analysis blocks (contract §12):
 

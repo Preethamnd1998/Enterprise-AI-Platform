@@ -34,6 +34,14 @@ install_targets:
     target: .claude/hooks/hash-check.js
     method: copy
 
+  # Usage logger — installed to the GLOBAL ~/.claude/hooks/, not per-repo.
+  # System-wide (UserPromptSubmit) log for /usage-report; writes to the fixed
+  # path ~/.claude/usage-logs/, independent of which repo triggered it.
+  - source: adapters/claude/hooks/usage-logger.js
+    target: ~/.claude/hooks/usage-logger.js
+    method: copy
+    scope: global
+
   # Commands (all files from shared/commands/)
   - source: shared/commands/
     target: .claude/commands/

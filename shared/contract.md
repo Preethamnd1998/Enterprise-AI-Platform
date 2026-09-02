@@ -20,9 +20,13 @@ Discovery, expansion, and validation are deterministic steps you drive.
 
 **No-scan (hard):** A file enters scope ONLY if (a) it is in the change set, (b) something loaded references it, or (c) naming/package convention ties it to a loaded symbol. Never enumerate.
 
-**Lazy standards:** detect languages in change set → Read only matching standards files from `~/.claude/standards/` (CC) or `.github/ai-platform/standards/` (Copilot). Never bulk-load.
+**Knowledge-graph first (F-KG):** Before any Grep/Glob source scan to establish a code flow, API endpoint, service/Kafka dependency, or DB impact: check whether a `knowledge-graph` MCP server is connected. If it is, use it first (`search_knowledge`/`get_context_pack` to locate the target, then `resolve_ui_api`/`find_api`/`get_api_context`/`trace_business_flow`/`get_business_flow`/`get_service_dependencies`/`get_database_impact`/`find_callers`/`find_dependencies`) — it returns exact file paths, classes, methods, and symbols to read directly, satisfying the no-scan rule instead of violating it. Treat the graph as a navigation/index layer, not implementation truth: open only the exact files/symbols it returns (smallest useful region first), and keep each fact's confidence (VERIFIED/INFERRED/UNRESOLVED) — never present INFERRED/UNRESOLVED as certain. Fall back to a scoped scan only when the server isn't connected, a query comes back unresolved, or a fact needs source verification.
+
+**Lazy standards:** detect languages in change set → Read only matching standards files from `~/.claude/standards/` (CC) or `.github/ai-platform/standards/` (Copilot). `coding-standards.md` is mandatory for any code-touching task — never optional, never skipped, regardless of language. Never bulk-load beyond what's matched.
 
 **Lazy rules (Phase D+):** detect task type → Read only applicable rules from `~/.claude/rules/` (CC) or `.github/ai-platform/rules/` (Copilot): `coding-style.md` (production code), `testing.md` (tests), `security.md` (auth/PII), `code-review.md` (Gate A). Never bulk-load all four.
+
+**Company knowledge (F10):** for a task touching a documented company/domain flow, Read only the matching file(s) under `<root>/knowledge/` (index: `company-profile.md`'s topic table). Load on demand, never bulk-load the directory.
 
 **MCP — read-only (F5):** MCP is restricted to the read-only allowlist in `.claude/settings.json`. Write-capable MCP tools are blocked by default. `enableAllProjectMcpServers: false`.
 
@@ -53,7 +57,7 @@ If a required key is missing, ask exactly one clarifying question, then proceed.
 
 **`context` shorthand:** if `$ARGUMENTS` contains the bare word `context` OR `file=context` (no filename):
 
-1. `Read context/context.path` — take the first non-empty, non-comment line as the folder path. If missing or blank, fall back to `context/` inside the repo.
+1. Resolve the folder path in this order: `CONTEXT_PATH` from `paths.env` (repo root) if set to a non-blank value → else `Read context/context.path`, first non-empty non-comment line → else fall back to `context/` inside the repo.
 2. `Glob <resolved-path>/**` → `Read` each file found (md, txt, html) in one pass.
 3. Use all content as the task's input context. Do not ask the user which file to use.
 
@@ -116,11 +120,16 @@ Standards root:
 Detect the languages in the CHANGE SET, then `Read` only the matching files from the
 appropriate root above, once each:
 - Any code        → `<root>/coding-standards.md`
-- Java / Spring   → `<root>/backend/<layer>.md` (only layers touched: controller, service, repository, entity, dto-mapper-enum, common-api, spring)
-- Angular / TS    → `<root>/frontend/<topic>.md` (only topics touched: component, service, custom-components, pagination, others, angular)
+- Java / Spring   → `<root>/backend/<layer>.md` (only layers touched: controller, service, repository, entity, dto-mapper-enum, common-api, spring, custom-annotations, sql-query, db-migration)
+- Angular / TS    → `<root>/frontend/<topic>.md` (only topics touched: component, service, custom-components, pagination, others, angular, app-shell-menu-config-cache, global-filter-search, modern-clinical-enterprise-design-system)
 - Flutter / Dart  → `<root>/mobile/<topic>.md` (only topics touched: widget, service, state-management, routing, models, flutter) — detect via `pubspec.yaml`, `*.dart` files, or `lib/`/`test/` Flutter project layout
 - SQL / Flyway    → `<root>/backend/repository.md` + `<root>/migration/` DB sections
 - Migration task  → `<root>/migration/semantic-git.md`, `<root>/migration/cherry-pick-rules.md`
+- Writing/reviewing tests → `<root>/testing/README.md` first (index, points to the
+  matching topic file(s) — e.g. `testing/java-junit-mockito.md`, `testing/angular-testing.md`,
+  `testing/test-case-design.md`). This knowledge base **supplements, never overrides**,
+  `<root>/testing.md` (the `/test` command's machine-enforced automation contract) and
+  `<root>/rules/testing.md` — read only the topic file(s) the task actually touches.
 A Java-only task must not read `frontend/` or `mobile/`, and vice versa. Reuse within the session; never re-read.
 
 **Lazy rules loading** (Phase D+ — linked, never inlined):
@@ -328,3 +337,17 @@ Continue? (approve / yes / proceed / stop)
 **Why this rule exists:**
 Long autonomous turns reduce engineer oversight. The pause-turn cap ensures the engineer
 remains in the loop at natural decision points during large changes.
+
+## 18. Redmine Comment Templates (on-demand, never proactive)
+
+Only when the engineer **explicitly asks** to add a comment to a Redmine issue
+(execution/status update, or a plan-approval comment) — never as a default
+step of any command:
+
+- Status/execution update → Read `shared/templates/redmine-execution-comment.md`, follow it.
+- Plan-approval comment (after the Plan Reviewer skill approves a plan) →
+  Read `shared/templates/redmine-approval-comment.md`, follow it.
+
+Both templates enforce the same discipline: short (≤~6 lines), reference
+files by name for anything long (plan, test-case report), never paste file
+contents into the comment body, never claim a check that wasn't actually run.

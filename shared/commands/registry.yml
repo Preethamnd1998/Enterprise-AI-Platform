@@ -4,7 +4,7 @@
 # Installers generate adapter-specific shells from this registry.
 # D1/D2 fix: /planning and /ui-redesign are NOT listed here (they were phantom commands in v3.0).
 
-version: "4.4.0"
+version: "4.9.0"
 
 commands:
   - id: bug-fix
@@ -83,6 +83,98 @@ commands:
     # Shells created for all 3 supported_platforms in the same pass — see
     # adapters/opencode/commands/dev.md, adapters/antigravity/commands/dev.md (bonus),
     # adapters/copilot/prompts/dev.prompt.md + chatmodes/dev.chatmode.md.
+
+  - id: planning
+    slug: planning
+    title: "Planning"
+    invoke: "/planning"
+    source: "shared/commands/planning.md"
+    supported_platforms: [claude, opencode]
+    phase_available: H
+    status: active
+    # Re-added post-D2 (v4.5.0). Unlike the v3.0 phantom /planning, this one has
+    # a real source file, a real shared engine (shared/commands/planning-engine.md),
+    # and real shells on every listed platform, added in the same pass.
+    # Copilot intentionally NOT listed: no adapters/copilot/ generation exists
+    # for ANY command today (bug-fix/migration included) in this checked-out
+    # workspace — that requires the separate install-copilot.ps1 pass. Add
+    # "copilot" back once that shell actually exists, not before.
+    # planning-engine.md is referenced DIRECTLY from calling commands' Phase 1
+    # (bug-fix.md today), not via contract.md §-injection — the installed
+    # CLAUDE.md kernel does not carry contract.md's full §-numbered sections,
+    # so that injection path is not reachable at runtime (same latent gap
+    # already affects migration-intelligence.md / contract §15 — migration.md
+    # never references it by name either; flagged separately, not fixed here).
+    # BACKPORTED into this source repo — this file and planning-engine.md
+    # existed in ~/.claude/commands/ (registry v4.5.0) but had never been
+    # committed back to this repo (still v4.4.0, no /planning entry). Copied
+    # verbatim from the installed copy, not rewritten.
+
+  - id: plan-reviewer
+    slug: plan-reviewer
+    title: "Plan Reviewer"
+    invoke: "/plan-reviewer"
+    source: "shared/commands/plan-reviewer.md"
+    supported_platforms: [claude, opencode]
+    phase_available: I
+    status: active
+    # New in this pass. QA/audit gate on a plan that already exists (from
+    # /planning, a human, or a Redmine attachment) — scores Problem
+    # Understanding, Code Understanding, Test Plan, and Confidence (0-100
+    # each) against actual evidence (code/DB/logs/BRD), requires all four to
+    # clear `threshold=` (default 95) for approval, and produces a revised
+    # plan + test-cases file on rejection. Does not implement.
+
+  - id: redmine-bulk-report
+    slug: redmine-bulk-report
+    title: "Redmine Bulk Reporter"
+    invoke: "/redmine-bulk-report"
+    source: "shared/commands/redmine-bulk-report.md"
+    supported_platforms: [claude, opencode]
+    phase_available: I
+    status: active
+    # New. Takes a list of Redmine IDs, produces one dated report per batch —
+    # task summary, status, and (evidence-gated) root cause per ticket, using
+    # the environment→DB-MCP routing table and comment-priority rule added in
+    # the Part C knowledge-graph work. Read-only; recommends /planning or
+    # /bug-fix per ticket rather than implementing anything itself.
+
+  - id: usage-report
+    slug: usage-report
+    title: "Usage Report"
+    invoke: "/usage-report"
+    source: "shared/commands/usage-report.md"
+    supported_platforms: [claude]
+    phase_available: I
+    status: active
+    # New. Reads the system-wide log written by adapters/claude/hooks/usage-logger.js
+    # (~/.claude/usage-logs/, a NEW UserPromptSubmit hook — distinct from the
+    # existing per-repo audit.js). Reuses shared/prompts/prompt-quality.md's
+    # scoring factors at a cross-session/cross-day scope. `clear` sub-mode
+    # requires a separately-typed CONFIRM, never a bare flag. Claude-only for
+    # now — the hook mechanism this depends on is Claude-Code-specific; add
+    # opencode/copilot support only if/when their hook systems support an
+    # equivalent global, cwd-independent event.
+
+  - id: knowledge-capture
+    slug: knowledge-capture
+    title: "Knowledge Capture"
+    invoke: "/knowledge-capture"
+    source: "shared/commands/knowledge-capture.md"
+    supported_platforms: [claude, opencode]
+    phase_available: I
+    status: active
+    # New. On-demand only — never a default step of another command. Turns
+    # what was actually implemented/verified this session (or a named
+    # redmine/MR) into a new or extended file under shared/knowledge/,
+    # matching the existing evidence-based (verified vs inferred) voice.
+    # Checks for existing coverage first (never duplicates), cross-links new
+    # files from company-profile.md's topic table.
+
+# NOTE: D:\GitLab-Workspace\UI-BE\.opencode\ai-platform\shared\commands\registry.yml
+# is stale relative to this file (v4.3.0, missing the "dev" entry present here
+# since v4.4.0). Pre-existing drift, not introduced by this change — left alone
+# to avoid scope creep; reconcile separately.
 
 # REMOVED — phantom commands (D2 defect, v3.0.0):
 # /planning — was a Copilot chatmode, not a real platform command; removed in v3.1

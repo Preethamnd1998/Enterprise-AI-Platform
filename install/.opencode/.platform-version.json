@@ -1,0 +1,9 @@
+﻿{
+    "version":  "4.3.0",
+    "adapter":  "opencode",
+    "installedAt":  "2026-07-10T10:45:20Z",
+    "features":  {
+                     "agents-md":  true,
+                     "command-shells":  true
+                 }
+}

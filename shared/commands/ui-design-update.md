@@ -132,15 +132,21 @@ When ambiguous, ask one clarifying question before proceeding.
 
 ### For NEW DEV — Angular
 
-1. Identify the closest existing analog component via `search_repositories`.
-2. Load analog component signatures only (not body).
-3. Standards (lazy): Read `frontend/component.md`, `frontend/custom-components.md`. Skip if cached.
+1. **Knowledge graph first (kernel F-KG):** if a `knowledge-graph` MCP server
+   is connected, use `search_knowledge`/`find_service` to locate the nearest
+   existing analog component before scanning — it returns the exact
+   component name/path directly. Fall back to step 2 only if unresolved.
+2. Identify the closest existing analog component via `search_repositories`.
+3. Load analog component signatures only (not body).
+4. Standards (lazy): Read `frontend/component.md`, `frontend/custom-components.md`. Skip if cached.
 
 ### For NEW DEV — Flutter
 
-1. Identify the closest existing analog screen/widget via `search_repositories` (or `Glob lib/features/**`).
-2. Load analog widget signatures only (not body).
-3. Standards (lazy): Read `mobile/widget.md`, `mobile/state-management.md`. Skip if cached.
+1. **Knowledge graph first (kernel F-KG):** same as above — check the
+   `knowledge-graph` MCP server before scanning, if connected.
+2. Identify the closest existing analog screen/widget via `search_repositories` (or `Glob lib/features/**`).
+3. Load analog widget signatures only (not body).
+4. Standards (lazy): Read `mobile/widget.md`, `mobile/state-management.md`. Skip if cached.
 
 ### For DESIGN UPDATE — Angular
 

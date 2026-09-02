@@ -244,3 +244,112 @@ onError(err: any, type: any, other?: any): void {
 - Every new public service method must have at least one unit test.
 - Controller tests must cover: happy path, null `siteId` validation, and `ApplicationException` catch path.
 - Angular components must have a `.spec.ts` (Karma/Jasmine) covering: component creation and `onResult` cases.
+
+
+## 10. Architecture & Layering
+
+### Java / Spring
+
+Follow the project layering:
+
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+Database
+
+- Controllers handle HTTP/request validation and response mapping only.
+- Services contain business logic and orchestration.
+- Repositories handle persistence/database access only.
+- Do not place business logic in controllers.
+- Do not call repositories directly from controllers.
+- Do not expose JPA entities directly through public APIs; use DTOs.
+- Use constructor injection for dependencies.
+- Avoid field injection with `@Autowired`.
+- Keep transaction boundaries at the service layer.
+- Shared business logic must not be duplicated across services.
+
+### Angular
+
+Follow:
+
+Component
+    ↓
+Facade/Service
+    ↓
+API Service
+    ↓
+Backend
+
+- Components handle UI state and user interaction.
+- Services handle business/API orchestration.
+- API services handle HTTP communication.
+- Do not place HTTP calls directly inside reusable UI components when an API service exists.
+- Do not duplicate API URLs across components.
+- Shared functionality must be extracted into reusable services/utilities.
+
+### Flutter
+
+Follow:
+
+Screen/Widget
+    ↓
+Bloc/Cubit
+    ↓
+Repository
+    ↓
+API/Data Source
+
+- Widgets handle presentation only.
+- Bloc/Cubit handles UI state and feature orchestration.
+- Repository handles data access and exception translation.
+- API/data-source classes handle HTTP communication.
+- Do not place business logic inside widgets.
+
+## 11. Database & SQL Standards
+
+See [`backend/sql-query.md`](backend/sql-query.md)
+for the full rule set — baseline query-writing rules, the string-built
+native-query (`*.query.SQL`) pattern and its parameter-safety requirements,
+`Pageable`/pagination handling, and execution-plan review guidance.
+
+
+## 12. API Standards
+* Use appropriate HTTP methods according to the project's established API conventions:
+  * **GET** — retrieve data.
+  * **POST** — create new records or perform actions.
+  * **PUT/PATCH** — update existing records where the API design uses separate update endpoints.
+  * **DELETE** — delete/deactivate records where applicable.
+* **Create/Update combined endpoint:**
+  * Where the project follows a combined create/update pattern, use **POST** for both operations.
+  * The request must contain the **primary/main table ID** when updating an existing record.
+  * If the main table ID is **null/absent**, treat the request as a create operation.
+  * If the main table ID is **present**, treat the request as an update operation.
+  * The backend must determine create vs. update based on the identifier and must not rely on a client-provided operation type.
+  * This pattern should be used consistently for similar APIs within the same module.
+* Validate all incoming request DTOs.
+* Do not trust client-provided authorization, user, site, tenant, or security context. Validate these against the authenticated request context.
+* Use a consistent `ApplicationResponse` structure for API responses.
+* Use standard application error codes and messages.
+* APIs returning collections must support pagination where the result set can be large.
+* Do not expose internal exception messages, database errors, or stack traces to clients.
+* Do not expose JPA/database entities directly through APIs.
+* API request and response DTOs must be explicitly defined.
+* Separate request and response DTOs when their structures or purposes differ.
+* Do not duplicate API response structures or error-handling logic across controllers; use the project's common response/error-handling mechanisms.
+
+
+
+## 13. Security Standards
+
+- Never hardcode passwords, tokens, API keys, or credentials.
+- Never commit secrets to Git.
+- Never log passwords, tokens, authentication headers, or sensitive PII.
+- Validate and sanitize external input.
+- Use parameterized SQL queries.
+- Enforce authorization at the backend.
+- Never rely solely on UI-level permission checks.
+- Do not expose internal stack traces to clients.
+- Sensitive configuration must come from environment/configuration management.

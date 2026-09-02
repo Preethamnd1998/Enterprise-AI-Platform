@@ -1,19 +1,23 @@
 # context/ — Agent Input Folder
 
 Store your logs, specs, and design files in a folder **outside this repository**.
-The agent reads `context.path` to find that folder — so git never tracks your content.
+The agent reads a path pointer to find that folder — so git never tracks your content.
 
 ## First-time setup (do once per machine)
 
 1. Create a folder anywhere outside the repo, e.g. `D:\AI-Context\`
-1. Open `context/context.path` in this repo
-1. Write the full path on the first non-comment line:
+2. Set the path in **either** of these (checked in this order — the first
+   one wins if both are set):
+   - `CONTEXT_PATH=` in `paths.env` (repo root) — the consolidated location,
+     alongside the plan/knowledge/usage-log path settings.
+   - `context/context.path` (this folder) — the original mechanism, still
+     fully supported for anyone already using it.
 
 ```text
 D:\AI-Context\
 ```
 
-1. Save. That's it — the setting is committed and reused every session.
+3. Save. That's it — the setting is committed and reused every session.
 
 ## Usage
 
@@ -48,4 +52,4 @@ Name files whatever you want. Supported formats: `.md` · `.txt` · `.html`
 
 - Clear files after each task — stale content leaks into the next task.
 - Multiple files are fine — agent reads all in one pass.
-- If `context.path` is blank, agent falls back to the `context/` folder inside this repo.
+- Resolution order: `paths.env`'s `CONTEXT_PATH` → `context/context.path` → the `context/` folder inside this repo, in that order, using the first one that's non-blank.

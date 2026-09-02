@@ -20,6 +20,192 @@ All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs)
 - Contract kernel (between the `enterprise-ai-platform:kernel:start/end` markers) is unchanged — no SHA-256 recompute needed; `/dev` reuses the existing kernel's C4 subagent opt-in and §14 approval gate rather than introducing new kernel rules.
 - Followed `GOVERNANCE.md` §1 7-step new-command process; shells for all `supported_platforms` were built in the same pass, so `registry.yml` went straight to `status: active` (step 6) without an intermediate `planned` state.
 
+## [Unreleased] — Knowledge Repo Standards Sync (Part A)
+
+### Added
+- `shared/standards/backend/sql-query.md` — split out of `repository.md`: parameter binding, pagination, N+1, indexing, and a documented real gap/fix in the `*.query.SQL` string-built native-query pattern.
+- `shared/standards/backend/custom-annotations.md` — `@Audited`, `@Auditable`, `@LogApiError`, `@InjectCTA`, `@IdentifierCodeConstraint`, `@EncounterLocked`, `@InvalidateRcmSettingsCache` — per-service duplication caveat, no shared annotation library.
+- `shared/standards/backend/db-migration.md` — Flyway (Postgres) naming/location rules and the silently-ignored-file gotcha; Mongock (Mongo) per-service usage table and transaction/replica-set gotcha. Distinct from `shared/standards/migration/` (git branch migration).
+- `shared/standards/frontend/app-shell-menu-config-cache.md` — access-driven menu data flow, two-tier (IndexedDB + Redis) access-rights caching and clear order, runtime PrimeNG theme-swap mechanism, Cache Management dialog.
+- `shared/standards/frontend/global-filter-search.md` — the FDM global filter/searchbar pattern (named `searchbar` router outlet + `SearchMenuService` pub/sub), per-module convention.
+- `shared/standards/frontend/modern-clinical-enterprise-design-system.md` — visual design system and AI-agent hard rules for UI work; consume the existing theme/customization system, never build a parallel one.
+- `shared/contract.md` §5 — added `custom-annotations`, `sql-query`, `db-migration` to the Java/Spring lazy-load list; added `app-shell-menu-config-cache`, `global-filter-search`, `modern-clinical-enterprise-design-system` to the Angular/TS lazy-load list. Kernel block (hash-pinned) untouched — no SHA-256 recompute needed.
+
+### Changed
+- `shared/standards/backend/repository.md` — replaced with the newer version that splits SQL-writing rules out to `sql-query.md` and documents the second (string-builder) JDBC pattern.
+- `shared/standards/coding-standards.md` — added §10 Architecture & Layering, §11 Database & SQL Standards (links to `backend/sql-query.md`), §12 API Standards, §13 Security Standards. §1–9 were already in sync with `D:\GitLab-Workspace\Knowledge Repo\docs\standards\coding-standards.md`.
+
+### Notes
+- Source: reconciliation against `D:\GitLab-Workspace\Knowledge Repo` (this machine's company knowledge workspace, not part of this git repo). `common-api.md`, `dto-mapper-enum.md`, `entity.md`, `service.md`, `spring.md` (backend) and `angular.md`, `component.md`, `custom-components.md`, `others.md`, `pagination.md`, `service.md` (frontend) were already identical — no change.
+- This is Part A of a larger Knowledge Repo integration (company knowledge relocation, skills reconciliation, redmine templates, and four new skills — Plan Reviewer, Testing consolidation, Bulk Redmine Reporter, weekly usage logger, Custom Knowledge Generator — tracked separately, not yet done).
+
+## [Unreleased] — Company Knowledge Relocation (Part B)
+
+### Added
+- `shared/knowledge/custom-flows/` — relocated from Knowledge Repo's `docs/Custom Flow knowledge/`: `abdm/` (backend + frontend ABDM integration), `bom/` (5 files — functionality KB, non-stock indent consumption, stock reduction, adding BOM to bill, casesheet/OPD clinical integration), `pagination-global-filter/` (global filter search + pagination architecture), `upload/` (core upload framework, RCM new-upload knowledge). Fixed the `uplaod` → `upload` directory-name typo from the source.
+- `shared/knowledge/architecture/` — relocated from Knowledge Repo's `docs/architecture/`: `architecture.md`, `dependencies.md`, `environments.md`, `projects.md`, `redmine.md` (project identifiers, `redmine-reader` MCP usage, full status-id workflow, MR-tracking-in-journals pattern), `running-locally.md`. All cross-file relative links (`./sibling.md`) preserved correctly since files moved together as a set.
+- `shared/company-profile.md` — new "Custom Flow & Architecture Knowledge" section: a topic → path table pointing to `shared/knowledge/`, with the same lazy-load-only-what's-relevant discipline as `shared/standards/`. SEAM NOTE updated to mention `shared/knowledge/` as company domain knowledge, separate from the company profile file itself.
+
+### Notes
+- `shared/knowledge/` was previously an empty placeholder (`.gitkeep` only) — this is its first real content.
+- Files copied as-is (pure relocation, no content merge needed — verified no other Knowledge Repo file referenced these by their old path).
+- `D:\GitLab-Workspace\Knowledge Repo` remains the live upstream workspace; this is a one-time sync-in, not a symlink (required for portability/CI — see Part A discussion).
+
+## [4.5.0] - 2026-08-29 — Drift Fix: Backport /planning
+
+### Added
+- `shared/commands/planning.md`, `shared/commands/planning-engine.md`, and their `registry.yml` entry — backported verbatim from `~/.claude/commands/` (the installed global copy), where they already existed at registry v4.5.0 but had never been committed back to this source repo (still v4.4.0, no `/planning` entry). No content changes — pure reconciliation.
+- `adapters/opencode/commands/planning.md` — the opencode shell the registry entry's own note claimed existed "on every listed platform" but was actually missing from this repo; added to match the pattern of the other opencode command shells (thin pointer to `.opencode/ai-platform/shared/commands/planning.md`).
+
+### Changed
+- `VERSION` — `4.4.0` → `4.5.0` (catching up to the version the installed commands already claimed).
+
+### Notes
+- Discovered while building the Plan Reviewer skill (next entry) — Plan Reviewer needed to sit consistently next to `/planning`, which surfaced the fact that `/planning` wasn't in this repo at all despite being live and usable in this Claude Code installation.
+- Root cause of the drift not established — no `.prev` backup file exists for `planning.md`/`planning-engine.md` in `~/.claude/commands/` (unlike `test.md.prev`, `migration.md.prev`, `registry.yml.prev`, which show normal installer-managed updates), meaning these two were added to the installed copy through some path other than `install-claude.ps1`/`update-platform.ps1`. Not investigated further — out of scope for this task.
+
+## [4.6.0] - 2026-08-29 — Plan Reviewer (Part E)
+
+### Added
+- `shared/commands/plan-reviewer.md` — new `/plan-reviewer` command (10th platform command). QA/audit gate on a plan that already exists (from `/planning`, a human, or a Redmine attachment): scores Problem Understanding, Code Understanding, Test Plan, and Confidence (0–100 each) against actual evidence (code via `gitlab-reader`, DB via the environment-routed `mcp__*-db` tools, logs/traces via `*-signoz-reader`/`*-grafana-reader`, ticket/BRD via `redmine-reader`) — never scores from how plausible the plan reads. Approval requires all four scores to clear `threshold=` (default 95, configurable). Not approved → produces a revised `PLAN.md` + `TEST-CASES.xlsx` and re-scores, capped at `max-revisions=` (default 3). Never implements. Posting the result to Redmine (only if explicitly asked) uses the Part D templates.
+- `shared/commands/registry.yml` — registered `plan-reviewer` (`phase_available: I`, `supported_platforms: [claude, opencode]`).
+- `adapters/opencode/commands/plan-reviewer.md` — opencode shell, same pattern as the other thin pointer shells.
+- `.claude-plugin/plugin.json` — `/plan-reviewer` added to command list/description; version → 4.6.0.
+- Mirrored into `~/.claude/commands/` (this machine's installed copy) so the command is usable immediately in this Claude Code installation, consistent with how `/planning` was already live there ahead of the source repo.
+
+### Changed
+- `VERSION` — `4.5.0` → `4.6.0`.
+
+## [4.7.0] - 2026-08-29 — Bulk Redmine Reporter (Part G)
+
+### Added
+- `shared/commands/redmine-bulk-report.md` — new `/redmine-bulk-report` command (11th platform command). Takes a list of Redmine IDs, and for each: applies the comment-priority rule, resolves environment via the Part C routing table, follows MR links found in journals, and only when evidence supports it (MR diff / code / DB / logs / attachments — checked in that priority order, budget-capped at 8 searches per ticket) states a root cause with a confidence rating and cited evidence. Writes one combined `Redmine-Report-<date>.md`. Never guesses a root cause to fill a row — marks `INSUFFICIENT EVIDENCE` instead. Recommends `/planning` (High confidence) or `/bug-fix` (Low/insufficient) per ticket. Read-only; posts to Redmine only if explicitly asked.
+- `shared/commands/registry.yml` — registered (`phase_available: I`, `supported_platforms: [claude, opencode]`).
+- `adapters/opencode/commands/redmine-bulk-report.md` — opencode shell.
+- `.claude-plugin/plugin.json` — added to command list; version → 4.7.0.
+- Mirrored into `~/.claude/commands/` for immediate use.
+
+### Changed
+- `VERSION` — `4.6.0` → `4.7.0`.
+
+## [4.8.0] - 2026-08-29 — System-Wide Usage Logger (Part H)
+
+### Added
+- `adapters/claude/hooks/usage-logger.js` — new `UserPromptSubmit` hook, distinct from the existing per-repo `audit.js`. Writes one JSONL entry per submitted prompt to a **fixed global path**, `~/.claude/usage-logs/<YYYY-MM-DD>.jsonl`, independent of which repo or folder the session runs in. Factual fields only (timestamp, session_id, cwd, repo basename, user, prompt text/length, an informational-only `has_redmine_ref` flag that never affects scoring). Self-prunes files older than 10 days on every write — no separate retention job needed.
+- `shared/commands/usage-report.md` — new `/usage-report` command (12th platform command, Claude-only — the hook mechanism it depends on is Claude-Code-specific). Reads the log and reports: total sessions, total prompts, prompts-per-session (min/max/avg), per-day breakdown, and prompt quality reusing `shared/prompts/prompt-quality.md` §16a's scoring factors — applied across sessions/days rather than the single-task scope of the existing per-session `Prompt Quality` line. `clear` sub-mode reports what would be deleted and requires an exact typed `CONFIRM` reply — a bare `clear` argument or any other reply deletes nothing.
+- `adapters/claude/file-map.yml` — new install-target entry for `usage-logger.js`, installed to the **global** `~/.claude/hooks/` (not per-repo `.claude/hooks/`) — first `scope: global` entry in this file.
+- `shared/commands/registry.yml` — registered `usage-report`.
+- `.claude-plugin/plugin.json` — added; version → 4.8.0.
+- Mirrored `usage-report.md` and `usage-logger.js` into the installed `~/.claude/commands/` and `~/.claude/hooks/` for immediate use; the hook's actual wiring into `~/.claude/settings.json` (the `UserPromptSubmit` event registration) was done via the `update-config` skill rather than a direct edit, since that's its designated job.
+
+### Changed
+- `VERSION` — `4.7.0` → `4.8.0`.
+
+### Fixed
+- `usage-logger.js` used `toISOString().slice(0,10)` (UTC date) for the daily log filename — on this machine (local time ahead of UTC), a prompt sent late at night would land in "tomorrow's" UTC file instead of today's local one. Switched to explicit local-time date components (`localDateStr()`), fixed the retention-pruning cutoff to match.
+- `usage-logger.js` didn't strip a leading UTF-8 BOM (U+FEFF) from stdin before `JSON.parse` — PowerShell prepends one when piping a string to a native process's stdin, which made `JSON.parse` throw (silently caught by the hook's own try/catch) and every field come back `null`. Confirmed via a raw-bytes test (`ef bb bf 7b 22...`) before fixing. Verified via pipe-tests through both bash and PowerShell (the hook's actual `shell: powershell` invocation path) before and after the fix.
+
+### Notes
+- Deliberately separate from `shared/commands/prompt-audit.md` / `shared/prompts/prompt-quality.md`'s existing per-task scoring — this is the "system level" measure the user asked for, reusing the same scoring factors rather than inventing a second rubric, but aggregating across every session/repo on the machine over a rolling 10-day window.
+- The `UserPromptSubmit` hook is now registered in `~/.claude/settings.json` (added via the `update-config` skill, existing `PostToolUse` hook left untouched) and pipe-tested end-to-end through PowerShell. Hooks are read at session start, so it takes effect from the next Claude Code session — it does not retroactively log prompts already submitted in a running session.
+
+## [4.9.0] - 2026-08-29 — Custom Knowledge Generator (Part I)
+
+### Added
+- `shared/commands/knowledge-capture.md` — new `/knowledge-capture` command (13th platform command). On-demand only — never a default step of another command. Turns what was actually implemented and verified this session (or a named `redmine=`/`mr=`) into a new or extended file under `shared/knowledge/`, matching the existing evidence-based voice (verified vs. inferred, real file/class/table citations, the gotcha if there was one). Checks existing coverage first via `Glob`/`Grep` before writing — extends an existing file rather than duplicating one where the domain is already covered. New files get cross-linked from `company-profile.md`'s topic table so they're discoverable. Refuses to document unverified/in-progress work.
+- `shared/commands/registry.yml` — registered.
+- `adapters/opencode/commands/knowledge-capture.md` — opencode shell.
+- `.claude-plugin/plugin.json` — added; version → 4.9.0.
+- Mirrored into `~/.claude/commands/` for immediate use.
+
+### Changed
+- `VERSION` — `4.8.0` → `4.9.0`.
+
+## [4.10.0] - 2026-08-29 — Contract Governance (Part J)
+
+### Added
+- `shared/contract.md` kernel — two new lines, per the user's explicit "strict things the agent should always do":
+  - `coding-standards.md` marked mandatory for any code-touching task (strengthens the existing "Lazy standards" line — previously implied, now explicit and unconditional).
+  - New **Company knowledge (F10)** line: load the matching `<root>/knowledge/` file(s) for a documented company/domain flow, indexed via `company-profile.md`'s topic table (Part B) — on demand, never bulk-loaded.
+  - (The third "strict thing" — logging all prompts/sessions — is infrastructure, not an agent instruction: Part H's hook does this unconditionally regardless of kernel content, so no kernel line was needed for it.)
+- Regenerated `shared/contract.md.sha256` using the exact extraction+hash algorithm `adapters/claude/hooks/hash-check.js` uses (substring between the kernel markers, inclusive, SHA-256 over UTF-8 bytes) — verified programmatically via a throwaway Node script, not computed by hand. Old hash `528cdbb2d5...` → new hash `70d6ae1f42...` (full value in the file).
+- Applied the identical kernel text to the live `~/.claude/CLAUDE.md` and verified byte-for-byte that source kernel hash == live kernel hash == the newly-written `.sha256` file, via a second verification script — not assumed.
+
+### Fixed (drift)
+- Backported the **Knowledge-graph first (F-KG)** kernel paragraph from the live `~/.claude/CLAUDE.md` into `shared/contract.md` — it existed live (matching this machine's `D:\GitLab-Workspace\CLAUDE.md` project instructions) but had never been committed to the source repo, same class of drift as the `/planning` backport in 4.5.0. Included in the hash recomputation above.
+
+### Changed
+- `VERSION` — `4.9.0` → `4.10.0`. `shared/commands/registry.yml` version left at 4.9.0 — no command was added or removed in this part, only the kernel.
+
+### Risk note
+- This is the one part of the whole Knowledge Repo integration that touches the hash-pinned kernel (every other part touched only the full, non-kernel contract or added new files). A consuming repo installed via `install-claude.ps1` from a pre-4.10.0 checkout will show a hash mismatch on its next session until re-installed — `hash-check.js` only warns and re-injects, it never blocks, so this is not destructive, but worth knowing before rolling this version out to other repos.
+
+## [Unreleased] — Configurable Output Paths
+
+### Added
+- `paths.env` (repo root, git-tracked — no secrets, plain folder paths only, unlike `.env`) — a new local config file the user edits after pulling the repo, following the same "edit in place, keep it committed" pattern as the existing `context/context.path`:
+  - `PLAN_OUTPUT_PATH` — where `/planning` and `/plan-reviewer` write `PLAN.md`/`TEST-CASES.xlsx`. Blank = existing default (current working directory).
+  - `KNOWLEDGE_OUTPUT_PATH` — where `/knowledge-capture` writes new/extended files. Blank = existing default (`shared/knowledge/` in this repo).
+  - `USAGE_LOG_PATH` — where the `usage-logger.js` hook writes its daily log. Blank = existing default (`~/.claude/usage-logs/`). Documented as needing a mirrored copy at `~/.claude/paths.env` since the hook runs globally (any repo, any cwd) and can't resolve a per-repo `paths.env`.
+  - `CONTEXT_PATH` — the AI context input folder, now consolidated into this file too (per follow-up instruction), pre-filled with the value already in `context/context.path` (`D:\GitLab Workspace\context for AI`). Checked first; `context/context.path` remains fully supported as the fallback for anyone already using it, and is left completely unmodified — nothing was deleted or migrated destructively.
+- `shared/commands/planning.md`, `shared/commands/plan-reviewer.md`, `shared/commands/knowledge-capture.md` — output-path resolution updated to check `paths.env` before falling back to each command's existing default.
+- `shared/commands/usage-report.md` — now resolves the log directory from `~/.claude/paths.env`'s `USAGE_LOG_PATH` (both Default/Dated Report Mode and Clear Mode), so it reads from wherever the hook is actually configured to write rather than assuming the hardcoded default.
+- `adapters/claude/hooks/usage-logger.js` — new `resolveLogDir()`: reads `USAGE_LOG_PATH` from `~/.claude/paths.env`, falls back to the original hardcoded default on a blank value, a missing file, or a read error.
+- Mirrored `paths.env` to `~/.claude/paths.env` and the updated `usage-logger.js`/`usage-report.md` to their installed locations.
+
+### Fixed
+- `resolveLogDir()`'s first implementation used `\s*` between `=` and the capture group in its `USAGE_LOG_PATH=` regex. `\s` matches newlines in JS, so on a **blank** value immediately followed by a blank line, the greedy `\s*` crossed the line boundary and the capture group grabbed the *next* line's comment text instead of an empty string — confirmed with an isolated repro (`content.match()` returned the following `# ─── AI context...` comment line as the "value") before fixing. Replaced with `[ \t]*` (does not match newlines) so matching stays on the `USAGE_LOG_PATH=` line. Verified after the fix: blank value → correct empty-string match → falls through to default; a real path value → captured correctly; a missing `paths.env` → falls through to default. All three cases re-verified end-to-end through the actual PowerShell hook-invocation path, not just in isolation.
+- While retesting, confirmed the live `UserPromptSubmit` hook wiring from the earlier session (Part H) is actually firing correctly mid-session now — real prompt text from this conversation appeared in today's log during testing, confirmed genuine (not a test artifact) and left in place; only the synthetic test entries this fix required were removed afterward.
+
+## [Unreleased] — Knowledge Graph Integration & README Refresh
+
+### Added
+- `shared/mcp/knowledge-graph-setup.md` — documents the full pipeline this machine actually runs: `Knowledge Graph Generator` (a separate repo, `indexer.py`) reads source repos read-only → writes `knowledge_graph.db` to `OUTPUT_DIR` (configured in that repo's `kg-config.env` as `Knowledge Repo\Knwoledge graphs\`, not its own `output/` folder) → the `knowledge-graph` MCP server (`mcp_server/`, same repo) serves it via `KG_DB_PATH` → this platform's contract kernel F-KG rule uses it first. Covers staleness (it's a snapshot, not live — reindex is a manual step), the 12 read-only tools, the VERIFIED/INFERRED/UNRESOLVED confidence model, and where "check it first" is wired into the platform.
+- `shared/company-profile.md` — `knowledge-graph` added to the Platform Defaults MCP servers row, marked optional, cross-linked to the new setup doc.
+- Explicit "Knowledge graph first (kernel F-KG)" steps added to each command's own discovery phase — not just relying on kernel recall — in `bug-fix.md`, `new-development.md`, `migration.md` (mode=functionality cross-service impact via `find_dependencies`/`trace_business_flow`), `data-correction.md` (`get_database_impact` before live schema inspection), `ui-design-update.md` (both Angular and Flutter analog-component lookup), `dev.md`, `planning-engine.md` (propagates to `/planning` and any command that reads it), `plan-reviewer.md` (verifying a plan's code claims via `get_source_evidence`), `redmine-bulk-report.md` (Step 4 code lookup), and `knowledge-capture.md` (citation verification). All fall back to the existing scan-based discovery when the server isn't connected — nothing is a hard dependency.
+- `shared/commands/README.md` — full rewrite/backport. The installed `~/.claude/commands/README.md` had drifted badly: only 5 of 13 commands documented, no `paths.env`, no knowledge-graph section, and it still referenced `/ui-redesign` — a phantom command removed back in v3.1 that was never actually built. Rewrote to cover all 13 commands, added §6 (`paths.env`) and §7 (Knowledge Graph MCP), fixed the phantom-command reference with a historical note distinguishing it from `/ui-design-update`.
+- `README.md` (repo root) — version → 4.10.0, command count → 13, new Commands-table rows for `/planning`/`/plan-reviewer`/`/redmine-bulk-report`/`/usage-report`/`/knowledge-capture`, new "Knowledge Graph MCP (optional)" section, `paths.env` and `shared/knowledge/` added to the Architecture tree, "Knowledge graph first" and "Company knowledge" added to the "How the Contract Works" list, Versioning table extended through Phase J (v4.10).
+- Mirrored every changed command file + the new `README.md` into `~/.claude/commands/` — confirmed live via the skill listing (`README`, `plan-reviewer`, `redmine-bulk-report`, `knowledge-capture`, `planning-engine`, and the rest all show updated descriptions).
+
+### Notes
+- No new command was registered and the kernel was not touched by this entry — verified the kernel hash still matches source/live/`.sha256` after all edits, same script as the Part J verification.
+- `file-map.yml`'s existing `shared/commands/ → .claude/commands/` recursive copy already covers the new `README.md` — no separate install-target entry needed.
+
+## [Unreleased] — Testing Knowledge Base (Part F)
+
+### Added
+- `shared/standards/testing/` — new subdirectory holding 15 supplementary testing-technique files relocated from Knowledge Repo's `docs/Testing/`: `README.md` (index), `testing-principles.md`, `test-case-design.md`, `java-junit-mockito.md`, `java-api-testing.md`, `java-db-testing.md`, `java-file-upload-testing.md`, `java-large-data-import-testing.md`, `java-performance-load-testing.md`, `angular-testing.md`, `react-testing.md` (reference only — no React app in this workspace yet), `playwright-e2e.md`, `test-data-strategy.md`, `coverage-and-regression.md`, `test-lifecycle-and-build-isolation.md`, `testing-anti-patterns.md`. Fixed the two cross-links (`README.md`, `coverage-and-regression.md`) that pointed at `testing.md` — now `../testing.md` since that file stays at the parent level; all other cross-links were already sibling-relative and needed no change.
+- `shared/contract.md` §5 — new "Writing/reviewing tests" lazy-load entry pointing to `testing/README.md` as the index, explicit that it supplements (never overrides) `testing.md` and `rules/testing.md`. Full contract only, kernel untouched — no hash recompute.
+- `shared/rules/testing.md` — one-line cross-reference to the new knowledge base.
+
+### Notes
+- Knowledge Repo's own `docs/Testing/testing.md` (174 lines) and `README.md` explicitly describe themselves as a reference copy of / wrapper around the platform's existing `/test` automation contract ("this is guidance, not the automation contract... nothing here overrides testing.md") — confirmed near-identical to `shared/standards/testing.md` (173 lines), so that file was **not** copied in; the platform's existing `testing.md` and `shared/rules/testing.md` (TR-01–TR-08) are unchanged.
+- This is purely additive technique/design guidance (JUnit/Mockito patterns, API/DB/file-upload/large-import/performance test design, Angular/React/Playwright testing, test-data strategy, coverage/regression policy, test lifecycle, anti-patterns) — no existing rule or automation behavior changed.
+
+## [Unreleased] — Redmine Comment Templates (Part D)
+
+### Added
+- `shared/templates/redmine-execution-comment.md` — short (≤~6 line) execution/status comment template. Optimized from Knowledge Repo's `docs/agent-response-template/optional-ai-generated-info.md`: keeps the opt-in "only when explicitly asked" rule and the no-hallucination/verification rules, tightens the format, and adds an explicit "reference files, never paste their content" rule per the user's instruction that Redmine comments should point at files rather than carry the content inline.
+- `shared/templates/redmine-approval-comment.md` — new template for posting a Plan Reviewer approval (Part E) to a Redmine issue: the 4 scores + file references, nothing more. Explicitly does not apply to a not-yet-approved plan (use the execution-comment template with `Status: Needs revision` instead).
+- `shared/contract.md` §18 "Redmine Comment Templates" — on-demand pointer to both templates, triggered only by an explicit user request, never as a default step of any command. Placed in the full contract (not the kernel) since it's an occasional-use capability, not a per-turn rule — no SHA-256 recompute needed.
+
+### Notes
+- No command file (`bug-fix.md`, `dev.md`, etc.) needed editing — none of them currently post to Redmine as part of their flow (they only *read* from it via the `redmine=<id>` discovery key in contract §2), so a single contract-level pointer covers all of them rather than duplicating the same instruction across 5+ command files.
+
+## [Unreleased] — Skills Reconciliation (Part C)
+
+### Added
+- `shared/knowledge/architecture/environments.md` — new "Ticket status → DB MCP routing" table mapping Redmine environment keywords/statuses to this session's actual configured `mcp__*-db`/`mcp__*-reader` server names (local, v2qa, sit, canary, medvista-qa/uat, aster-uat, ajyal-uat, smiles-stage).
+- `shared/knowledge/architecture/redmine.md` — new "Reading journals: newest finding wins" section (comment-priority rule: latest QA/deployment/rejection findings outweigh the original description).
+- `shared/standards/backend/db-migration.md` — new "Migration risk tagging" section (SAFE / CAUTION / HIGH RISK, with lock-behavior and NOT NULL/backfill practical notes); HIGH RISK always triggers the contract §9 approval gate regardless of `auto=true`.
+- `shared/standards/backend/sql-query.md` — new "Verify schema before writing SQL" rule: confirm schema via the live `mcp__*-db` tool for the target environment before writing any query, never from memory or a possibly-stale entity class.
+
+### Rejected (architecture-incompatible, documented for the record)
+- `D:\GitLab-Workspace\Knowledge Repo\Skills\planning-workflow.md`, `spring-enterprise-backend.md`, `database-engineering.md` are built around a multi-agent orchestrator/delegation model (named persistent sub-agents `healthcare-backend-engineer`, `db-engineering-agent`, `angular-healthcare-ui`, `orchestrator-agent`, `triage-agent` that auto-load these skills and receive delegated work). This directly conflicts with the contract kernel's "single reasoning agent, no automatic agent chains, subagents opt-in and capped at 3" mandate — not ported wholesale.
+- Non-duplicate, architecture-agnostic content was extracted instead (see Added, above). Remaining content (debugging root-cause workflow, 13-item API verification checklist) was left unported — it's raw material for the planned Plan Reviewer (Part E) and Bulk Redmine Reporter (Part G) skills rather than being placed in two locations.
+- Files in Knowledge Repo were left untouched — that workspace isn't owned by this repo's git history; the user can prune superseded files there at their own discretion.
+- `shared/rules/security.md`'s header already documented an earlier, security-scoped consolidation from these same two files (2026-08) — this entry covers the additional non-security content.
+
 ## [Unreleased] — Flutter / Dart Mobile Support
 
 ### Added

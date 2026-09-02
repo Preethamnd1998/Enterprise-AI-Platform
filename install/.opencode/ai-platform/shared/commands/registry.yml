@@ -1,0 +1,78 @@
+﻿# shared/commands/registry.yml
+# Single source of truth for all platform commands.
+# CI validates: no adapters reference commands not listed here (no-phantom-commands job).
+# Installers generate adapter-specific shells from this registry.
+# D1/D2 fix: /planning and /ui-redesign are NOT listed here (they were phantom commands in v3.0).
+
+version: "4.3.0"
+
+commands:
+  - id: bug-fix
+    slug: bug-fix
+    title: "Bug Fix"
+    invoke: "/bug-fix"
+    source: "shared/commands/bug-fix.md"
+    supported_platforms: [claude, copilot]
+    phase_available: A
+    status: active
+
+  - id: migration
+    slug: migration
+    title: "Migration"
+    invoke: "/migration"
+    source: "shared/commands/migration.md"
+    supported_platforms: [claude, copilot]
+    phase_available: A
+    status: active
+
+  - id: new-development
+    slug: new-development
+    title: "New Development"
+    invoke: "/new-development"
+    source: "shared/commands/new-development.md"
+    supported_platforms: [claude, copilot]
+    phase_available: A
+    status: active
+
+  - id: data-correction
+    slug: data-correction
+    title: "Data Correction"
+    invoke: "/data-correction"
+    source: "shared/commands/data-correction.md"
+    supported_platforms: [claude, copilot]
+    phase_available: A
+    status: active
+
+  - id: ui-design-update
+    slug: ui-design-update
+    title: "UI Design Update"
+    invoke: "/ui-design-update"
+    source: "shared/commands/ui-design-update.md"
+    supported_platforms: [claude, copilot]
+    phase_available: A
+    status: active
+
+  - id: test
+    slug: test
+    title: "Test"
+    invoke: "/test"
+    source: "shared/commands/test.md"
+    supported_platforms: [claude, opencode]
+    phase_available: C
+    status: active
+    # Copilot: no prompt.md/chatmode.md shell exists yet â€” deferred, see
+    # adapters/copilot/capability-map.yml cap-06. Add "copilot" back once built.
+
+  - id: prompt-audit
+    slug: prompt-audit
+    title: "Prompt Audit"
+    invoke: "/prompt-audit"
+    source: "shared/commands/prompt-audit.md"
+    supported_platforms: [claude, copilot, opencode]
+    phase_available: D
+    status: active
+
+# REMOVED â€” phantom commands (D2 defect, v3.0.0):
+# /planning â€” was a Copilot chatmode, not a real platform command; removed in v3.1
+# /ui-redesign â€” was a Copilot chatmode, not a real platform command; removed in v3.1
+

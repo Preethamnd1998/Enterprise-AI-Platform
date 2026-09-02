@@ -100,7 +100,11 @@ API/DB docs).
 2. Read only the `context/` files the task file explicitly references (see above).
 3. Standards (lazy): detect languages/layers the task touches, read matching
    `shared/standards/` files only. Skip if already cached this session.
-4. Build the execution plan: sequence of tasks, in the order they must run, with the layers
+4. **Knowledge graph first (kernel F-KG):** if the task file names a
+   feature/flow/component but not exact file paths, and a `knowledge-graph`
+   MCP server is connected, resolve it via `search_knowledge`/`get_context_pack`
+   before falling back to a repository scan.
+5. Build the execution plan: sequence of tasks, in the order they must run, with the layers
    each touches.
 
 Output the analysis blocks (contract §12):
