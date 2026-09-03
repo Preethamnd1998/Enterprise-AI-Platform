@@ -1,0 +1,10 @@
+1.
+The only remaining item I'd prioritize is the live nested-subagent verification, because the README itself correctly admits that this specific SDK behavior has not yet been independently verified end-to-end.
+
+2. D:\GitHub Repos
+-two GitHub repos integration.
+
+3. D:\GitLab-Workspace\Knowledge Graph Generator -> generate using mcp when needed.
+
+4. .env file path for all things in one place so taht user can configure once.
+-for autonomous runner also
