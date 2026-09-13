@@ -36,3 +36,6 @@ package-lock.json
 
 # ─── Backup files created by installer ───────────────────────────────────
 *.prev
+
+# ─── Machine bootstrap output (per-machine, has real absolute paths) ─────
+install/environment-manifest.md

@@ -86,6 +86,30 @@ Copy-Item shared/mcp/.mcp.json.template C:\src\my-service\.mcp.json
 
 See [docs/QUICK-START.md](docs/QUICK-START.md) for a full walkthrough.
 
+**macOS / Linux — machine bootstrap (new):** the steps above assume the
+Claude Code CLI, OpenCode, and the Knowledge Graph/Code Cortex/Unified
+Trace MCP servers are already set up. `install/bootstrap.sh` does that
+part too — prerequisite detection, sibling-repo clone-or-reuse, Claude
+Code CLI install, this platform's global contract install, and MCP
+registration for `knowledge-graph`/`code-cortex-mcp`/`unified-trace`/
+`opencode-bridge` — idempotent (safe to re-run), and it never indexes
+your codebase automatically (indexing stays an explicit, separate step
+you run yourself in `knowledge-graph-generator/`).
+
+```bash
+git clone https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git
+cd enterprise-ai-platform
+bash install/bootstrap.sh --dry-run   # preview what would happen
+bash install/bootstrap.sh             # actually set up
+bash install/bootstrap.sh --doctor    # health check any time after
+```
+
+Optional path overrides live in `paths.env` (`TOOLS_DIR`, `PROJECTS_DIR`) —
+see the comments above each key. There is no Windows equivalent of this
+specific script yet; Windows engineers use the PowerShell steps above for
+the contract/commands install (Claude Code, OpenCode, and MCP servers
+still need to be installed by hand there today).
+
 ---
 
 ## Knowledge Graph MCP (optional)
