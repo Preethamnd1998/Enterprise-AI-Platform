@@ -2,6 +2,23 @@
 
 All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs).
 
+## [4.11.0] - 2026-09-14 — Machine bootstrap (macOS/Linux) + Unified Trace committed
+
+### Added
+- `shared/mcp-tools/unified-trace-mcp/`, `shared/mcp-tools/opencode-mcp-bridge/`, `docs/opencode-setup.md` — committed for the first time; these existed and had been iterated on locally across several sessions but were never in git, so cloning the repo produced an environment missing Unified Trace entirely.
+- `install/bootstrap.sh` — portable (macOS + Linux) machine bootstrap: prerequisite detection with version classification, sibling-repo clone-or-reuse (knowledge-graph-generator, code-cortex-mcp), Claude Code CLI install, this platform's own contract install, MCP registration for `knowledge-graph`/`code-cortex-mcp`/`unified-trace`/`opencode-bridge` with stale-registration detection and repair, OpenCode config safe-merge (refuses rather than risks corrupting a hand-edited JSONC file), `--dry-run`, `--doctor`, `--reindex`, `--skip-runner-tests`. Indexing stays explicit — a missing Knowledge Graph database is reported `NOT INDEXED / READY TO INDEX`, never built automatically.
+- `install/merge-opencode-config.js` — the safe-merge helper `bootstrap.sh` shells out to.
+- `install/test-bootstrap.sh` — 22-case test matrix (new/existing-machine scenarios, idempotency, config-merge preservation, broken-registration repair, optional-component absence, dry-run/doctor isolation), run against isolated fake `$HOME` directories, never the real environment.
+- `paths.env` — new `TOOLS_DIR`/`PROJECTS_DIR` keys (blank = auto-detect siblings of wherever this repo was cloned); `EAP_TOOLS_DIR`/`EAP_PROJECTS_DIR` env var overrides for scripting/CI.
+- `docs/TROUBLESHOOTING.md` — new entries for the `claude mcp get` project-scope-shadowing gotcha (found and fixed during this work), `CONNECTION_CLOSED` on `code-cortex-mcp`/`unified-trace`, and the OpenCode config manual-merge fallback.
+- `docs/installation.md`, `docs/prerequisites.md`, `README.md` — cross-references to the new bootstrap path.
+
+### Fixed
+- The Windows master-prompt doc under `Auto setup claude prompt/` marked superseded — it predates the decision not to adopt GraphRAG (superseded by Knowledge Generator + Code Cortex + Unified Trace) and had 20+ stale references across 1,646 lines.
+
+### Notes
+- Windows is explicitly out of scope for `install/bootstrap.sh` — documented as a known gap rather than claimed working. The existing PowerShell installers (`install/*.ps1`, `adapters/*/install.ps1`) still cover the repo-contract install on Windows.
+
 ## [4.4.0] - 2026-07-13 — Phase G: AI Developer Agent
 
 ### Added

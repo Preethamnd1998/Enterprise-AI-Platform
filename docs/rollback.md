@@ -348,6 +348,52 @@ Remove-Item adapters/roo-code/ -Recurse -Force
 
 ---
 
+## Scenario 13: Roll back `install/bootstrap.sh` (machine-level, macOS/Linux)
+
+**When:** You want to remove what `install/bootstrap.sh` set up on this
+machine — its actions are additive and never touch unrelated config, so
+this is about removing MCP registrations and PATH lines, not restoring a
+backup.
+
+### Remove the MCP server registrations
+```bash
+claude mcp remove unified-trace -s user
+claude mcp remove opencode-bridge -s user
+claude mcp remove code-cortex-mcp -s user
+claude mcp remove knowledge-graph -s user
+```
+Run these from `$HOME` (or anywhere with no `.mcp.json` above it) — see
+[TROUBLESHOOTING.md](TROUBLESHOOTING.md)'s note on project-scope shadowing
+for why running them from inside a project directory can silently target
+the wrong scope.
+
+### Remove the PATH line it added (only if it added one)
+`install/bootstrap.sh` only appends to your shell profile if `claude` had
+to be installed fresh; if `claude` was already on PATH, nothing was added.
+If it did add a line, it's clearly marked:
+```bash
+grep -n "enterprise-ai-platform bootstrap" ~/.zprofile ~/.bash_profile ~/.bashrc ~/.profile 2>/dev/null
+# then delete the marked block (the comment line plus the export line right after it)
+```
+
+### Remove the OpenCode config merge (only if it auto-merged)
+If `install/bootstrap.sh` reported `OpenCode config merged` (not
+`already configured` or `MANUAL_STEP_REQUIRED`), the `mcp`/`tools` keys it
+added to `~/.config/opencode/opencode.jsonc` can be removed by hand — it's
+plain JSON at that point (the merge only ever runs when the file has no
+comments to lose), so any JSON-aware edit is safe.
+
+### Sibling repos, Knowledge Graph database, autonomous-runner build
+Bootstrap never deletes anything — `knowledge-graph-generator/`,
+`code-cortex-mcp/`, the indexed database, and `autonomous-runner/dist/`
+are ordinary git-tracked/build directories. Remove them exactly as you
+would any other local checkout/build output.
+
+**Verify:** `bash install/bootstrap.sh --doctor` should report `[MISSING]`
+for whichever servers you removed.
+
+---
+
 ## General rollback guidance
 
 - Every `.prev` file is created at install time and updated on each re-install.

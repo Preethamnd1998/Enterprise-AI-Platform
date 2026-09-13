@@ -39,3 +39,4 @@ package-lock.json
 
 # ─── Machine bootstrap output (per-machine, has real absolute paths) ─────
 install/environment-manifest.md
+install/environment-manifest.json

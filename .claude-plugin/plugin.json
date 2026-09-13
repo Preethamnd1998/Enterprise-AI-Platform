@@ -1,6 +1,6 @@
 {
   "name": "enterprise-ai-platform",
-  "version": "4.10.0",
+  "version": "4.11.0",
   "description": "Token-efficient, deterministic AI commands for enterprise Java/Spring Boot/Angular/Flutter repositories. Provides /bug-fix, /migration, /new-development, /data-correction, /ui-design-update, /test, /prompt-audit, /dev, /planning, /plan-reviewer, /redmine-bulk-report, /usage-report, /knowledge-capture. Single reasoning agent by default, lazy standards loading, MCP read-only allowlist, fail-closed security, no automatic agent chains (subagents are opt-in and capped at 3).",
   "author": {
     "name": "Lifetrenz Engineering"

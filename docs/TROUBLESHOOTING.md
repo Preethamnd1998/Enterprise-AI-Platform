@@ -204,6 +204,59 @@ $s.permissions.allow | Where-Object { $_ -like "*<tool-name>*" }
 
 ---
 
+### `claude mcp get <name>` says "already registered" but bootstrap re-registers it anyway (or vice versa)
+
+**Cause:** `claude mcp get`/`add`/`remove` resolve a **project-scoped**
+`.mcp.json` from the current directory upward before ever consulting
+user-scope config — a same-named server registered in a project `.mcp.json`
+anywhere above your current directory silently shadows the user-scope
+entry `install/bootstrap.sh` actually manages. This is genuinely confusing
+even when nothing is broken: two different directories can give two
+different answers for the exact same `claude mcp get unified-trace`.
+
+**Fix:** `install/bootstrap.sh` (v4.11+) always runs `claude mcp` commands
+from `$HOME` internally specifically to avoid this. If you're debugging by
+hand, always run `claude mcp get <name>` from `$HOME` or another directory
+with no `.mcp.json` above it, not from inside a project repo.
+
+---
+
+### `unified-trace` / `code-cortex-mcp` shows `CONNECTION_CLOSED`
+
+**Cause 1:** The `code-cortex-mcp` binary at `~/.local/bin/code-cortex-mcp`
+isn't actually executable in this shell/sandbox (seen in restricted CI/agent
+sandboxes — the binary is valid, verified by md5 and by running the exact
+same file from its build directory, but blocked specifically when copied to
+`~/.local/bin` and invoked from that session). Point `unified-trace` at the
+build-directory binary directly as a workaround:
+```bash
+claude mcp remove unified-trace -s user
+claude mcp add unified-trace -s user \
+  -e UT_CODE_CORTEX_BIN="/path/to/code-cortex-mcp/build/c/code-cortex-mcp" \
+  -- node shared/mcp-tools/unified-trace-mcp/index.js
+```
+
+**Cause 2:** `npm install` was never run inside
+`shared/mcp-tools/unified-trace-mcp/` (or `opencode-mcp-bridge/`) —
+`install/bootstrap.sh` does this automatically, but if you registered the
+server by hand, check `node_modules/` exists in that directory first.
+
+**Verify:** `bash install/bootstrap.sh --doctor` reports live connectivity
+for all four shared MCP servers without installing or registering anything.
+
+---
+
+### OpenCode config wasn't auto-merged ("MANUAL_STEP_REQUIRED")
+
+**Cause:** `install/bootstrap.sh` only auto-merges the shared MCP block
+into `~/.config/opencode/opencode.jsonc` when the file round-trips cleanly
+through `JSON.parse`/`JSON.stringify` — a JSONC file with `//` comments
+(valid JSONC, invalid JSON) fails that check on purpose, so a hand-edited
+config with comments is never silently rewritten. Add the block from
+[opencode-setup.md](opencode-setup.md) by hand in that case.
+
+---
+
 ## Command Problems
 
 ### Command produces no output or hangs

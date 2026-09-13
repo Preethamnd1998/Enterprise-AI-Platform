@@ -42,6 +42,11 @@
 #   ./install/bootstrap.sh --reindex           force a Knowledge Generator
 #                                               reindex as part of this run
 #   ./install/bootstrap.sh --skip-runner-tests skip autonomous-runner `npm test`
+#
+# Env var overrides (take precedence over paths.env; mainly for
+# install/test-bootstrap.sh and CI, not needed for normal use):
+#   EAP_TOOLS_DIR      overrides paths.env's TOOLS_DIR
+#   EAP_PROJECTS_DIR   overrides paths.env's PROJECTS_DIR
 # ============================================================================
 set -uo pipefail
 
@@ -72,6 +77,18 @@ warn() { echo "[bootstrap] WARN: $*" >&2; }
 err()  { echo "[bootstrap] ERROR: $*" >&2; }
 dry()  { [[ $DRY_RUN -eq 1 ]] && log "[DRY-RUN] $*" && return 0; return 1; }
 
+# `claude mcp get/add/remove` resolves project-scope .mcp.json from the
+# CURRENT DIRECTORY UPWARD before ever looking at user-scope config — so a
+# name that's ALSO project-registered somewhere above wherever this script
+# happens to be invoked from silently shadows the user-scope entry this
+# script actually manages, and "already registered" checks pass against
+# the wrong scope entirely (verified empirically: `claude mcp get X` gave
+# different answers run from two different directories with the exact same
+# ~/.claude.json). Always run through $HOME, which no project directory
+# lives above, to get a scope-shadow-free answer every time regardless of
+# where the user invoked bootstrap.sh from.
+claude_mcp() { (cd "$HOME" && claude mcp "$@"); }
+
 # ── Locate platform root (same idiom as adapters/claude/install.sh) ────────
 find_platform_root() {
   local d="$SCRIPT_DIR"
@@ -92,9 +109,10 @@ read_paths_env_key() {
   [[ -f "$PLATFORM_REPO/paths.env" ]] || return 0
   sed -n "s/^[ \\t]*${key}[ \\t]*=[ \\t]*//p" "$PLATFORM_REPO/paths.env" | tail -1 | sed 's/[ \t]*$//'
 }
-TOOLS_DIR="$(read_paths_env_key TOOLS_DIR)"
+# Precedence: environment variable (scripting/CI/tests) > paths.env > computed default.
+TOOLS_DIR="${EAP_TOOLS_DIR:-$(read_paths_env_key TOOLS_DIR)}"
 [[ -z "$TOOLS_DIR" ]] && TOOLS_DIR="$(dirname "$PLATFORM_REPO")"
-PROJECTS_DIR="$(read_paths_env_key PROJECTS_DIR)"
+PROJECTS_DIR="${EAP_PROJECTS_DIR:-$(read_paths_env_key PROJECTS_DIR)}"
 [[ -z "$PROJECTS_DIR" ]] && PROJECTS_DIR="$(dirname "$TOOLS_DIR")"
 
 KG_REPO="$TOOLS_DIR/knowledge-graph-generator"
@@ -175,9 +193,9 @@ if [[ $DOCTOR -eq 1 ]]; then
   log "=== Doctor: MCP connectivity ==="
   if need claude; then
     for server in knowledge-graph code-cortex-mcp unified-trace opencode-bridge; do
-      if claude mcp get "$server" 2>&1 | grep -q "Connected"; then
+      if claude_mcp get "$server" 2>&1 | grep -q "Connected"; then
         echo "[PASS] $server"
-      elif claude mcp get "$server" >/dev/null 2>&1; then
+      elif claude_mcp get "$server" >/dev/null 2>&1; then
         echo "[FAIL] $server (registered, not connected)"
       else
         echo "[MISSING] $server (not registered)"
@@ -311,6 +329,28 @@ else
   STATUS_PLATFORM="FAIL"
 fi
 
+# ── MCP repair: detect a registered-but-stale entry (e.g. the repo moved,
+# or an env var changed) and fix it, rather than reporting FAIL forever.
+# Only used for servers whose exact expected command/args THIS script
+# controls (knowledge-graph, unified-trace, opencode-bridge) — code-cortex-mcp
+# self-configures via its own installer, so its exact invocation isn't
+# something to second-guess here.
+verify_or_repair_mcp() {
+  local name="$1" expected_arg_substring="$2"
+  local existing
+  existing="$(claude_mcp get "$name" 2>&1)"
+  [[ "$existing" == "No MCP server named"* ]] && return 1  # not registered at all
+  if echo "$existing" | grep -q "$expected_arg_substring"; then
+    return 0  # registered and pointing at the right place
+  fi
+  warn "$name: registered but pointing somewhere unexpected — repairing"
+  if dry "Would remove and re-register $name (stale registration detected)"; then
+    return 0
+  fi
+  claude_mcp remove "$name" -s user >/dev/null 2>&1
+  return 2  # caller should fall through to its normal (re-)registration path
+}
+
 # ============================================================================
 # 5. Knowledge Graph Generator — venv + MCP registration (index stays EXPLICIT)
 # ============================================================================
@@ -363,21 +403,23 @@ PYEOF
   fi
 
   if need claude; then
-    if claude mcp get knowledge-graph >/dev/null 2>&1; then
-      log "knowledge-graph MCP server already registered (user scope)"
+    verify_or_repair_mcp knowledge-graph "$KG_REPO/mcp_server_main.py"
+    kg_mcp_status=$?
+    if [[ $kg_mcp_status -eq 0 ]]; then
+      log "knowledge-graph MCP server already registered and correct (user scope)"
     elif dry "Would register knowledge-graph MCP server"; then
       :
     else
       log "Registering knowledge-graph MCP server (user scope)..."
-      claude mcp add knowledge-graph -s user \
+      claude_mcp add knowledge-graph -s user \
         -e KG_DB_PATH="$DB_PATH" \
         -- "$KG_REPO/.venv-mcp/bin/python" "$KG_REPO/mcp_server_main.py" >/dev/null 2>&1
     fi
     if [[ $DRY_RUN -eq 0 ]]; then
-      if claude mcp get knowledge-graph 2>&1 | grep -q "Connected"; then
+      if claude_mcp get knowledge-graph 2>&1 | grep -q "Connected"; then
         log "knowledge-graph MCP: Connected"
       else
-        warn "knowledge-graph MCP: not connected — check 'claude mcp get knowledge-graph'"
+        warn "knowledge-graph MCP: not connected — check 'claude_mcp get knowledge-graph'"
         [[ "$STATUS_KG" == "PASS" ]] && STATUS_KG="FAIL"
       fi
     fi
@@ -403,7 +445,7 @@ elif [[ -f "$CORTEX_REPO/install.sh" ]]; then
   fi
 fi
 if need code-cortex-mcp; then
-  if claude mcp get code-cortex-mcp >/dev/null 2>&1; then
+  if claude_mcp get code-cortex-mcp >/dev/null 2>&1; then
     log "code-cortex-mcp MCP server already registered"
   elif dry "Would run: code-cortex-mcp install -y"; then
     :
@@ -412,7 +454,7 @@ if need code-cortex-mcp; then
     code-cortex-mcp install -y >/tmp/cortex-configure.log 2>&1
   fi
   if [[ $DRY_RUN -eq 0 ]]; then
-    if claude mcp get code-cortex-mcp 2>&1 | grep -q "Connected"; then
+    if claude_mcp get code-cortex-mcp 2>&1 | grep -q "Connected"; then
       log "code-cortex-mcp MCP: Connected"
       STATUS_CORTEX="PASS"
     else
@@ -441,16 +483,17 @@ if [[ -d "$UNIFIED_TRACE_DIR" ]] && need node; then
     fi
   fi
   if [[ -d "$UNIFIED_TRACE_DIR/node_modules" ]] || [[ $DRY_RUN -eq 1 ]]; then
-    if claude mcp get unified-trace >/dev/null 2>&1; then
-      log "unified-trace MCP server already registered"
+    verify_or_repair_mcp unified-trace "$UNIFIED_TRACE_DIR/index.js"
+    if [[ $? -eq 0 ]]; then
+      log "unified-trace MCP server already registered and correct"
     elif dry "Would register unified-trace MCP server"; then
       :
     else
       log "Registering unified-trace MCP server (Claude Code, user scope)..."
-      claude mcp add unified-trace -s user -- node "$UNIFIED_TRACE_DIR/index.js" >/tmp/unified-trace-register.log 2>&1
+      claude_mcp add unified-trace -s user -- node "$UNIFIED_TRACE_DIR/index.js" >/tmp/unified-trace-register.log 2>&1
     fi
     if [[ $DRY_RUN -eq 0 ]]; then
-      if claude mcp get unified-trace 2>&1 | grep -q "Connected"; then
+      if claude_mcp get unified-trace 2>&1 | grep -q "Connected"; then
         STATUS_UNIFIED_TRACE="PASS"
       else
         warn "unified-trace MCP: not connected"
@@ -474,18 +517,29 @@ fi
 log "=== 6c. OpenCode (independent, optional) ==="
 if need opencode; then
   OC_CONFIG="$HOME/.config/opencode/opencode.jsonc"
-  if dry "Would ensure $OC_CONFIG exists and check for unified-trace wiring"; then
-    :
+  # Check CURRENT state first, even in dry-run — "would merge" is only the
+  # right answer when it isn't already configured. A file that doesn't
+  # exist yet obviously isn't, so that check is dry-run-safe without
+  # needing to create it first.
+  if [[ -f "$OC_CONFIG" ]] && grep -q '"unified-trace"' "$OC_CONFIG" 2>/dev/null; then
+    log "OpenCode already has unified-trace/knowledge-graph/code-cortex-mcp configured"
+    STATUS_OPENCODE="PASS"
+  elif dry "Would ensure $OC_CONFIG exists and merge shared MCP block if safely parseable as plain JSON"; then
+    STATUS_OPENCODE="DRY_RUN"
   else
     mkdir -p "$(dirname "$OC_CONFIG")"
     if [[ ! -f "$OC_CONFIG" ]]; then
       echo '{"$schema": "https://opencode.ai/config.json"}' > "$OC_CONFIG"
     fi
-    if grep -q '"unified-trace"' "$OC_CONFIG" 2>/dev/null; then
-      log "OpenCode already has unified-trace/knowledge-graph/code-cortex-mcp configured"
+    if need node && need code-cortex-mcp && node "$SCRIPT_DIR/merge-opencode-config.js" "$OC_CONFIG" "$KG_REPO" "$(command -v code-cortex-mcp)" "$PLATFORM_REPO" 2>/tmp/opencode-merge.log; then
+      log "OpenCode config merged (knowledge-graph + code-cortex-mcp filtered + unified-trace added)"
       STATUS_OPENCODE="PASS"
     else
-      warn "OpenCode found but shared MCP tools not yet wired into $OC_CONFIG — see docs/opencode-setup.md for the block to add."
+      # Merge script refuses on anything it can't safely round-trip (JSONC
+      # comments, non-object root, etc.) rather than risk corrupting a
+      # hand-edited file — see docs/opencode-setup.md for why this stays a
+      # manual step in that case, and the exact block to add by hand.
+      warn "OpenCode found but $OC_CONFIG couldn't be safely auto-merged (see /tmp/opencode-merge.log) — see docs/opencode-setup.md for the block to add by hand."
       STATUS_OPENCODE="MANUAL_STEP_REQUIRED"
     fi
   fi
@@ -508,19 +562,20 @@ if [[ -d "$BRIDGE_DIR" ]] && need node && need opencode; then
     fi
   fi
   if [[ -d "$BRIDGE_DIR/node_modules" ]] || [[ $DRY_RUN -eq 1 ]]; then
-    if claude mcp get opencode-bridge >/dev/null 2>&1; then
-      log "opencode-bridge MCP server already registered"
+    verify_or_repair_mcp opencode-bridge "$BRIDGE_DIR/index.js"
+    if [[ $? -eq 0 ]]; then
+      log "opencode-bridge MCP server already registered and correct"
     elif dry "Would register opencode-bridge MCP server"; then
       :
     else
       log "Registering opencode-bridge MCP server (Claude Code, user scope)..."
-      claude mcp add opencode-bridge -s user \
+      claude_mcp add opencode-bridge -s user \
         -e "OPENCODE_BRIDGE_ALLOWED_ROOTS=$PROJECTS_DIR" \
         -e "OPENCODE_BRIDGE_AGENT=code-implementer" \
         -- node "$BRIDGE_DIR/index.js" >/tmp/opencode-bridge-register.log 2>&1
     fi
     if [[ $DRY_RUN -eq 0 ]]; then
-      if claude mcp get opencode-bridge 2>&1 | grep -q "Connected"; then
+      if claude_mcp get opencode-bridge 2>&1 | grep -q "Connected"; then
         STATUS_OPENCODE_BRIDGE="PASS"
       else
         warn "opencode-bridge MCP: not connected"
@@ -609,6 +664,11 @@ fi
 # 9. Manifest (safe to share — no secrets, no API keys, no tokens)
 # ============================================================================
 if [[ $DRY_RUN -eq 0 ]]; then
+  if [[ ${#BLOCKERS[@]} -eq 0 && "$STATUS_PREREQS" == "PASS" && "$STATUS_PLATFORM" == "PASS" && "$STATUS_CORTEX" == "PASS" && "$STATUS_UNIFIED_TRACE" == "PASS" ]]; then
+    OVERALL_STATUS="READY"
+  else
+    OVERALL_STATUS="PARTIAL"
+  fi
   MANIFEST="$SCRIPT_DIR/environment-manifest.md"
   gen_repo_block() {
     local path="$1"
@@ -675,13 +735,32 @@ if [[ $DRY_RUN -eq 0 ]]; then
     echo "  $BE_ROOT ($([[ -d "$BE_ROOT" ]] && echo present || echo "not found — set PROJECTS_DIR in paths.env if needed"))"
     echo "  $UI_ROOT ($([[ -d "$UI_ROOT" ]] && echo present || echo "not found — set PROJECTS_DIR in paths.env if needed"))"
     echo ""
-    if [[ ${#BLOCKERS[@]} -eq 0 && "$STATUS_PREREQS" == "PASS" && "$STATUS_PLATFORM" == "PASS" && "$STATUS_CORTEX" == "PASS" && "$STATUS_UNIFIED_TRACE" == "PASS" ]]; then
-      echo "Overall Status: READY"
-    else
-      echo "Overall Status: PARTIAL"
-    fi
+    echo "Overall Status: $OVERALL_STATUS"
   } > "$MANIFEST"
 
   log "Manifest written: $MANIFEST"
+
+  # Machine-readable twin (CI/tooling), same gitignore entry covers both —
+  # generated via node so every value is properly JSON-escaped rather than
+  # hand-quoted in bash. No secrets: same fields as the markdown manifest.
+  if need node; then
+    MANIFEST_JSON="$SCRIPT_DIR/environment-manifest.json"
+    node -e '
+      const fs = require("fs");
+      const [, outPath, ...rest] = process.argv;
+      const keys = ["enterpriseAiVersion","overallStatus","prereqs","repos","claudeCli","platform",
+                    "knowledgeGraph","codeCortex","unifiedTrace","openCode","openCodeBridge","runner",
+                    "claudeVersion","nodeVersion","pythonVersion","javaVersion"];
+      const data = {};
+      keys.forEach((k, i) => { data[k] = rest[i] ?? null; });
+      data.generatedAt = new Date().toISOString();
+      fs.writeFileSync(outPath, JSON.stringify(data, null, 2) + "\n");
+    ' "$MANIFEST_JSON" \
+      "$ENTERPRISE_AI_VERSION" "$OVERALL_STATUS" "$STATUS_PREREQS" "$STATUS_REPOS" "$STATUS_CLAUDE_CLI" \
+      "$STATUS_PLATFORM" "$STATUS_KG" "$STATUS_CORTEX" "$STATUS_UNIFIED_TRACE" "$STATUS_OPENCODE" \
+      "$STATUS_OPENCODE_BRIDGE" "$STATUS_RUNNER" \
+      "$(claude --version 2>&1)" "$(node --version 2>&1)" "$(python3 --version 2>&1)" "$(java --version 2>&1 | head -1)"
+    log "Machine-readable manifest written: $MANIFEST_JSON"
+  fi
 fi
 log "Done."
