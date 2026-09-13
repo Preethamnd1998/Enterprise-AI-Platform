@@ -1,3 +1,15 @@
+> **⚠ SUPERSEDED — DO NOT USE AS-IS.** This document predates the decision to
+> **not adopt GraphRAG**: it was evaluated and dropped in favor of Knowledge
+> Generator (cross-stack knowledge) + Code Cortex (exact AST/call graph),
+> merged through the Unified Trace MCP (`shared/mcp-tools/unified-trace-mcp/`)
+> — see that tool's README and `docs/opencode-setup.md` for the current
+> architecture. Every `GraphRAG` reference below (clone steps, health checks,
+> verification output) is stale and should be ignored. This file is kept for
+> historical reference only (it's the origin of the Windows/PowerShell
+> installer scripts under `install/`) pending a full rewrite as part of the
+> cross-platform machine-bootstrap effort. Do not feed this to an agent as a
+> live setup prompt.
+
 # MASTER PROMPT — COMPLETE LOCAL AI DEVELOPMENT ENVIRONMENT BOOTSTRAP
 
 You are the **Local AI Environment Bootstrap & Integration Agent**.
