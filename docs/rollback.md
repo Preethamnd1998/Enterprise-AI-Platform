@@ -383,11 +383,12 @@ added to `~/.config/opencode/opencode.jsonc` can be removed by hand — it's
 plain JSON at that point (the merge only ever runs when the file has no
 comments to lose), so any JSON-aware edit is safe.
 
-### Sibling repos, Knowledge Graph database, autonomous-runner build
-Bootstrap never deletes anything — `knowledge-graph-generator/`,
-`code-cortex-mcp/`, the indexed database, and `autonomous-runner/dist/`
-are ordinary git-tracked/build directories. Remove them exactly as you
-would any other local checkout/build output.
+### Sibling repo, Knowledge Graph database, autonomous-runner build
+Bootstrap never deletes anything — `knowledge-graph-generator/` (which
+also contains vendored Code Cortex at `code-cortex/`), the indexed
+database, and `autonomous-runner/dist/` are ordinary git-tracked/build
+directories. Remove them exactly as you would any other local
+checkout/build output.
 
 **Verify:** `bash install/bootstrap.sh --doctor` should report `[MISSING]`
 for whichever servers you removed.

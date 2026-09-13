@@ -89,12 +89,15 @@ See [docs/QUICK-START.md](docs/QUICK-START.md) for a full walkthrough.
 **macOS / Linux — machine bootstrap (new):** the steps above assume the
 Claude Code CLI, OpenCode, and the Knowledge Graph/Code Cortex/Unified
 Trace MCP servers are already set up. `install/bootstrap.sh` does that
-part too — prerequisite detection, sibling-repo clone-or-reuse, Claude
-Code CLI install, this platform's global contract install, and MCP
-registration for `knowledge-graph`/`code-cortex-mcp`/`unified-trace`/
-`opencode-bridge` — idempotent (safe to re-run), and it never indexes
-your codebase automatically (indexing stays an explicit, separate step
-you run yourself in `knowledge-graph-generator/`).
+part too — prerequisite detection, sibling-repo clone-or-reuse (one clone
+of `knowledge-graph-generator` gets both Knowledge Generator and Code
+Cortex — the latter is vendored inside it at `code-cortex/`, see that
+directory's `VENDORED_FROM.md`), Claude Code CLI install, this platform's
+global contract install, and MCP registration for
+`knowledge-graph`/`code-cortex-mcp`/`unified-trace`/`opencode-bridge` —
+idempotent (safe to re-run), and it never indexes your codebase
+automatically (indexing stays an explicit, separate step you run yourself
+in `knowledge-graph-generator/`).
 
 ```bash
 git clone https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git

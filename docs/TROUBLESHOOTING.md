@@ -224,15 +224,18 @@ with no `.mcp.json` above it, not from inside a project repo.
 ### `unified-trace` / `code-cortex-mcp` shows `CONNECTION_CLOSED`
 
 **Cause 1:** The `code-cortex-mcp` binary at `~/.local/bin/code-cortex-mcp`
-isn't actually executable in this shell/sandbox (seen in restricted CI/agent
-sandboxes — the binary is valid, verified by md5 and by running the exact
-same file from its build directory, but blocked specifically when copied to
-`~/.local/bin` and invoked from that session). Point `unified-trace` at the
-build-directory binary directly as a workaround:
+is stale or was copied in a way that left it not-quite-executable in this
+shell/sandbox (seen in restricted CI/agent sandboxes). **Try a genuinely
+fresh reinstall first** — `mv ~/.local/bin/code-cortex-mcp /tmp/ && bash
+install/bootstrap.sh` (it detects the binary is missing and reinstalls
+from the vendored source at `knowledge-graph-generator/code-cortex/`) —
+this alone resolved the issue the one time it was seen, without needing
+the workaround below. If a fresh reinstall doesn't help, point
+`unified-trace` at the build-directory binary directly:
 ```bash
 claude mcp remove unified-trace -s user
 claude mcp add unified-trace -s user \
-  -e UT_CODE_CORTEX_BIN="/path/to/code-cortex-mcp/build/c/code-cortex-mcp" \
+  -e UT_CODE_CORTEX_BIN="/path/to/knowledge-graph-generator/code-cortex/build/c/code-cortex-mcp" \
   -- node shared/mcp-tools/unified-trace-mcp/index.js
 ```
 

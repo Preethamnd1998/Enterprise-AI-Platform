@@ -122,19 +122,18 @@ fi
 
 echo ""
 echo "============================================================"
-echo "Test F — Missing Code Cortex source repo -> only that component reports missing, rest proceeds"
+echo "Test F — Incomplete KG checkout (vendored code-cortex/ missing) -> warned, not silently skipped"
 echo "============================================================"
+echo "  (Code Cortex is now vendored INSIDE knowledge-graph-generator, not"
+echo "   a separate clone -- the only way it can be 'missing' is a stale/"
+echo "   incomplete KG checkout that hasn't pulled the consolidation commit)"
 HOME_F="$(fresh_home home-f)"
 FAKE_TOOLS="$WORKDIR/fake-tools-f"
-mkdir -p "$FAKE_TOOLS"
-# Real knowledge-graph-generator present, code-cortex-mcp deliberately absent
-# -- EAP_TOOLS_DIR overrides paths.env cleanly, no mutation of real files.
-REAL_TOOLS_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
-ln -s "$REAL_TOOLS_DIR/knowledge-graph-generator" "$FAKE_TOOLS/knowledge-graph-generator" 2>/dev/null
+FAKE_KG="$FAKE_TOOLS/knowledge-graph-generator"
+mkdir -p "$FAKE_KG/.git"   # present-looking repo, but with no code-cortex/ at all
 OUT_F="$(cd "$NEUTRAL_CWD" && HOME="$HOME_F" EAP_TOOLS_DIR="$FAKE_TOOLS" bash "$BOOTSTRAP" --dry-run 2>&1)"
-assert_contains "$OUT_F" "Would clone code-cortex-mcp" "reports it would clone the missing component (not silently skipped)"
-assert_not_contains "$OUT_F" "Would clone knowledge-graph-generator" "the PRESENT component is correctly not reported as needing a clone"
-assert_contains "$OUT_F" "=== 1. Prerequisites ===" "rest of bootstrap still proceeds despite one missing component"
+assert_contains "$OUT_F" "code-cortex-mcp/CMakeLists.txt not found under" "warns about the incomplete checkout rather than silently proceeding"
+assert_contains "$OUT_F" "=== 1. Prerequisites ===" "rest of bootstrap still proceeds despite the incomplete component"
 
 echo ""
 echo "============================================================"

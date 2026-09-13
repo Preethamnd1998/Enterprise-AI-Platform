@@ -8,11 +8,13 @@
 # destroys uncommitted work in a sibling repo, never overwrites unrelated
 # user configuration.
 #
-# Sets up: prerequisites -> sibling tool repos (knowledge-graph-generator,
-# code-cortex-mcp) -> Claude Code CLI -> Enterprise AI Platform global
-# install -> Knowledge Generator (venv + MCP registration, index left
-# EXPLICIT/manual) -> Code Cortex MCP -> Unified Trace MCP -> OpenCode
-# (independent, optional) -> OpenCode subagent bridge (Claude-only,
+# Sets up: prerequisites -> sibling repo knowledge-graph-generator (which
+# also contains Code Cortex, vendored at code-cortex/ -- ONE clone gets
+# both, see that directory's VENDORED_FROM.md) -> Claude Code CLI ->
+# Enterprise AI Platform global install -> Knowledge Generator (venv + MCP
+# registration, index left EXPLICIT/manual) -> Code Cortex MCP (built from
+# the vendored copy) -> Unified Trace MCP -> OpenCode (independent,
+# optional) -> OpenCode subagent bridge (Claude-only,
 # optional) -> autonomous-runner build/test -> health check + manifest.
 #
 # GraphRAG: evaluated, not adopted. Knowledge Generator (cross-stack,
@@ -117,13 +119,16 @@ PROJECTS_DIR="${EAP_PROJECTS_DIR:-$(read_paths_env_key PROJECTS_DIR)}"
 
 KG_REPO="$TOOLS_DIR/knowledge-graph-generator"
 KG_URL="https://git.lifetrenz.com/Preetham.ND/knowledge-graph-generator.git"
-CORTEX_REPO="$TOOLS_DIR/code-cortex-mcp"
-CORTEX_URL="https://github.com/tigercosmos/code-cortex-mcp.git"
+# Code Cortex is vendored INSIDE knowledge-graph-generator (see
+# code-cortex/VENDORED_FROM.md there) — one repository provides both, so
+# Enterprise AI only ever clones knowledge-graph-generator. Never a
+# separate sibling clone/URL anymore.
+CORTEX_REPO="$KG_REPO/code-cortex"
 BE_ROOT="$PROJECTS_DIR/BE"
 UI_ROOT="$PROJECTS_DIR/UI"
 
 log "Platform root : $PLATFORM_REPO (v$ENTERPRISE_AI_VERSION)"
-log "Tools dir     : $TOOLS_DIR (knowledge-graph-generator, code-cortex-mcp siblings)"
+log "Tools dir     : $TOOLS_DIR (knowledge-graph-generator sibling; it also contains Code Cortex, vendored)"
 log "Projects dir  : $PROJECTS_DIR (informational — BE/UI presence check only)"
 [[ $DOCTOR -eq 1 ]] && log "Mode: --doctor (detection/health-check only, no writes, no indexing)"
 [[ $DRY_RUN -eq 1 && $DOCTOR -eq 0 ]] && log "Mode: --dry-run (no writes)"
@@ -186,10 +191,16 @@ if [[ ${#BLOCKERS[@]} -eq 0 ]]; then STATUS_PREREQS="PASS"; else STATUS_PREREQS=
 if [[ $DOCTOR -eq 1 ]]; then
   # Doctor mode: report tool + repo + MCP connectivity, skip every mutation.
   log "=== Doctor: repositories ==="
-  for pair in "enterprise-ai-platform:$PLATFORM_REPO" "knowledge-graph-generator:$KG_REPO" "code-cortex-mcp:$CORTEX_REPO"; do
+  for pair in "enterprise-ai-platform:$PLATFORM_REPO" "knowledge-graph-generator:$KG_REPO"; do
     name="${pair%%:*}"; path="${pair#*:}"
     if [[ -d "$path/.git" ]]; then log "OK: $name present at $path"; else warn "$name not found at $path"; fi
   done
+  # Code Cortex is vendored (no .git of its own) — check for its build marker instead.
+  if [[ -f "$CORTEX_REPO/CMakeLists.txt" ]]; then
+    log "OK: code-cortex (vendored) present at $CORTEX_REPO"
+  else
+    warn "code-cortex (vendored) not found at $CORTEX_REPO"
+  fi
   log "=== Doctor: MCP connectivity ==="
   if need claude; then
     for server in knowledge-graph code-cortex-mcp unified-trace opencode-bridge; do
@@ -259,7 +270,13 @@ clone_or_verify() {
 }
 
 clone_or_verify "$KG_REPO" "$KG_URL" "knowledge-graph-generator"
-clone_or_verify "$CORTEX_REPO" "$CORTEX_URL" "code-cortex-mcp"
+# Code Cortex is vendored inside knowledge-graph-generator (code-cortex/) —
+# cloning KG above already got it; nothing separate to clone here. Warn
+# (don't block) if the KG clone somehow lacks it, e.g. a pre-consolidation
+# checkout that hasn't pulled the merge commit yet.
+if [[ -d "$KG_REPO" && ! -f "$CORTEX_REPO/CMakeLists.txt" ]]; then
+  warn "code-cortex-mcp/CMakeLists.txt not found under $CORTEX_REPO — is $KG_REPO up to date? (git -C \"$KG_REPO\" pull)"
+fi
 
 for root in "$BE_ROOT" "$UI_ROOT"; do
   if [[ -d "$root" ]]; then
@@ -694,11 +711,17 @@ if [[ $DRY_RUN -eq 0 ]]; then
     echo "Enterprise AI Platform"
     gen_repo_block "$PLATFORM_REPO"
     echo ""
-    echo "Knowledge Graph Generator"
+    echo "Knowledge Graph Generator (also contains Code Cortex, vendored)"
     gen_repo_block "$KG_REPO"
     echo ""
-    echo "Code Cortex MCP"
-    gen_repo_block "$CORTEX_REPO"
+    echo "Code Cortex MCP (vendored inside knowledge-graph-generator/code-cortex/ -- see its VENDORED_FROM.md; version tracked via that file, not its own git history)"
+    if [[ -f "$CORTEX_REPO/CMakeLists.txt" ]]; then
+      echo "  Path: $CORTEX_REPO"
+      echo "  Status: present"
+    else
+      echo "  Path: $CORTEX_REPO"
+      echo "  Status: NOT PRESENT"
+    fi
     echo ""
     echo "GraphRAG"
     echo "  Status: NOT ADOPTED — superseded by Knowledge Generator + Code Cortex + Unified Trace."

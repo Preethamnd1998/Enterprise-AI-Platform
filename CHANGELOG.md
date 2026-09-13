@@ -2,6 +2,21 @@
 
 All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs).
 
+## [4.12.0] - 2026-09-14 — Code Cortex consolidated into knowledge-graph-generator
+
+### Changed
+- **One graph-intelligence repository instead of two.** Code Cortex (previously a separate sibling clone, `code-cortex-mcp`) is now vendored inside `knowledge-graph-generator` at `code-cortex/` — `install/bootstrap.sh` clones only `knowledge-graph-generator` and gets both. See `knowledge-graph-generator/code-cortex/VENDORED_FROM.md` for exact provenance (pinned upstream commit, license, the local modifications on top) and `LOCAL_MODIFICATIONS.patch` for the literal diff.
+- `install/bootstrap.sh`: removed the separate `code-cortex-mcp` clone step; `CORTEX_REPO` now points at `$KG_REPO/code-cortex`; doctor mode and the manifest updated for the vendored (no independent `.git`) case; warns (doesn't block) if a KG checkout is missing the vendored subdirectory (stale/incomplete pull).
+- `shared/mcp-tools/unified-trace-mcp/index.js`: fixed hardcoded personal-path defaults (`/Users/preetham/...` for `KG_PYTHON`/`KG_SCRIPT`/`KG_DB_PATH`, and a literal username instead of `$HOME` for `CODE_CORTEX_BIN`) — now auto-discovers the sibling `knowledge-graph-generator` repo relative to its own file location, matching `bootstrap.sh`'s own convention. Explicit `UT_*` env vars still always win.
+- `knowledge-graph-generator/kg-config.env` untracked (real, machine-specific paths) in favor of a tracked `kg-config.env.example` template — the previously-committed file had a hardcoded personal `ROOT_PATH`, and its own history showed a *different* prior developer's path there before that.
+
+### Fixed
+- Incidentally fixed a long-standing `CONNECTION_CLOSED` issue on `code-cortex-mcp`: a genuinely fresh `install.sh` run (prompted by this consolidation) produced a working, connected binary where the previous stale `~/.local/bin` copy had not been.
+
+### Notes
+- Code Cortex's upstream (`github.com/tigercosmos/code-cortex-mcp`, MIT, itself a fork of `DeusData/codebase-memory-mcp`) has 893 commits from 30+ external contributors — deliberately vendored as a pinned-commit snapshot + patch file rather than a git-history merge, to avoid mixing unrelated project history into this repository.
+- Old standalone `code-cortex-mcp` clone deleted from disk after the vendored copy was built, functionally verified (real Unified Trace query against real indexed data), and the git history confirmed fully recoverable from its public GitHub origin if ever needed.
+
 ## [4.11.0] - 2026-09-14 — Machine bootstrap (macOS/Linux) + Unified Trace committed
 
 ### Added

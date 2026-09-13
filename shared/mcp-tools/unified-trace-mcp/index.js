@@ -5,20 +5,43 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { z } from "zod";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const execFileAsync = promisify(execFile);
 
-const CODE_CORTEX_BIN = process.env.UT_CODE_CORTEX_BIN || "/Users/preetham/.local/bin/code-cortex-mcp";
-const KG_PYTHON = process.env.UT_KG_PYTHON ||
-  "/Users/preetham/Lifetrenz/Projects/Custom Git Repos/knowledge-graph-generator/.venv-mcp/bin/python";
-const KG_SCRIPT = process.env.UT_KG_SCRIPT ||
-  "/Users/preetham/Lifetrenz/Projects/Custom Git Repos/knowledge-graph-generator/mcp_server_main.py";
-const KG_DB_PATH = process.env.UT_KG_DB_PATH ||
-  "/Users/preetham/Lifetrenz/Projects/Custom Git Repos/knowledge-graph-generator/output/knowledge_graph.db";
+// Knowledge Generator (which now also contains Code Cortex, vendored at
+// knowledge-graph-generator/code-cortex/ — see that directory's
+// VENDORED_FROM.md) is a SIBLING of wherever this file's own repo
+// (enterprise-ai-platform) was cloned, matching install/bootstrap.sh's own
+// TOOLS_DIR convention — never a hardcoded personal path. Explicit
+// UT_* env vars (as install/bootstrap.sh sets when it registers this
+// server) always win; this is only the fallback for running it by hand.
+function findSiblingRepo(name) {
+  let d = dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 6 && d !== dirname(d); i++, d = dirname(d)) {
+    const candidate = join(dirname(d), name);
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+const KG_REPO = findSiblingRepo("knowledge-graph-generator");
 
-const CC_PROJECTS = (process.env.UT_CODE_CORTEX_PROJECTS ||
-  "Users-preetham-Lifetrenz-Projects-BE-core-service,Users-preetham-Lifetrenz-Projects-UI-lifetrenz-core"
-).split(",").map((s) => s.trim());
+const CODE_CORTEX_BIN = process.env.UT_CODE_CORTEX_BIN || join(homedir(), ".local/bin/code-cortex-mcp");
+const KG_PYTHON = process.env.UT_KG_PYTHON ||
+  (KG_REPO ? join(KG_REPO, ".venv-mcp/bin/python") : null);
+const KG_SCRIPT = process.env.UT_KG_SCRIPT ||
+  (KG_REPO ? join(KG_REPO, "mcp_server_main.py") : null);
+const KG_DB_PATH = process.env.UT_KG_DB_PATH ||
+  (KG_REPO ? join(KG_REPO, "output/knowledge_graph.db") : null);
+
+// Project identifiers as registered with Code Cortex (`list_projects`) —
+// inherently deployment-specific (which real repos to trace), so this has
+// no portable default; set UT_CODE_CORTEX_PROJECTS explicitly.
+const CC_PROJECTS = (process.env.UT_CODE_CORTEX_PROJECTS || "")
+  .split(",").map((s) => s.trim()).filter(Boolean);
 
 const MAX_NODES = 400;
 const MAX_EDGES = 800;
@@ -37,6 +60,12 @@ async function getCodeCortexClient() {
 
 async function getKnowledgeGraphClient() {
   if (kgClient) return kgClient;
+  if (!KG_PYTHON || !KG_SCRIPT) {
+    throw new Error(
+      "Knowledge Generator not found: no sibling knowledge-graph-generator/ directory next to this repo, " +
+      "and UT_KG_PYTHON/UT_KG_SCRIPT weren't set explicitly."
+    );
+  }
   const transport = new StdioClientTransport({
     command: KG_PYTHON,
     args: [KG_SCRIPT],
