@@ -64,6 +64,7 @@ never bulk-load this directory.
 | BOM (Bill of Materials) | `shared/knowledge/custom-flows/bom/` | Functionality KB, non-stock indent consumption, stock reduction, adding BOM to bill, casesheet/OPD clinical integration |
 | Pagination & global filter | `shared/knowledge/custom-flows/pagination-global-filter/` | Global filter/search architecture, pagination architecture |
 | Upload framework | `shared/knowledge/custom-flows/upload/` | Core upload framework architecture, RCM new-upload knowledge |
+| Approval notifications (discount, refund) | `shared/knowledge/custom-flows/approval-notifications/` | Notification-service approval messages (recipients, template-first rule, default channels, tokens, event seed), the Mobility link API, NotiShell (the web app the link opens, embed protocol, local run), known ipd self-revert bug |
 | Architecture reference | `shared/knowledge/architecture/` | Service map, dependencies, environments/promotion flow, project list, Redmine (projects/status-workflow/MR-tracking), running locally |
 
 A task touching one of these domains (e.g. an ABDM bug, a BOM feature, a new
