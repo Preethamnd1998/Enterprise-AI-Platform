@@ -1,0 +1,220 @@
+{
+  "version": 1,
+  "servers": {
+    "unified-trace": {
+      "description": "Single entry point for code flow/impact tracing (merges Knowledge Graph + Code Cortex).",
+      "runtime": "node",
+      "entry": "shared/mcp-tools/unified-trace-mcp/index.js",
+      "dependencies": {
+        "npm": "shared/mcp-tools/unified-trace-mcp",
+        "requires": [
+          "knowledge-graph",
+          "code-cortex"
+        ]
+      },
+      "env": {
+        "UT_CODE_CORTEX_BIN": {
+          "required": false,
+          "description": "Override Code Cortex binary"
+        },
+        "UT_KG_DB_PATH": {
+          "required": false,
+          "description": "Override knowledge_graph.db path"
+        },
+        "UT_CODE_CORTEX_PROJECTS": {
+          "required": false,
+          "description": "Force fixed project list (default: auto-discover)"
+        }
+      },
+      "platforms": [
+        "darwin",
+        "win32",
+        "linux"
+      ],
+      "healthcheck": {
+        "type": "mcp-list-tools",
+        "expectTools": [
+          "saga",
+          "trace",
+          "trace_usages",
+          "trace_impact",
+          "index_status"
+        ],
+        "timeoutMs": 20000
+      },
+      "permissions": [
+        "spawn:knowledge-graph",
+        "spawn:code-cortex",
+        "read:fs:projects",
+        "exec:git"
+      ],
+      "expose": true,
+      "clients": [
+        "claude-code",
+        "cursor",
+        "opencode"
+      ]
+    },
+    "opencode-bridge": {
+      "description": "Claude/Cursor -> OpenCode delegation (sandboxed to approved roots).",
+      "runtime": "node",
+      "entry": "shared/mcp-tools/opencode-mcp-bridge/index.js",
+      "dependencies": {
+        "npm": "shared/mcp-tools/opencode-mcp-bridge"
+      },
+      "env": {
+        "OPENCODE_BRIDGE_ALLOWED_ROOTS": {
+          "required": false,
+          "description": "Comma-separated roots; default PROJECTS_DIR"
+        },
+        "OPENCODE_BRIDGE_AGENT": {
+          "required": false,
+          "description": "OpenCode agent name"
+        },
+        "OPENCODE_BRIDGE_BIN": {
+          "required": false,
+          "description": "opencode executable (.exe/.js on Windows for arbitrary prompts)"
+        }
+      },
+      "platforms": [
+        "darwin",
+        "win32",
+        "linux"
+      ],
+      "healthcheck": {
+        "type": "mcp-list-tools",
+        "expectTools": [
+          "opencode_health",
+          "opencode_run"
+        ],
+        "timeoutMs": 15000
+      },
+      "permissions": [
+        "spawn:opencode",
+        "read:fs:projects",
+        "exec:git"
+      ],
+      "expose": true,
+      "clients": [
+        "claude-code",
+        "cursor"
+      ]
+    },
+    "kafka-mcp": {
+      "description": "Read-only Kafka inspection. Needs per-environment broker config, so it is NOT auto-exposed; define instances per environment in project .mcp.json.",
+      "runtime": "node",
+      "entry": "shared/mcp-tools/kafka-mcp/index.js",
+      "dependencies": {
+        "npm": "shared/mcp-tools/kafka-mcp"
+      },
+      "env": {
+        "KAFKA_BROKERS": {
+          "required": true,
+          "description": "host:port list"
+        },
+        "KAFKA_SASL_USERNAME": {
+          "required": false,
+          "secret": true
+        },
+        "KAFKA_SASL_PASSWORD": {
+          "required": false,
+          "secret": true
+        }
+      },
+      "platforms": [
+        "darwin",
+        "win32",
+        "linux"
+      ],
+      "healthcheck": {
+        "type": "mcp-list-tools",
+        "expectTools": [
+          "kafka_list_topics",
+          "kafka_consume_recent"
+        ],
+        "env": {
+          "KAFKA_BROKERS": "127.0.0.1:9"
+        },
+        "timeoutMs": 15000
+      },
+      "permissions": [
+        "network:kafka"
+      ],
+      "expose": false,
+      "clients": [
+        "claude-code",
+        "cursor",
+        "opencode"
+      ]
+    },
+    "knowledge-graph": {
+      "description": "Cross-stack (UI<->API<->service<->DB) knowledge graph MCP. Spawned by unified-trace; not exposed directly. Lives in its own repo (knowledge-graph-generator): sibling clone, or KNOWLEDGE_GRAPH_PATH.",
+      "runtime": "python",
+      "entry": "mcp_server_main.py",
+      "dependencies": {
+        "pip": "requirements-mcp.txt (in the knowledge-graph-generator repo)",
+        "venv": ".venv-mcp (in the knowledge-graph-generator repo)"
+      },
+      "env": {
+        "KG_DB_PATH": {
+          "required": false,
+          "description": "Default: <kg>/output/knowledge_graph.db"
+        }
+      },
+      "platforms": [
+        "darwin",
+        "win32",
+        "linux"
+      ],
+      "healthcheck": {
+        "type": "mcp-list-tools",
+        "expectTools": [
+          "find_api",
+          "trace_business_flow",
+          "saga_entry"
+        ],
+        "timeoutMs": 30000
+      },
+      "permissions": [
+        "read:fs:projects",
+        "write:fs:kg-output"
+      ],
+      "expose": false,
+      "clients": [],
+      "entryBase": "kg"
+    },
+    "code-cortex": {
+      "description": "Exact AST call-graph MCP (vendored C++ binary, built/installed per OS). Spawned by unified-trace; not exposed directly.",
+      "runtime": "binary",
+      "entry": "code-cortex",
+      "dependencies": {
+        "install": {
+          "darwin": "install.sh",
+          "linux": "install.sh",
+          "win32": "install.ps1"
+        }
+      },
+      "env": {
+        "CODE_CORTEX_PATH": {
+          "required": false,
+          "description": "Override binary path"
+        }
+      },
+      "platforms": [
+        "darwin",
+        "win32",
+        "linux"
+      ],
+      "healthcheck": {
+        "type": "binary-version"
+      },
+      "permissions": [
+        "read:fs:projects",
+        "write:fs:cortex-cache"
+      ],
+      "expose": false,
+      "clients": [],
+      "entryBase": "kg"
+    }
+  }
+}

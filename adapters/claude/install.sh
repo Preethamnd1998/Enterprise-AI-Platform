@@ -97,12 +97,20 @@ inject_markers() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
-# GLOBAL INSTALL — standards, commands, contract kernel → ~/.claude/
+# GLOBAL INSTALL — standards, commands, skills, knowledge, contract kernel → ~/.claude/
 # ═══════════════════════════════════════════════════════════════════════════
 log "=== Global install (v$VERSION) ==="
 
 install_dir "$PLATFORM_ROOT/shared/commands"   "$CLAUDE_GLOBAL/commands"
 install_dir "$PLATFORM_ROOT/shared/standards"  "$CLAUDE_GLOBAL/standards"
+install_dir "$PLATFORM_ROOT/shared/skills"     "$CLAUDE_GLOBAL/skills"
+
+# Knowledge + its index (company-profile.md) — contract kernel §F10 instructs
+# "Read only the matching file(s) under <root>/knowledge/ (index:
+# company-profile.md's topic table)" but, until this fix (2026-10-13 reorg
+# audit), nothing actually installed either one anywhere for this adapter.
+install_dir "$PLATFORM_ROOT/shared/knowledge" "$CLAUDE_GLOBAL/knowledge"
+install_file "$PLATFORM_ROOT/shared/company-profile.md" "$CLAUDE_GLOBAL/company-profile.md"
 
 # Inject contract kernel into ~/.claude/CLAUDE.md
 CLAUDE_MD="$CLAUDE_GLOBAL/CLAUDE.md"

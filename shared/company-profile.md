@@ -60,16 +60,19 @@ never bulk-load this directory.
 
 | Topic | Path | Covers |
 |---|---|---|
-| ABDM integration | `shared/knowledge/custom-flows/abdm/` | Backend + frontend ABDM (govt health-ID) integration |
 | BOM (Bill of Materials) | `shared/knowledge/custom-flows/bom/` | Functionality KB, non-stock indent consumption, stock reduction, adding BOM to bill, casesheet/OPD clinical integration |
 | Pagination & global filter | `shared/knowledge/custom-flows/pagination-global-filter/` | Global filter/search architecture, pagination architecture |
 | Upload framework | `shared/knowledge/custom-flows/upload/` | Core upload framework architecture, RCM new-upload knowledge |
-| Architecture reference | `shared/knowledge/architecture/` | Service map, dependencies, environments/promotion flow, project list, Redmine (projects/status-workflow/MR-tracking), running locally |
+| Architecture reference | `shared/knowledge/architecture/` | Service map, dependencies, environments/promotion flow, project list, Redmine (projects/status-workflow/MR-tracking), saga tracing |
 
-A task touching one of these domains (e.g. an ABDM bug, a BOM feature, a new
-paginated list) should read the matching file(s) here **in addition to** the
-usual `shared/standards/` layer files — this is domain knowledge, standards
-are code-shape knowledge; both apply together.
+A task touching one of these domains (e.g. a BOM feature, a new paginated list) should read the
+matching file(s) here **in addition to** the usual `shared/standards/` layer files — this is
+domain knowledge, standards are code-shape knowledge; both apply together.
+
+**Procedural resources have moved to `shared/skills/`** (how-to content, not domain facts) —
+notably `abdm-integration-backend`/`abdm-integration-frontend` (ABDM work) and
+`running-locally-skill` (running the app locally). These are discovered automatically by
+Claude Code/OpenCode's own skill scanner; no entry in this table is needed for them.
 
 ---
 <!-- SEAM NOTE (F10):

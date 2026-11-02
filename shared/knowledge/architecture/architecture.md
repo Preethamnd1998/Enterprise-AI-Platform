@@ -8,9 +8,12 @@
 >
 > Companion files: [projects.md](./projects.md) · [environments.md](./environments.md) ·
 > [dependencies.md](./dependencies.md) · [redmine.md](./redmine.md) ·
-> [running-locally.md](./running-locally.md) ·
+> [saga-tracing.md](./saga-tracing.md) ·
 > [repo knowledge/](../repo%20knowledge/README.md) (per-repo orientation +
 > `knowledge-graph` MCP pointer, one file per git repo)
+>
+> For *how to run the app locally* (a procedure, not an architecture fact), see
+> `shared/skills/running-locally-skill/SKILL.md` instead.
 >
 > Related, already-curated docs (not duplicated here — read directly when relevant):
 > `Knowledge Repo/docs/Custom Flow knowledge/` (BOM, Pagination & Global Filter, Upload
@@ -62,7 +65,7 @@ build/serve configurations** (`opd-clinical-dev`, `mis-dev`, `rcm-dev`, `adt-dev
 `inpatient-dev`, `settings-dev`, `physiotherapy-dev`, `anesthesia-dev`,
 `operation-theatre-dev`, …) — each configuration bundles a different subset of
 the `projects/*` libraries into a deployable entry point. See
-[running-locally.md](./running-locally.md) for how to actually run one.
+running-locally-skill (`shared/skills/running-locally-skill/SKILL.md`) for how to actually run one.
 
 Each `projects/<name>` folder is its **own independent git repository**, checked
 out inside `lifetrenz-core/projects/<name>` with its own `.git` pointing at

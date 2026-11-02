@@ -347,3 +347,5 @@ No. If it exists, the installer warns you to merge the allowlist manually. The p
 
 **Q: Is the audit log sent anywhere?**
 No. `.claude/audit/log.jsonl` is written locally and is gitignored. It never leaves your machine unless you explicitly send it.
+
+> **Self-contained install (Unreleased):** see [CROSS_PLATFORM_INSTALLATION](CROSS_PLATFORM_INSTALLATION.md) and [PLUGIN_INTEGRATIONS](PLUGIN_INTEGRATIONS.md) (`npm run plugin:install:claude`, dry-run by default). Windows is not verified on a real machine.

@@ -2,6 +2,17 @@
 
 > Also read: `component.md`, `others.md`.
 
+**Scope note (added 2026-10-13 reorg audit):** this file documents exactly ONE of (at least)
+three distinct search/filter subsystems in this codebase — the page-specific FDM filter-panel
+pattern below. It is NOT a "global patient search." If the task needs to find an existing
+patient *anywhere* in the system (not filter one page's own list), the relevant subsystem is the
+Core-owned, cross-module patient-identity search API (`core-service GET /core/patient/list`),
+which this file does not cover. See
+`shared/knowledge/custom-flows/pagination-global-filter/Global-Filter-Search-Architecture.md`
+for the full three-subsystem breakdown (this FDM pattern, the per-page topbar quick-search, and
+the Core patient-identity search) before assuming this pattern is the only option, or building a
+new module-local search when the reusable Core endpoint already does the job.
+
 The "global filter" in the top bar is **not** a component directly embedded in
 the topbar or in the page that uses it — it's a **named/auxiliary router
 outlet** wired through a shared pub/sub service. Confirmed against real source

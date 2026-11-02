@@ -3,6 +3,14 @@
 > **Master Reference Document for All Upload Modules**
 > Last Updated: 2026-06-17
 
+> **Resource classification (2026-10-13 reorg audit):** §1-11 and §15 are KNOWLEDGE
+> (architecture/lifecycle/API facts — what IS). §12 "Clean Code Standards" is a STANDARD
+> (mandatory rules). §13 "Adding New Upload Module" and §14 "AI Agent Development Guide" are a
+> SKILL (step-by-step how-to). Left as one file rather than physically split — this document is
+> large, actively used, and internally consistent; splitting it risked losing cross-section
+> context for a classification-only concern. Treat the section boundaries above as the de facto
+> split when citing or extending this doc. See `shared/reports/` for the full audit.
+
 ---
 
 ## Table of Contents

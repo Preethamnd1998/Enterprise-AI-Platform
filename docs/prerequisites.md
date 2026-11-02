@@ -38,7 +38,7 @@ three, but still needs these already on the machine:
 
 | Tool | Version | Used by |
 |---|---|---|
-| Python | ≥ 3.9 | Knowledge Generator (regex-based indexer, zero pip deps) + its MCP server venv |
+| Python | ≥ 3.10 (3.14 used on the verified macOS machine; on Windows use python.org/winget, not the Microsoft Store stub) | Knowledge Generator (regex-based indexer, zero pip deps) + its MCP server venv |
 | Java | any recent LTS | Only if you build Code Cortex from source instead of using its prebuilt binary |
 | curl | any | Code Cortex's `install.sh` prebuilt-binary download |
 
@@ -87,3 +87,6 @@ GitLab shared runners must have:
 - Internet access to pull images (or use internal registry mirrors)
 
 The CI jobs do NOT require any secrets or authenticated services.
+
+## Cross-platform runtime (self-contained repo)
+Node ≥ 20 and Python ≥ 3.10 are the only hard prerequisites; `npm run platform:install -- --apply` creates `.venv-mcp` (never copy a venv between machines/OSes). Code Cortex needs its prebuilt binary (`--with-cortex`) or a C++23 toolchain to build from the vendored source. Verified on macOS only; see `docs/CROSS_PLATFORM_INSTALLATION.md`.

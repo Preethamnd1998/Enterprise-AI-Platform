@@ -2,21 +2,38 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { execFile, spawn } from "node:child_process";
-import { realpathSync, existsSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
+import { createContext, loadSettings, which } from "../../core/path-resolver/index.js";
+import { createPathGuard, resolveSpawn } from "../../core/security/index.js";
 
 const execFileAsync = promisify(execFile);
 
-const ALLOWED_ROOTS = (process.env.OPENCODE_BRIDGE_ALLOWED_ROOTS ||
-  "/Users/preetham/Lifetrenz/Projects"
-)
+// Roots: OPENCODE_BRIDGE_ALLOWED_ROOTS, else PROJECTS_DIR (paths.env /
+// paths.local.env). No default personal path; startup does not crash if
+// unset — every call then fails with a clear message instead.
+const CTX = createContext({ repoRoot: path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..") });
+const SETTINGS = loadSettings(CTX);
+const ROOT_LIST = (process.env.OPENCODE_BRIDGE_ALLOWED_ROOTS || SETTINGS.PROJECTS_DIR || "")
   .split(",")
   .map((p) => p.trim())
-  .filter(Boolean)
-  .map((p) => realpathSync(p));
+  .filter(Boolean);
+let GUARD = null;
+let GUARD_ERROR = null;
+try {
+  GUARD = createPathGuard({ allowedRoots: ROOT_LIST });
+} catch (e) {
+  GUARD_ERROR = e.message;
+}
+const ALLOWED_ROOTS = GUARD ? GUARD.roots : [];
 
-const DENY_SUBSTRINGS = ["/.ssh", "/.aws", "/.config", "/.gnupg"];
+// opencode executable: explicit override first, else PATH lookup. On Windows
+// the npm shim is opencode.cmd, which cannot safely receive arbitrary prompt
+// text — resolveSpawn() refuses that; set OPENCODE_BRIDGE_BIN to the .exe.
+function opencodeBin() {
+  return process.env.OPENCODE_BRIDGE_BIN || which("opencode", CTX).path || "opencode";
+}
 
 const AGENTS = {
   implement: process.env.OPENCODE_BRIDGE_IMPLEMENT_AGENT || "code-implementer",
@@ -43,24 +60,8 @@ function resolveWorkspacePath(projectPath) {
   if (!projectPath || typeof projectPath !== "string") {
     throw new Error("projectPath is required");
   }
-  if (!existsSync(projectPath)) {
-    throw new Error(`projectPath does not exist: ${projectPath}`);
-  }
-  const resolved = realpathSync(projectPath);
-
-  if (DENY_SUBSTRINGS.some((s) => resolved.includes(s))) {
-    throw new Error(`projectPath is in a denied location: ${resolved}`);
-  }
-
-  const inAllowedRoot = ALLOWED_ROOTS.some(
-    (root) => resolved === root || resolved.startsWith(root + path.sep)
-  );
-  if (!inAllowedRoot) {
-    throw new Error(
-      `projectPath ${resolved} is outside the approved workspace roots: ${ALLOWED_ROOTS.join(", ")}`
-    );
-  }
-  return resolved;
+  if (!GUARD) throw new Error(`no approved workspace roots: ${GUARD_ERROR}`);
+  return GUARD.assert(projectPath);
 }
 
 async function gitStatusPorcelain(cwd) {
@@ -83,7 +84,8 @@ function tail(text, maxChars) {
 // past any timeout under execFile, completes in ~20-30s under spawn+ignore).
 function runOpenCode(args, timeoutMs) {
   return new Promise((resolve, reject) => {
-    const child = spawn("opencode", args, { stdio: ["ignore", "pipe", "pipe"] });
+    const sp = resolveSpawn(opencodeBin(), args);
+    const child = spawn(sp.command, sp.args, { stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
     let timedOut = false;
@@ -123,7 +125,8 @@ server.registerTool(
   },
   async () => {
     try {
-      const { stdout } = await execFileAsync("opencode", ["--version"]);
+      const sp = resolveSpawn(opencodeBin(), ["--version"]);
+      const { stdout } = await execFileAsync(sp.command, sp.args);
       return {
         content: [
           {
@@ -132,7 +135,7 @@ server.registerTool(
               `opencode ok, version ${stdout.trim()}\n` +
               `agents: implement=${AGENTS.implement}, investigate=${AGENTS.investigate}\n` +
               `model chain (tried in order until one isn't rate-limited): ${MODEL_CHAIN.join(" -> ")}\n` +
-              `allowed roots: ${ALLOWED_ROOTS.join(", ")}`,
+              `allowed roots: ${ALLOWED_ROOTS.join(", ") || `NONE (${GUARD_ERROR})`}`,
           },
         ],
       };

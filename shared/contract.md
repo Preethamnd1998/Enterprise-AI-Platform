@@ -20,7 +20,9 @@ Discovery, expansion, and validation are deterministic steps you drive.
 
 **No-scan (hard):** A file enters scope ONLY if (a) it is in the change set, (b) something loaded references it, or (c) naming/package convention ties it to a loaded symbol. Never enumerate.
 
-**Knowledge-graph first (F-KG):** Before any Grep/Glob source scan to establish a code flow, API endpoint, service/Kafka dependency, or DB impact: check whether a `knowledge-graph` MCP server is connected. If it is, use it first (`search_knowledge`/`get_context_pack` to locate the target, then `resolve_ui_api`/`find_api`/`get_api_context`/`trace_business_flow`/`get_business_flow`/`get_service_dependencies`/`get_database_impact`/`find_callers`/`find_dependencies`) — it returns exact file paths, classes, methods, and symbols to read directly, satisfying the no-scan rule instead of violating it. Treat the graph as a navigation/index layer, not implementation truth: open only the exact files/symbols it returns (smallest useful region first), and keep each fact's confidence (VERIFIED/INFERRED/UNRESOLVED) — never present INFERRED/UNRESOLVED as certain. Fall back to a scoped scan only when the server isn't connected, a query comes back unresolved, or a fact needs source verification.
+**Knowledge-graph first (F-KG):** Before any Grep/Glob source scan to establish a code flow, API endpoint, service/Kafka dependency, DB impact, or symbol usage/impact: check whether the `unified-trace` MCP server is connected. It is the single, consolidated entry point — internally it spawns both the Knowledge Generator (UI<->API<->architecture) and Code Cortex (exact AST calls/callers/callees) as its own internal clients and merges their results, and it auto-discovers which projects are indexed (via Code Cortex's `list_projects`) on every call, so no repo/project name list needs to be entered or maintained. Use it first: `saga` for the COMPLETE flow of an action (UI trigger → endpoint → service methods → Feign/WebClient/Kafka hops into other services → DB reads/writes; accepts a gateway URL, endpoint, UI API constant, Kafka topic, or backend method; returns every unfollowable link in `gaps` — read `shared/knowledge/architecture/saga-tracing.md` for how to read and verify it), `trace` for a UI API constant/endpoint/symbol, `trace_usages` for all known callers/UI references of a symbol, `trace_impact` for change-impact analysis, `index_status` to check whether a project's index is stale before trusting a result. It returns exact file paths, classes, methods, and symbols to read directly, satisfying the no-scan rule instead of violating it. Treat it as a navigation/index layer, not implementation truth: open only the exact files/symbols it returns (smallest useful region first), and keep each fact's confidence (VERIFIED/INFERRED/UNRESOLVED) — never present INFERRED/UNRESOLVED as certain.
+
+Only if `unified-trace` itself is not connected (a legacy/partial install), fall back to whichever of the standalone `knowledge-graph` (`search_knowledge`/`get_context_pack`/`resolve_ui_api`/`find_api`/`get_api_context`/`trace_business_flow`/`get_business_flow`/`get_service_dependencies`/`get_database_impact`/`find_callers`/`find_dependencies`) or `code-cortex-mcp` (`search_graph`/`get_code_snippet`/`get_architecture`) tools are connected — these are no longer registered as separate MCP servers by a current install, so their presence signals an older setup. Fall back to a scoped source scan only when no knowledge/code-graph tool is connected at all, a query comes back unresolved, or a fact needs source verification.
 
 **Lazy standards:** detect languages in change set → Read only matching standards files from `~/.claude/standards/` (CC) or `.github/ai-platform/standards/` (Copilot). `coding-standards.md` is mandatory for any code-touching task — never optional, never skipped, regardless of language. Never bulk-load beyond what's matched.
 
@@ -143,10 +145,29 @@ Load only the rules files applicable to the current task. Never bulk-load all fo
 **Company profile (F10 seam):** `shared/company-profile.md` defines company-specific overrides (identity, defaults, module boundaries, banned patterns).
 Load it once per session when a company-context-aware command is active. Never overwrite on installer update.
 
-## 6. Context discipline
+## 6. Context & output discipline
 Send changed hunks (full) and neighbor SIGNATURES (not bodies). Discard raw MCP payloads after
 extracting facts; keep short summaries. Never re-read a file already summarized this session.
 Ignore: node_modules, dist, build, target, coverage, logs, generated/binary/vendor files.
+
+**6a. Terminal/command output discipline**
+Before carrying raw command output into context or a response, keep everything load-bearing —
+exit codes, error messages, stack traces (root cause + the outer frame; trim repetitive middle
+frames), failing test names/assertions, compiler/lint errors, and diffs relevant to the task.
+Drop or collapse: progress bars/spinners, repeated identical log lines (collapse to one line + a
+count), build-tool banners, and successful/no-op lines once the task only needs the failure.
+Never report a FAILURE as a PASS, never drop the only occurrence of an error, and never change
+what an exit code implies when summarizing it. When unsure whether a line matters, keep it.
+
+**6b. Response conciseness**
+Default to the shortest response that fully answers the question: lead with the result, then add
+only the reasoning, caveats, or file:line references the user needs to act on it. Do not restate
+the task, narrate routine steps, or append a closing summary after output that already states the
+result. Keep: the answer itself, code, exact error text, file:line references, and any caveat that
+changes what the user should do next. Drop: filler acknowledgements, restating the request, and
+saying the same point more than once. This does not relax §12/§13's mandatory structured blocks —
+those are emitted verbatim; conciseness governs the prose around them. If the user asks for a
+detailed explanation, give one — conciseness is the default, not a ceiling.
 
 ## 7. Validation gate A — Completeness (functionality, not file count)
 Verify every APPLICABLE layer is present: Controller · Service · Repository · DTO · Mapper ·

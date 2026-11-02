@@ -8,6 +8,15 @@ Companion file: `Pagination-Architecture.md` (LtPaginationComponent/LtPaginatorS
 a DIFFERENT subsystem; a searchbar's "Search" action typically ALSO resets pagination,
 see the bridge note in §2, but the two subsystems are otherwise independent).
 
+**Resource classification (2026-10-13 reorg audit):** most of this file is KNOWLEDGE (what IS),
+including this file's own "HEADLINE FINDING" that `app-searchbar-all-appointment` is NOT a
+global patient search, and the three-subsystem breakdown (FDM filter-panel, per-page topbar
+quick-search, Core patient-identity search). §7 and §8's `RULE:`/`BUG_PATTERN:` statements are
+STANDARD content — `shared/standards/frontend/global-filter-search.md` (which only documented
+the FDM filter-panel subsystem) now cross-references this file so the Core patient-identity
+search stays discoverable. §11/§12 "AI_IMPLEMENTATION_GUIDE"/"AI_DEBUGGING_GUIDE" are a SKILL
+(how-to), left in place rather than extracted — see `shared/reports/` for the full audit.
+
 **HEADLINE FINDING (verify against this before reusing anything below): the task's
 premise that `app-searchbar-all-appointment` is a "global patient search" component is
 NOT what the source shows.** `SearchbarAllAppointmentComponent` is a **page-specific

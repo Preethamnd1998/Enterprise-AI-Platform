@@ -251,3 +251,5 @@ No. The installer injects the platform section between markers without touching 
 
 **Q: Does OpenCode support the auto=true argument?**
 Yes. Include `auto=true` in your command arguments. The approval gate is enforced by the contract kernel, not by a hook — so it works on all platforms.
+
+> **Self-contained install (Unreleased):** see [CROSS_PLATFORM_INSTALLATION](CROSS_PLATFORM_INSTALLATION.md) and [PLUGIN_INTEGRATIONS](PLUGIN_INTEGRATIONS.md) (`npm run plugin:install:opencode`, dry-run by default). Windows is not verified on a real machine.

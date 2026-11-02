@@ -2,6 +2,47 @@
 
 All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs).
 
+## [Unreleased] — Self-contained cross-platform runtime, shared core, client plugins, KG fixes
+
+### Added
+- `shared/core/` (path-resolver, security, mcp-registry, runtime-manager, plugin-manager, launcher, CLI) + root `package.json` scripts (`platform:*`, `mcp:*`, `plugin:*`, `test`); 45 tests.
+- Platform-owned MCPs under `shared/mcp-tools/`. The Knowledge Graph Generator stays its own repo (KG changes shipped there: knowledge-graph-generator MR !1); this repo finds it as a sibling clone or via `KNOWLEDGE_GRAPH_PATH`.
+- Client packages built from shared sources: Claude Code plugin (+ local marketplace), Cursor plugin, OpenCode plugin; dry-run-first install/update/uninstall with backups and install manifests; `integrations/opencode/agents/`.
+- `install/{macos,linux}/install-all.sh`, `install/windows/install-all.ps1`, `sync-projects.ps1`, `paths.env.example`, `paths.local.env.example` (gitignored `paths.local.env`).
+- Docs: PLATFORM_ARCHITECTURE, MCP_ARCHITECTURE, PLUGIN_INTEGRATIONS, CROSS_PLATFORM_INSTALLATION, ADDING_NEW_MCP, ADDING_NEW_PLUGIN_INTEGRATION, KG_PARITY_REPORT, SECURITY_FINDINGS.
+
+### Fixed
+- unified-trace / opencode-bridge no longer hardcode `.venv-mcp/bin/python`, `~/.local/bin/code-cortex-mcp` or `/Users/...`; bridge deny-list now handles `\` paths and symlink escapes.
+- KG: gateway prefix for services whose name is a `${...}` placeholder; JPA engine lost when SQL path reached a table first; `saga_ui_trigger` intermittently empty (full edge scan exceeded the per-call query limit); saga hid handlers beyond 4 per component; failed UI lookups were reported as "no UI calls".
+- Saga UI-narrowing budget configurable (`UT_SAGA_UI_NARROW_BUDGET_MS`) and reported in `metadata.ui_narrowing`.
+- Saga test for Auto Follow-Up Rules updated to the current create (list dialog) / assign (Apply screen) workflow.
+
+### Known limits
+- **Windows and Linux are mock-tested only; nothing was run on a real Windows machine.** Cursor plugin never run in Cursor.
+- In-repo KG index not at proven parity with legacy (`docs/KG_PARITY_REPORT.md`); `KG_SOURCE=legacy` recommended until reviewed.
+- Open security finding SF-001 (token in a Redmine ticket) — `docs/SECURITY_FINDINGS.md`.
+
+## [4.13.0] - 2026-10-09 — Communication/implementation/terminal-output discipline (native, no third-party tools)
+
+### Added
+- `shared/contract.md` §6: added **6a. Terminal/command output discipline** (keep exit codes,
+  errors, stack-trace root cause, failing tests; collapse spinners/repeated lines/banners — never
+  drop the only occurrence of a failure) and **6b. Response conciseness** (lead with the result,
+  drop filler/restatement, never relax the mandatory §12/§13 structured output blocks).
+- `shared/rules/coding-style.md`: new `CS-10` — minimal-footprint implementation decision ladder
+  (skip/descope → stdlib → existing dependency → existing in-repo utility → smallest new code),
+  explicitly subordinate to security/validation/auth/error-handling/test-coverage requirements.
+
+### Notes
+- Evaluated installing three third-party tools requested for this (token-concise responses,
+  minimal-diff guidance, terminal-output compression). All three resolved to real GitHub repos but
+  showed a consistent supply-chain red-flag pattern: 80k–158k stars acquired in 2–9 months against
+  owner follower counts 40–100x smaller, near-identical programmatic-SEO promotion across multiple
+  blogs reporting different star counts for the same repo, global-npm/`curl`-style installers, and
+  (one of them) an explicitly undisclosed PreToolUse hook that rewrites Bash commands before the
+  agent sees them. User confirmed: do not install; encode the same goals as native platform rules
+  instead (this entry). No third-party package, hook, or MCP server was added.
+
 ## [4.12.0] - 2026-09-14 — Code Cortex consolidated into knowledge-graph-generator
 
 ### Changed

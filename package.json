@@ -1,0 +1,23 @@
+{
+  "name": "enterprise-ai-platform",
+  "version": "4.13.0",
+  "private": true,
+  "type": "module",
+  "description": "Enterprise AI Platform — shared MCPs, plugins and cross-platform runtime",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "platform:doctor": "node shared/core/cli.js platform:doctor",
+    "platform:install": "node shared/core/cli.js platform:install",
+    "mcp:doctor": "node shared/core/cli.js mcp:doctor",
+    "mcp:selftest": "node shared/core/cli.js mcp:selftest",
+    "plugin:build": "node shared/core/cli.js plugin:build",
+    "plugin:install": "node shared/core/cli.js plugin:install",
+    "plugin:install:claude": "node shared/core/cli.js plugin:install claude-code",
+    "plugin:install:cursor": "node shared/core/cli.js plugin:install cursor",
+    "plugin:install:opencode": "node shared/core/cli.js plugin:install opencode",
+    "plugin:install:all": "node shared/core/cli.js plugin:install all",
+    "plugin:update": "node shared/core/cli.js plugin:update all",
+    "plugin:uninstall": "node shared/core/cli.js plugin:uninstall",
+    "test": "node --test shared/core/tests/"
+  }
+}

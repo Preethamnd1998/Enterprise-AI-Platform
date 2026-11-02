@@ -54,6 +54,32 @@ install_targets:
     method: copy
     recursive: true
 
+  # Skills — installed GLOBAL only (matches the actual installer behavior for
+  # commands/standards: install.sh/install.ps1 copy these to ~/.claude/, not per-repo).
+  # ~/.claude/skills/ is scanned natively by both Claude Code and OpenCode (OpenCode's
+  # v2 skill scanner already reads this path by default, verified via `opencode debug skill`)
+  # — no separate adapters/opencode entry needed.
+  - source: shared/skills/
+    target: ~/.claude/skills/
+    method: copy
+    recursive: true
+    scope: global
+
+  # Knowledge + its index (company-profile.md) — installed GLOBAL, same as skills/standards.
+  # Contract kernel F10 instructs "Read only the matching file(s) under <root>/knowledge/
+  # (index: company-profile.md's topic table)"; until this fix (2026-10-13 reorg audit),
+  # neither was actually installed anywhere by this adapter.
+  - source: shared/knowledge/
+    target: ~/.claude/knowledge/
+    method: copy
+    recursive: true
+    scope: global
+
+  - source: shared/company-profile.md
+    target: ~/.claude/company-profile.md
+    method: copy
+    scope: global
+
   # Templates
   - source: shared/templates/
     target: .github/ai-platform/templates/

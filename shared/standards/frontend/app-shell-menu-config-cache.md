@@ -2,6 +2,18 @@
 
 > Also read: `component.md`, `others.md`.
 
+**Related, parallel subsystem (added 2026-10-13 reorg audit):** this file covers
+access-rights/menu/button-access caching specifically. For the newer, generic clinical-*settings*
+cache (mandatory fields, component/speciality/role/user access) — a different data domain with
+its own IndexedDB store (`SettingsCacheDB`) and Redis dirty-check (`ScopeCacheService`) — see
+`shared/skills/settings-redic-index-db-cache-skill/SKILL.md`. The two are intentionally separate
+systems for separate data, not duplicates of each other. One factual note verified against
+source while auditing both: `AccessRightsCacheService` (line 2 below) uses the `idb` wrapper
+library, unlike `SettingsCacheDB`/`ConfigMenuService`, which use raw `window.indexedDB` — this is
+the one real exception to the "no wrapper library" convention described in the settings skill;
+that skill has been corrected to no longer cite `AccessRightsCacheService` as supporting
+evidence for it.
+
 ---
 
 ## 1. Access-driven menu (`app-menu`)

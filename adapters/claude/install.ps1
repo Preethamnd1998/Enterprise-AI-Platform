@@ -1,7 +1,7 @@
 # adapters/claude/install.ps1
 # Enterprise AI Platform — Claude Code adapter installer (v3.1)
 # Usage:
-#   Global install (no -RepoPath):  installs contract kernel + commands + standards to ~/.claude/
+#   Global install (no -RepoPath):  installs contract kernel + commands + standards + skills to ~/.claude/
 #   Per-repo install (-RepoPath x): installs settings.json, hooks, .ai/ to a specific repo
 
 param(
@@ -19,7 +19,7 @@ if ($DryRun)  { Write-Warn2 "DRY RUN -- no files will be written" }
 if ($Force)   { Write-Warn2 "FORCE -- skipping idempotency check" }
 
 # ─── GLOBAL INSTALL ──────────────────────────────────────────────────────────
-Write-Step "Global: contract kernel + commands + standards -> ~/.claude/"
+Write-Step "Global: contract kernel + commands + standards + skills -> ~/.claude/"
 
 $globalDir  = Join-Path $env:USERPROFILE '.claude'
 $contractSrc = Join-Path $root 'shared\contract.md'
@@ -53,6 +53,32 @@ if (-not $DryRun) {
     -Target (Join-Path $globalDir 'standards')
 } else {
   Write-Dry "Would copy shared/standards/ -> ~/.claude/standards/"
+}
+
+# 4. Copy skills to ~/.claude/skills/
+if (-not $DryRun) {
+  Install-DirectoryCopy `
+    -Source (Join-Path $root 'shared\skills') `
+    -Target (Join-Path $globalDir 'skills')
+} else {
+  Write-Dry "Would copy shared/skills/ -> ~/.claude/skills/"
+}
+
+# 5. Copy knowledge + its index (company-profile.md) to ~/.claude/
+# Contract kernel F10 instructs "Read only the matching file(s) under
+# <root>/knowledge/ (index: company-profile.md's topic table)" but, until
+# this fix (2026-10-13 reorg audit), nothing actually installed either one
+# anywhere for this adapter.
+if (-not $DryRun) {
+  Install-DirectoryCopy `
+    -Source (Join-Path $root 'shared\knowledge') `
+    -Target (Join-Path $globalDir 'knowledge')
+  Install-FileCopy `
+    -Source (Join-Path $root 'shared\company-profile.md') `
+    -Target (Join-Path $globalDir 'company-profile.md')
+} else {
+  Write-Dry "Would copy shared/knowledge/ -> ~/.claude/knowledge/"
+  Write-Dry "Would copy shared/company-profile.md -> ~/.claude/company-profile.md"
 }
 
 Write-Ok "Global install complete"

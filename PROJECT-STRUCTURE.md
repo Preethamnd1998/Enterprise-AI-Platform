@@ -62,6 +62,24 @@ shared/
 │   ├── prompt-audit.md     # /prompt-audit command specification
 │   └── dev.md              # /dev command specification (AI Developer Agent)
 │
+├── knowledge/              # Company/domain knowledge (descriptive facts, not rules or
+│   │                       #   procedures — see shared/skills/ for how-to content and
+│   │                       #   shared/standards/ for mandatory rules). Indexed by
+│   │                       #   company-profile.md's topic table. Installed globally by
+│   │                       #   adapters/claude/install.sh|ps1 -> ~/.claude/knowledge/
+│   │                       #   (fixed 2026-10-13 — previously not installed anywhere).
+│   ├── architecture/       # System shape, service map, dependencies, environments,
+│   │                       #   Redmine conventions, saga-tracing MCP usage (kept here,
+│   │                       #   not shared/skills/, because its exact path is referenced
+│   │                       #   inside shared/contract.md's hash-pinned kernel section)
+│   └── custom-flows/       # Reverse-engineered feature knowledge: abdm/ moved out to
+│       │                   #   shared/skills/ 2026-10-13 (it was skill-shaped, not
+│       │                   #   knowledge-shaped); bom/, pagination-global-filter/,
+│       │                   #   upload/ remain — each flags any embedded skill/standard
+│       │                   #   sections with a classification note rather than
+│       │                   #   physically splitting a large, actively-used document
+│       │                   #   (see shared/reports/ for the full audit)
+│
 ├── standards/              # Coding standards (lazy-loaded per language/layer)
 │   ├── coding-standards.md # General coding standards (any language)
 │   ├── testing.md          # Testing standards (coverage policy, subagent limits)
@@ -92,8 +110,19 @@ shared/
 │       ├── cherry-pick-rules.md
 │       └── branch-migration.md
 │
+├── skills/                 # Skills (SKILL.md packages; discovered + lazy-loaded natively by
+│   │                       #   Claude Code and OpenCode -- no registry, just drop in a folder)
+│   ├── README.md           # Convention, discovery paths, how to manually add a skill
+│   ├── find-skills/        # Vendored verbatim from ~/.agents/skills/find-skills/
+│   ├── modern-web-guidance/ # Vendored verbatim from ~/.agents/skills/modern-web-guidance/
+│   ├── settings-redic-index-db-cache-skill/ # Custom: Redis+IndexedDB settings cache pattern
+│   ├── print-header-footer-browserprint-skill/ # Custom: shared browser-print technique
+│   ├── abdm-integration-backend/   # Moved from shared/knowledge/custom-flows/abdm/ 2026-10-13
+│   ├── abdm-integration-frontend/  # Moved from shared/knowledge/custom-flows/abdm/ 2026-10-13
+│   └── running-locally-skill/      # Moved from shared/knowledge/architecture/ 2026-10-13
+│
 ├── rules/                  # Governance rules (lazy-loaded per task type)
-│   ├── coding-style.md     # CS-01–09 coding style rules
+│   ├── coding-style.md     # CS-01–10 coding style rules
 │   ├── testing.md          # TR-01–08 testing rules
 │   ├── security.md         # SR-01–08 security rules
 │   └── code-review.md      # CR-01–08 code review rules
@@ -128,7 +157,7 @@ shared/
     └── STRATEGY.md          # Installer architecture decision record
 ```
 
-**Key principle:** When you change a command, change `shared/commands/<slug>.md` only. When you change a standard, change `shared/standards/...` only. Never put canonical content in adapters.
+**Key principle:** When you change a command, change `shared/commands/<slug>.md` only. When you change a standard, change `shared/standards/...` only. When you add a skill, add `shared/skills/<name>/SKILL.md` only — see `shared/skills/README.md`. Never put canonical content in adapters.
 
 ---
 
@@ -414,6 +443,8 @@ The architecture has two designed extension points:
 
 2. **Company profile customisation:** Edit `shared/company-profile.md` for company-wide defaults. Edit per-repo `.ai/AI_PROJECT.md` for repo-specific overrides. The generic platform core never references company internals (F10 seam).
 
+3. **New skill:** Drop a `shared/skills/<name>/SKILL.md` folder in (see `shared/skills/README.md`). No registry to edit — `ci/validate.sh` checks frontmatter validity and that `name` matches the directory. Re-run `adapters/claude/install.sh` (global, no `-RepoPath`/`--repo`) to make it live; Claude Code and OpenCode both discover it from `~/.claude/skills/` on their next session start.
+
 ---
 
 ## File Naming Conventions
@@ -427,3 +458,9 @@ The architecture has two designed extension points:
 | `docs/sp-XX-result.md` | Spike investigation result |
 | `.platform-version` or `.platform-version.json` | Install timestamp and version |
 | `*.prev` | Pre-upgrade backup created by installer |
+
+## Shared core & MCP tools (Unreleased)
+- `shared/core/` — `path-resolver/` (all OS paths), `security/` (path guard, redaction, safe spawn), `mcp-registry/` (`registry.json`), `runtime-manager/`, `plugin-manager/` (build + install), `launcher.js`, `cli.js`, `tests/`.
+- `shared/mcp-tools/` — `unified-trace-mcp/`, `opencode-mcp-bridge/`, `kafka-mcp/`, `MIGRATION.md`. The Knowledge Graph Generator is a separate repo (sibling clone or `KNOWLEDGE_GRAPH_PATH`); a local copy under `shared/mcp-tools/knowledge-graph-generator/` is gitignored.
+- `integrations/opencode/agents/` — OpenCode agents shipped by the plugin. `install/{macos,linux,windows}/` — thin installers. `dist/` — generated plugin packages (gitignored, per machine).
+- `paths.env` (tracked defaults), `paths.local.env` (gitignored, machine-specific).

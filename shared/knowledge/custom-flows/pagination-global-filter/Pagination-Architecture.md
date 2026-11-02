@@ -9,6 +9,15 @@ human tutorial reading.
 Companion file: `Global-Filter-Search-Architecture.md` (search bars, saved filters,
 quick time-range filters — a DIFFERENT subsystem from pagination, do not conflate).
 
+**Resource classification (2026-10-13 reorg audit):** most of this file is KNOWLEDGE (what IS).
+§5 "Which pattern to pick" and §8 "ANTI_PATTERNS" contain real mandatory rules — STANDARD
+content; those rules now also live in `shared/standards/frontend/pagination.md`, which was
+corrected during this audit (its canonical example previously used a 1-based `event.page + 1` /
+`noOfRecord` pattern that contradicted this file's directly-verified 0-based/`pageSize` finding
+below — confirmed by tracing a real live call chain, not just by comparing the two documents).
+§10 "AI_IMPLEMENTATION_GUIDE" and §11 "AI_DEBUGGING_GUIDE" are a SKILL (step-by-step how-to),
+left in place rather than extracted — see `shared/reports/` for the full audit.
+
 ---
 
 ## 1. ENTITIES
