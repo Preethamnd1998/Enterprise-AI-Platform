@@ -1,0 +1,12 @@
+{
+  "name": "kafka-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "kafkajs": "^2.2.4",
+    "zod": "^4.6.4"
+  }
+}

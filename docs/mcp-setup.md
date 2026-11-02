@@ -140,3 +140,5 @@ Run before fleet rollout. All must return non-2xx for write operations.
 ```
 
 Only after all checks pass: proceed with fleet rollout.
+
+> **Self-contained install (Unreleased):** see [CROSS_PLATFORM_INSTALLATION](CROSS_PLATFORM_INSTALLATION.md) and [PLUGIN_INTEGRATIONS](PLUGIN_INTEGRATIONS.md) (`npm run plugin:install:claude`, dry-run by default). Windows is not verified on a real machine.

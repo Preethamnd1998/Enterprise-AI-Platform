@@ -27,8 +27,27 @@
 | Tool | Version | Notes |
 |---|---|---|
 | bash | ≥ 5.0 | CI scripts use bash |
-| pwsh | ≥ 7.4 | Installer scripts require PowerShell on macOS/Linux |
+| pwsh | ≥ 7.4 | Only needed if you use the PowerShell installers directly; `adapters/claude/install.sh` and `install/bootstrap.sh` are native bash and need no PowerShell at all |
 | sha256sum | System | Used by CI contract-hash-verify job |
+
+### Knowledge Generator / Code Cortex / Unified Trace (optional, macOS/Linux)
+
+Only needed if you want the `knowledge-graph`/`code-cortex-mcp`/`unified-trace`
+MCP servers — `install/bootstrap.sh` detects and installs/configures all
+three, but still needs these already on the machine:
+
+| Tool | Version | Used by |
+|---|---|---|
+| Python | ≥ 3.10 (3.14 used on the verified macOS machine; on Windows use python.org/winget, not the Microsoft Store stub) | Knowledge Generator (regex-based indexer, zero pip deps) + its MCP server venv |
+| Java | any recent LTS | Only if you build Code Cortex from source instead of using its prebuilt binary |
+| curl | any | Code Cortex's `install.sh` prebuilt-binary download |
+
+**Indexing is never automatic.** `install/bootstrap.sh` sets up the MCP
+servers themselves, but a fresh Knowledge Generator database is never
+built as part of bootstrap — it reports `NOT INDEXED / READY TO INDEX`
+and leaves the actual `python3 indexer.py` run to you, explicitly, once
+`kg-config.env` points at your real project paths. `bash install/bootstrap.sh --reindex`
+opts into it explicitly if you want bootstrap to do that step too.
 
 ## Optional tools (used by specific commands)
 
@@ -68,3 +87,6 @@ GitLab shared runners must have:
 - Internet access to pull images (or use internal registry mirrors)
 
 The CI jobs do NOT require any secrets or authenticated services.
+
+## Cross-platform runtime (self-contained repo)
+Node ≥ 20 and Python ≥ 3.10 are the only hard prerequisites; `npm run platform:install -- --apply` creates `.venv-mcp` (never copy a venv between machines/OSes). Code Cortex needs its prebuilt binary (`--with-cortex`) or a C++23 toolchain to build from the vendored source. Verified on macOS only; see `docs/CROSS_PLATFORM_INSTALLATION.md`.

@@ -4,6 +4,100 @@ All GitLab paths are rooted at `https://git.lifetrenz.com/novel/his-ehr/`.
 "Local" = checked out under `D:\GitLab-Workspace\UI-BE`. Branch/environment
 mapping is in [environments.md](./environments.md), not here.
 
+## UI monolith split (status as of 2026-09-20)
+
+`lifetrenz-core` (the UI monolith, see below) is being split module-by-module
+into independent, separately-deployed UI projects.
+
+- **Phase 1 (in progress, most modules done)**: each module gets its own
+  top-level GitLab repo under `ui/` (a sibling of `ui-library/`, not inside
+  it), with its own private copy of the `lifetrenz-core` shell embedded, and
+  is built/deployed independently.
+- **Phase 2 (not started)**: once every module has split, `lifetrenz-core`
+  converts into a shared library consumed by all the split projects, replacing
+  each project's private embedded copy.
+
+**Access note**: developer access to the canonical `ui/lifetrenz-core` repo
+has been removed for now (planned to be restored once Phase 2 makes it a
+library). A local copy of `lifetrenz-core` is kept for running the modules
+that haven't split yet — see running-locally-skill (`shared/skills/running-locally-skill/SKILL.md`).
+
+### Split status per module (authoritative — supersedes any earlier partial version of this table)
+
+| Module | Split done | GitLab repo | Canary release done | Env/PATH | Status |
+|---|---|---|---|---|---|
+| Blood-Bank | Yes | `ui/blood-bank` | Yes | blood-bank | Released |
+| Front-Desk | Yes | `ui/front-desk` | Yes | front-desk-management | Released |
+| OPD-Clinical | Yes | `ui/opd-clinical` | Yes | OPD | Released |
+| ADT | Yes | `ui/adt` | Yes | adt | Released |
+| IPD-Clinical | Yes | `ui/ipd-clinical` | Yes | ipd-clinical | Released |
+| RCM | Yes | `ui/rcm` | Yes | rcm | Released |
+| ER-Clinical | Yes | `ui/er-clinical` | Yes | er-clinical | Released |
+| ambulance | Yes | `ui/ambulance` | Yes | ambulance | Released |
+| anesthesia | Yes | `ui/anesthesia` | **No** | anesthesia | **error** |
+| audit | Yes | `ui/audit` | Yes | audit | released |
+| callcenter | No | — | — | — | — |
+| clinical-pharmacy | Yes | `ui/clinical-pharmacy` | Yes | clinical-pharmacy | released |
+| committee | Yes | `ui/committee` | Yes | committee | released |
+| consulting-services | No | — | — | — | — |
+| cssd | **No** | `ui/cssd` | No | cssd | **error** |
+| daycare-clinical | Yes | `ui/daycare` | Yes | daycare | released |
+| diet-management | Yes | `ui/diet` | Yes | diet | released |
+| doctor-payout | Yes | `ui/doc-payout` | Yes | doc-payout | released |
+| haemodialysis | Yes | `ui/haemodialysis` | Yes | haemodialysis | released |
+| home-care | Yes | `ui/homecare` | Yes | homecare | released |
+| house-keeping | Yes | `ui/housekeep` | Yes | housekeep | released |
+| incident-management | Yes | `ui/incident-mgmt` | Yes | incident-mgmt | released |
+| indent | Yes | `ui/indent` | Yes | indent | released |
+| inventory | Yes | `ui/inventory` | Yes | inventory | released |
+| infection | Yes | `ui/infection-mgmt` | Yes | infection-mgmt | released |
+| lab-sample-collection | No | `ui/lab-sample-collection` | — | — | — |
+| linen-laundry | No | — | — | — | — |
+| lis-configuration | No | — | — | — | — |
+| lis-result | No | — | — | — | — |
+| lis-sample-tracking | No | — | — | — | — |
+| masters | No | — | — | — | — |
+| mis-reports | No | — | — | — | — |
+| mortuary | No | — | — | — | — |
+| mrd | No | — | — | — | — |
+| oncology | No | — | — | — | — |
+| operation-theatre | No | — | — | — | — |
+| opd-clinical (lowercase row) † | No | — | — | — | — |
+| ot-lib | No | — | — | — | — |
+| patient-lib | No | — | — | — | — |
+| patient-results-reports | No | — | — | — | — |
+| pharmacy | No | — | — | — | — |
+| physiotherapy | No | — | — | — | — |
+| pre-surgery | No | — | — | — | — |
+| procurement | No | — | — | — | — |
+| qc | No | — | — | — | — |
+| quality | No | — | — | — | — |
+| queue-management | No | — | — | — | — |
+| quotation-management | No | — | — | — | — |
+| revenue-cycle-management | No | — | — | — | — |
+| ris | No | — | — | — | — |
+| roster-management | No | — | — | — | — |
+| settings | No | — | — | — | — |
+| support-ticket-management | No | — | — | — | — |
+| user-management ‡ | No | `ui/user-management` | Yes | user-management | released |
+| video-consult | No | — | — | — | — |
+| workflow | No | — | — | — | — |
+
+† Source list has both `OPD-Clinical` (split, Released) and a separate
+lowercase `opd-clinical` row marked not-split — kept as two distinct rows to
+match the source exactly rather than silently merging them; confirm with the
+source which one (if not both) is stale before treating either as authoritative.
+
+‡ Source list marks "Changes Done" as **No** for `user-management` while also
+giving it a live repo, a canary release, and "released" status — contradictory
+as given. Recorded verbatim; confirm which field is wrong before relying on it.
+
+**Corrections vs. the `ui-library/*` table further below** (not
+re-verified library-by-library since the split): `committee`, `doctor-payout`,
+and `incident-management` are marked there as having no matching GitLab repo,
+and `audit` as a bare GitLab-only scaffold — all four are stale per the
+table above; they now have real, split-out, released repos under `ui/`.
+
 ## Backend services (`be/` group)
 
 Common stack unless noted: Java, Spring Boot, Spring Cloud Consul discovery
@@ -173,7 +267,7 @@ project or a local checkout; treat them as not-yet-created/renamed.
   `settings-dev`, `physiotherapy-dev`, `anesthesia-dev`,
   `operation-theatre-dev`, …) — each bundles a different subset of the
   `ui-library` repos checked out under `projects/*`. How to actually run these:
-  [running-locally.md](./running-locally.md).
+  running-locally-skill (`shared/skills/running-locally-skill/SKILL.md`).
 
 ## Other GitLab groups
 
@@ -188,7 +282,7 @@ project or a local checkout; treat them as not-yet-created/renamed.
 | Folder | What it is |
 |---|---|
 | `config-repo-local` | Local mirror of the Spring Cloud Config repo ("LTHS-Config-Files") — per-service `.properties` per environment. Not a service, no own `.git`. |
-| `dev-proxy` | nginx reverse-proxy config — see [running-locally.md](./running-locally.md). |
+| `dev-proxy` | nginx reverse-proxy config — see running-locally-skill (`shared/skills/running-locally-skill/SKILL.md`). |
 | `report-service-fix-bed-config` | Empty folder, no matching GitLab project — not a real service. |
 
 ## Redmine projects

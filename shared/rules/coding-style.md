@@ -1,5 +1,5 @@
 # Coding Style Rules
-<!-- shared/rules/coding-style.md — v4.1 -->
+<!-- shared/rules/coding-style.md — v4.2 -->
 <!-- Lazy-loaded when the change set includes production code. Complements standards/. -->
 <!-- Linked from contract §5 (lazy rules loading). Never inlined. -->
 
@@ -48,3 +48,15 @@ Write comments only when the WHY is non-obvious: a hidden constraint, a workarou
 known bug, a subtle invariant, or behavior that would surprise a reader.
 Do not write comments that restate what the code does. Do not write TODO comments unless
 they are linked to a tracked issue (Redmine ID / ticket reference).
+
+## CS-10 — Minimal-footprint implementation (decision ladder)
+Before writing new code, work down this ladder and stop at the first rung that satisfies the
+task — do not jump straight to custom code by default:
+1. Can the task be skipped or descoped (YAGNI)? If the feature isn't actually needed yet, say so
+   instead of building it speculatively.
+2. Does the language/framework standard library already do this?
+3. Does a dependency already present in the project do this?
+4. Can an existing utility/service/component in this codebase be reused or extended (see CS-01)?
+5. Only then: write the smallest new code that satisfies the task (see CS-06).
+This never overrides security, validation, authorization, error handling, or test coverage
+(`coding-standards.md` §13, `rules/security.md`) — those are never traded away for a smaller diff.

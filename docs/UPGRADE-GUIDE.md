@@ -163,6 +163,22 @@ This is the simplest command — no MCP required, just tests that the contract a
 
 ## Version-Specific Notes
 
+### Upgrading to v4.11 from v4.10 (macOS/Linux machine bootstrap)
+
+**Changes:**
+- Contract kernel: **unchanged** — no hash recompute needed
+- New: `install/bootstrap.sh`, `install/merge-opencode-config.js`, `install/test-bootstrap.sh` — macOS/Linux only, no action required for Windows-only installs
+- `shared/mcp-tools/unified-trace-mcp/` and `shared/mcp-tools/opencode-mcp-bridge/` are now committed to the repo (previously local-only on one machine) — if you'd already set these up by hand from an earlier uncommitted copy, no action needed, they're identical
+- New `paths.env` keys: `TOOLS_DIR`, `PROJECTS_DIR` (blank = auto-detect, safe default for existing installs)
+
+**Action required (macOS/Linux, optional):**
+```bash
+git pull
+bash install/bootstrap.sh --doctor    # see what, if anything, needs reconciling
+bash install/bootstrap.sh             # idempotent -- only touches what --doctor flagged
+```
+No action required on Windows — this release doesn't change the PowerShell installers.
+
 ### Upgrading to v4.3 from v4.2 (Phase E → Phase F)
 
 **Changes:**

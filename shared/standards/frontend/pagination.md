@@ -54,18 +54,25 @@ export class MyListComponent implements OnInit, ApiCallBack {
   ) {}
 
   ngOnInit(): void {
-    this.loadPage(1, this.paginatorService.noOfRecord);
+    this.loadPage(0, this.paginatorService.noOfRecord);
   }
 
-  // Called by paginator page change
+  // Called by paginator page change. PrimeNG's event.page is 0-based and the
+  // whole stack (UI -> API -> DB) is consistently 0-based -- pass it through
+  // as-is. Verified 2026-10-13 against a real, live call chain (in-patient-q
+  // .component.ts paginate() -> search() -> onSearchIpDashboard(page) ->
+  // InPatientService.getAllDashboardInPatient(..., pageNo, pageSize, ...),
+  // which sets HttpParams "pageNo" directly from the raw page param, no +1).
+  // See shared/knowledge/custom-flows/pagination-global-filter/
+  // Pagination-Architecture.md for the fuller investigation.
   paginate(event: any): void {
-    this.loadPage(event.page + 1, this.paginatorService.noOfRecord);
+    this.loadPage(event.page, this.paginatorService.noOfRecord);
   }
 
   // Called by paginator records-per-page change
   noOfRecordChange(eve: any): void {
     this.paginatorService.noOfRecord = eve.value;
-    this.loadPage(1, eve.value);
+    this.loadPage(0, eve.value);
   }
 
   private loadPage(pageNo: number, pageSize: number): void {
@@ -110,11 +117,14 @@ export class MyListComponent implements OnInit, ApiCallBack {
 Pass pagination to the service call:
 
 ```typescript
-apiObject.params = {
-  pageNo: pageNo,        // 1-based
-  noOfRecord: pageSize
-};
+params = params
+  .set('pageNo', pageNo)     // 0-based — the raw PrimeNG event.page value, never +1
+  .set('pageSize', pageSize);
 ```
+
+**Field name is `pageSize`, not `noOfRecord`** — `noOfRecord` is only the `LtPaginatorService`
+property name on the frontend; the actual HTTP param every real backend call sets is `pageSize`
+(confirmed in `InPatientService.getAllDashboardInPatient`'s `HttpParams`).
 
 The response from the BE must include a `pageDTO` object that is stored in `paginatorService.selectedPage` to drive the paginator UI state.
 

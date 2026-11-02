@@ -2,6 +2,79 @@
 
 All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs).
 
+## [Unreleased] — Self-contained cross-platform runtime, shared core, client plugins, KG fixes
+
+### Added
+- `shared/core/` (path-resolver, security, mcp-registry, runtime-manager, plugin-manager, launcher, CLI) + root `package.json` scripts (`platform:*`, `mcp:*`, `plugin:*`, `test`); 45 tests.
+- Platform-owned MCPs under `shared/mcp-tools/`. The Knowledge Graph Generator stays its own repo (KG changes shipped there: knowledge-graph-generator MR !1); this repo finds it as a sibling clone or via `KNOWLEDGE_GRAPH_PATH`.
+- Client packages built from shared sources: Claude Code plugin (+ local marketplace), Cursor plugin, OpenCode plugin; dry-run-first install/update/uninstall with backups and install manifests; `integrations/opencode/agents/`.
+- `install/{macos,linux}/install-all.sh`, `install/windows/install-all.ps1`, `sync-projects.ps1`, `paths.env.example`, `paths.local.env.example` (gitignored `paths.local.env`).
+- Docs: PLATFORM_ARCHITECTURE, MCP_ARCHITECTURE, PLUGIN_INTEGRATIONS, CROSS_PLATFORM_INSTALLATION, ADDING_NEW_MCP, ADDING_NEW_PLUGIN_INTEGRATION, KG_PARITY_REPORT, SECURITY_FINDINGS.
+
+### Fixed
+- unified-trace / opencode-bridge no longer hardcode `.venv-mcp/bin/python`, `~/.local/bin/code-cortex-mcp` or `/Users/...`; bridge deny-list now handles `\` paths and symlink escapes.
+- KG: gateway prefix for services whose name is a `${...}` placeholder; JPA engine lost when SQL path reached a table first; `saga_ui_trigger` intermittently empty (full edge scan exceeded the per-call query limit); saga hid handlers beyond 4 per component; failed UI lookups were reported as "no UI calls".
+- Saga UI-narrowing budget configurable (`UT_SAGA_UI_NARROW_BUDGET_MS`) and reported in `metadata.ui_narrowing`.
+- Saga test for Auto Follow-Up Rules updated to the current create (list dialog) / assign (Apply screen) workflow.
+
+### Known limits
+- **Windows and Linux are mock-tested only; nothing was run on a real Windows machine.** Cursor plugin never run in Cursor.
+- In-repo KG index not at proven parity with legacy (`docs/KG_PARITY_REPORT.md`); `KG_SOURCE=legacy` recommended until reviewed.
+- Open security finding SF-001 (token in a Redmine ticket) — `docs/SECURITY_FINDINGS.md`.
+
+## [4.13.0] - 2026-10-09 — Communication/implementation/terminal-output discipline (native, no third-party tools)
+
+### Added
+- `shared/contract.md` §6: added **6a. Terminal/command output discipline** (keep exit codes,
+  errors, stack-trace root cause, failing tests; collapse spinners/repeated lines/banners — never
+  drop the only occurrence of a failure) and **6b. Response conciseness** (lead with the result,
+  drop filler/restatement, never relax the mandatory §12/§13 structured output blocks).
+- `shared/rules/coding-style.md`: new `CS-10` — minimal-footprint implementation decision ladder
+  (skip/descope → stdlib → existing dependency → existing in-repo utility → smallest new code),
+  explicitly subordinate to security/validation/auth/error-handling/test-coverage requirements.
+
+### Notes
+- Evaluated installing three third-party tools requested for this (token-concise responses,
+  minimal-diff guidance, terminal-output compression). All three resolved to real GitHub repos but
+  showed a consistent supply-chain red-flag pattern: 80k–158k stars acquired in 2–9 months against
+  owner follower counts 40–100x smaller, near-identical programmatic-SEO promotion across multiple
+  blogs reporting different star counts for the same repo, global-npm/`curl`-style installers, and
+  (one of them) an explicitly undisclosed PreToolUse hook that rewrites Bash commands before the
+  agent sees them. User confirmed: do not install; encode the same goals as native platform rules
+  instead (this entry). No third-party package, hook, or MCP server was added.
+
+## [4.12.0] - 2026-09-14 — Code Cortex consolidated into knowledge-graph-generator
+
+### Changed
+- **One graph-intelligence repository instead of two.** Code Cortex (previously a separate sibling clone, `code-cortex-mcp`) is now vendored inside `knowledge-graph-generator` at `code-cortex/` — `install/bootstrap.sh` clones only `knowledge-graph-generator` and gets both. See `knowledge-graph-generator/code-cortex/VENDORED_FROM.md` for exact provenance (pinned upstream commit, license, the local modifications on top) and `LOCAL_MODIFICATIONS.patch` for the literal diff.
+- `install/bootstrap.sh`: removed the separate `code-cortex-mcp` clone step; `CORTEX_REPO` now points at `$KG_REPO/code-cortex`; doctor mode and the manifest updated for the vendored (no independent `.git`) case; warns (doesn't block) if a KG checkout is missing the vendored subdirectory (stale/incomplete pull).
+- `shared/mcp-tools/unified-trace-mcp/index.js`: fixed hardcoded personal-path defaults (`/Users/preetham/...` for `KG_PYTHON`/`KG_SCRIPT`/`KG_DB_PATH`, and a literal username instead of `$HOME` for `CODE_CORTEX_BIN`) — now auto-discovers the sibling `knowledge-graph-generator` repo relative to its own file location, matching `bootstrap.sh`'s own convention. Explicit `UT_*` env vars still always win.
+- `knowledge-graph-generator/kg-config.env` untracked (real, machine-specific paths) in favor of a tracked `kg-config.env.example` template — the previously-committed file had a hardcoded personal `ROOT_PATH`, and its own history showed a *different* prior developer's path there before that.
+
+### Fixed
+- Incidentally fixed a long-standing `CONNECTION_CLOSED` issue on `code-cortex-mcp`: a genuinely fresh `install.sh` run (prompted by this consolidation) produced a working, connected binary where the previous stale `~/.local/bin` copy had not been.
+
+### Notes
+- Code Cortex's upstream (`github.com/tigercosmos/code-cortex-mcp`, MIT, itself a fork of `DeusData/codebase-memory-mcp`) has 893 commits from 30+ external contributors — deliberately vendored as a pinned-commit snapshot + patch file rather than a git-history merge, to avoid mixing unrelated project history into this repository.
+- Old standalone `code-cortex-mcp` clone deleted from disk after the vendored copy was built, functionally verified (real Unified Trace query against real indexed data), and the git history confirmed fully recoverable from its public GitHub origin if ever needed.
+
+## [4.11.0] - 2026-09-14 — Machine bootstrap (macOS/Linux) + Unified Trace committed
+
+### Added
+- `shared/mcp-tools/unified-trace-mcp/`, `shared/mcp-tools/opencode-mcp-bridge/`, `docs/opencode-setup.md` — committed for the first time; these existed and had been iterated on locally across several sessions but were never in git, so cloning the repo produced an environment missing Unified Trace entirely.
+- `install/bootstrap.sh` — portable (macOS + Linux) machine bootstrap: prerequisite detection with version classification, sibling-repo clone-or-reuse (knowledge-graph-generator, code-cortex-mcp), Claude Code CLI install, this platform's own contract install, MCP registration for `knowledge-graph`/`code-cortex-mcp`/`unified-trace`/`opencode-bridge` with stale-registration detection and repair, OpenCode config safe-merge (refuses rather than risks corrupting a hand-edited JSONC file), `--dry-run`, `--doctor`, `--reindex`, `--skip-runner-tests`. Indexing stays explicit — a missing Knowledge Graph database is reported `NOT INDEXED / READY TO INDEX`, never built automatically.
+- `install/merge-opencode-config.js` — the safe-merge helper `bootstrap.sh` shells out to.
+- `install/test-bootstrap.sh` — 22-case test matrix (new/existing-machine scenarios, idempotency, config-merge preservation, broken-registration repair, optional-component absence, dry-run/doctor isolation), run against isolated fake `$HOME` directories, never the real environment.
+- `paths.env` — new `TOOLS_DIR`/`PROJECTS_DIR` keys (blank = auto-detect siblings of wherever this repo was cloned); `EAP_TOOLS_DIR`/`EAP_PROJECTS_DIR` env var overrides for scripting/CI.
+- `docs/TROUBLESHOOTING.md` — new entries for the `claude mcp get` project-scope-shadowing gotcha (found and fixed during this work), `CONNECTION_CLOSED` on `code-cortex-mcp`/`unified-trace`, and the OpenCode config manual-merge fallback.
+- `docs/installation.md`, `docs/prerequisites.md`, `README.md` — cross-references to the new bootstrap path.
+
+### Fixed
+- The Windows master-prompt doc under `Auto setup claude prompt/` marked superseded — it predates the decision not to adopt GraphRAG (superseded by Knowledge Generator + Code Cortex + Unified Trace) and had 20+ stale references across 1,646 lines.
+
+### Notes
+- Windows is explicitly out of scope for `install/bootstrap.sh` — documented as a known gap rather than claimed working. The existing PowerShell installers (`install/*.ps1`, `adapters/*/install.ps1`) still cover the repo-contract install on Windows.
+
 ## [4.4.0] - 2026-07-13 — Phase G: AI Developer Agent
 
 ### Added

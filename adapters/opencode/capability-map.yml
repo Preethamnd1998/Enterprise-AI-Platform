@@ -96,6 +96,12 @@ capabilities:
     status: unsupported
     notes: "SP-03: OC has no hook/event API. No session-end event. Audit = Claude Code only."
 
+  # ── Skills ────────────────────────────────────────────────────────────────
+  - id: cap-19
+    name: "Skills (shared/skills/)"
+    status: supported
+    notes: "OC has a native v2 skill scanner (SkillV2Info / skills.paths in opencode.jsonc) that already reads ~/.claude/skills/ and ~/.agents/skills/ by default -- verified via `opencode debug skill`. No OC-specific file-map entry needed: the single adapters/claude global install target (~/.claude/skills/) covers both tools. Lazy-loaded natively (frontmatter-only at scan time, full content read on invocation) -- same contract as Claude Code, nothing platform-specific to add."
+
   # ── Installer ─────────────────────────────────────────────────────────────
   - id: cap-16
     name: "Idempotent installer"

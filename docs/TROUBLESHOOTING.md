@@ -204,6 +204,72 @@ $s.permissions.allow | Where-Object { $_ -like "*<tool-name>*" }
 
 ---
 
+### `claude mcp get <name>` says "already registered" but bootstrap re-registers it anyway (or vice versa)
+
+**Cause:** `claude mcp get`/`add`/`remove` resolve a **project-scoped**
+`.mcp.json` from the current directory upward before ever consulting
+user-scope config — a same-named server registered in a project `.mcp.json`
+anywhere above your current directory silently shadows the user-scope
+entry `install/bootstrap.sh` actually manages. This is genuinely confusing
+even when nothing is broken: two different directories can give two
+different answers for the exact same `claude mcp get unified-trace`.
+
+**Fix:** `install/bootstrap.sh` (v4.11+) always runs `claude mcp` commands
+from `$HOME` internally specifically to avoid this. If you're debugging by
+hand, always run `claude mcp get <name>` from `$HOME` or another directory
+with no `.mcp.json` above it, not from inside a project repo.
+
+---
+
+### Diagnose anything first: `npm run platform:doctor` / `npm run mcp:selftest`
+`platform:doctor` shows, for THIS machine, the resolved Node, base Python, `.venv-mcp` python (`bin/python` or `Scripts\python.exe`), Code Cortex binary (and where it was found), KG database and `PROJECTS_DIR`, with the fix hint for each miss. `mcp:selftest` starts every MCP through the shared launcher and lists its tools.
+- `venv python not found` → `npm run platform:install -- --apply`.
+- `Code Cortex binary not found` → `npm run platform:install -- --apply --with-cortex` (Windows: installs to `%LOCALAPPDATA%\Programs\code-cortex-mcp` and edits your USER PATH), or set `CODE_CORTEX_PATH` in `paths.local.env`.
+- `projects root not set` / saga returns nothing → set `PROJECTS_DIR` in `paths.local.env`; set `KG_SOURCE` if two Knowledge Graphs exist.
+- Saga UI stage empty or partial → check `metadata.ui_narrowing.timed_out` (raise `UT_SAGA_UI_NARROW_BUDGET_MS`) and `metadata.ui_lookup_failed`; both are reported as gaps, never silently.
+- Windows: untested on a real machine — please report doctor/selftest output.
+
+---
+
+### `unified-trace` / `code-cortex-mcp` shows `CONNECTION_CLOSED`
+
+**Cause 1:** The `code-cortex-mcp` binary at `~/.local/bin/code-cortex-mcp`
+is stale or was copied in a way that left it not-quite-executable in this
+shell/sandbox (seen in restricted CI/agent sandboxes). **Try a genuinely
+fresh reinstall first** — `mv ~/.local/bin/code-cortex-mcp /tmp/ && bash
+install/bootstrap.sh` (it detects the binary is missing and reinstalls
+from the vendored source at `../knowledge-graph-generator/code-cortex/`; or `npm run platform:install -- --apply --with-cortex`) —
+this alone resolved the issue the one time it was seen, without needing
+the workaround below. If a fresh reinstall doesn't help, point
+`unified-trace` at the build-directory binary directly:
+```bash
+claude mcp remove unified-trace -s user
+claude mcp add unified-trace -s user \
+  -e UT_CODE_CORTEX_BIN="/path/to/../knowledge-graph-generator/code-cortex/build/c/code-cortex-mcp" \
+  -- node shared/mcp-tools/unified-trace-mcp/index.js
+```
+
+**Cause 2:** `npm install` was never run inside
+`shared/mcp-tools/unified-trace-mcp/` (or `opencode-mcp-bridge/`) —
+`install/bootstrap.sh` does this automatically, but if you registered the
+server by hand, check `node_modules/` exists in that directory first.
+
+**Verify:** `bash install/bootstrap.sh --doctor` reports live connectivity
+for all four shared MCP servers without installing or registering anything.
+
+---
+
+### OpenCode config wasn't auto-merged ("MANUAL_STEP_REQUIRED")
+
+**Cause:** `install/bootstrap.sh` only auto-merges the shared MCP block
+into `~/.config/opencode/opencode.jsonc` when the file round-trips cleanly
+through `JSON.parse`/`JSON.stringify` — a JSONC file with `//` comments
+(valid JSONC, invalid JSON) fails that check on purpose, so a hand-edited
+config with comments is never silently rewritten. Add the block from
+[opencode-setup.md](opencode-setup.md) by hand in that case.
+
+---
+
 ## Command Problems
 
 ### Command produces no output or hangs

@@ -61,6 +61,38 @@ All commands accept `key=value` arguments. Common keys: `redmine=<id>`, `mr=!<n>
 
 ---
 
+## Cross-platform runtime, MCPs and plugins (Unreleased)
+
+This repo contains the platform and the MCP servers it owns (`shared/mcp-tools/`: `unified-trace-mcp`, `opencode-mcp-bridge`, `kafka-mcp`). The **Knowledge Graph Generator (with Code Cortex vendored in `code-cortex/`) is its own repository** — [knowledge-graph-generator](https://git.lifetrenz.com/Preetham.ND/knowledge-graph-generator) — clone it next to this repo (`../knowledge-graph-generator`) or point `KNOWLEDGE_GRAPH_PATH` at it in `paths.local.env`. The two repos are independent; this repo only locates and launches it. All OS-specific logic (venv layout, Code Cortex binary, config dirs, project roots) lives once in `shared/core/`; MCPs and client plugins never hardcode paths.
+
+```bash
+cp paths.local.env.example paths.local.env      # set PROJECTS_DIR (folder with BE/ and UI/); gitignored
+npm run platform:doctor                          # what is missing on THIS machine
+npm run platform:install                         # dry-run plan
+npm run platform:install -- --apply [--with-cortex]   # npm deps + .venv-mcp (+ Code Cortex binary)
+npm run mcp:selftest                             # starts every MCP through the shared launcher
+npm test                                         # shared-core tests
+npm run plugin:install:all                       # DRY-RUN plan for Claude Code / Cursor / OpenCode (add -- --apply to install)
+```
+Wrappers: `install/macos/install-all.sh`, `install/linux/install-all.sh`, `install\windows\install-all.ps1`. Index your repos with `shared/mcp-tools/knowledge-graph-generator/sync-projects.sh` (macOS/Linux) or `sync-projects.ps1` (Windows).
+
+### Verification status — read this before relying on it
+| | macOS | Windows | Linux |
+|---|---|---|---|
+| Runtime install, doctor, MCP startup, KG indexing, Claude + OpenCode plugin load | **Verified on a real machine** | **Not verified** | **Not verified** |
+| Path resolution, security guard, install planning | real run | **mock-tested only** (`path.win32` with injected file system) | mock-tested |
+| `install-all.ps1`, `sync-projects.ps1` | n/a | **written, never executed** | n/a |
+
+Windows is *designed* to work (OS-aware venv `Scripts\python.exe`, `code-cortex-mcp.exe` under `%LOCALAPPDATA%`, `node npm-cli.js` instead of `.cmd` shims, paths with spaces, backslash-aware deny-list) but nothing has been run on a Windows machine. First thing to do there: `npm run platform:doctor`, then `npm test`, then `npm run mcp:selftest`, and report failures.
+
+Client integrations (built by `npm run plugin:build` into the gitignored `dist/plugins/`): Claude Code (native plugin, verified loading), OpenCode (plugin + commands/skills/agents, verified loading on 1.18.34), Cursor (native plugin format built to the official docs; **never run in Cursor**). Installs are dry-run by default and never edit global client configs without `--apply`. See [docs/PLUGIN_INTEGRATIONS.md](docs/PLUGIN_INTEGRATIONS.md).
+
+Docs: [PLATFORM_ARCHITECTURE](docs/PLATFORM_ARCHITECTURE.md) · [MCP_ARCHITECTURE](docs/MCP_ARCHITECTURE.md) · [PLUGIN_INTEGRATIONS](docs/PLUGIN_INTEGRATIONS.md) · [CROSS_PLATFORM_INSTALLATION](docs/CROSS_PLATFORM_INSTALLATION.md) · [ADDING_NEW_MCP](docs/ADDING_NEW_MCP.md) · [ADDING_NEW_PLUGIN_INTEGRATION](docs/ADDING_NEW_PLUGIN_INTEGRATION.md) · [KG_PARITY_REPORT](docs/KG_PARITY_REPORT.md) · [SECURITY_FINDINGS](docs/SECURITY_FINDINGS.md)
+
+> Knowledge Graph source: `KG_SOURCE` in `paths.local.env` (`auto` | `legacy` | `in-repo`). The in-repo index is not yet at proven parity with the legacy one, so keep `KG_SOURCE=legacy` if you still have the legacy sibling index (see KG_PARITY_REPORT).
+
+---
+
 ## Quick Start
 
 **60-second path for Claude Code:**
@@ -85,6 +117,32 @@ Copy-Item shared/mcp/.mcp.json.template C:\src\my-service\.mcp.json
 ```
 
 See [docs/QUICK-START.md](docs/QUICK-START.md) for a full walkthrough.
+
+**macOS / Linux — machine bootstrap (legacy sibling-repo flow; the section above is the current self-contained path):** the steps above assume the
+Claude Code CLI, OpenCode, and the Knowledge Graph/Code Cortex/Unified
+Trace MCP servers are already set up. `install/bootstrap.sh` does that
+part too — prerequisite detection, sibling-repo clone-or-reuse (one clone
+of `knowledge-graph-generator` gets both Knowledge Generator and Code
+Cortex — the latter is vendored inside it at `code-cortex/`, see that
+directory's `VENDORED_FROM.md`), Claude Code CLI install, this platform's
+global contract install, and MCP registration for
+`knowledge-graph`/`code-cortex-mcp`/`unified-trace`/`opencode-bridge` —
+idempotent (safe to re-run), and it never indexes your codebase
+automatically (indexing stays an explicit, separate step you run yourself
+in `knowledge-graph-generator/`).
+
+```bash
+git clone https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git
+cd enterprise-ai-platform
+bash install/bootstrap.sh --dry-run   # preview what would happen
+bash install/bootstrap.sh             # actually set up
+bash install/bootstrap.sh --doctor    # health check any time after
+```
+
+Optional path overrides live in `paths.env` (`TOOLS_DIR`, `PROJECTS_DIR`) —
+see the comments above each key. This script has no Windows equivalent; on
+Windows use `install\\windows\\install-all.ps1` (runtime + MCPs, **unverified on a real
+Windows machine**) plus the PowerShell contract/commands install above.
 
 ---
 
@@ -191,6 +249,11 @@ D:\enterprise-ai-platform\                 # git repo root (flattened — no nes
 | [docs/fleet-rollout.md](docs/fleet-rollout.md) | Fleet rollout to consuming repos |
 | [docs/prerequisites.md](docs/prerequisites.md) | Required tools and versions |
 | [docs/audit-and-metrics.md](docs/audit-and-metrics.md) | Audit log structure and metrics |
+| [docs/PLATFORM_ARCHITECTURE.md](docs/PLATFORM_ARCHITECTURE.md) | Shared core, MCP registry, plugin build |
+| [docs/CROSS_PLATFORM_INSTALLATION.md](docs/CROSS_PLATFORM_INSTALLATION.md) | macOS / Windows / Linux install + verification status |
+| [docs/PLUGIN_INTEGRATIONS.md](docs/PLUGIN_INTEGRATIONS.md) | Claude Code / Cursor / OpenCode integrations |
+| [docs/KG_PARITY_REPORT.md](docs/KG_PARITY_REPORT.md) | Legacy vs in-repo Knowledge Graph comparison |
+| [docs/SECURITY_FINDINGS.md](docs/SECURITY_FINDINGS.md) | Open security findings |
 
 ---
 

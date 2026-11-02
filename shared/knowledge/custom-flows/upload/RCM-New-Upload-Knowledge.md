@@ -6,6 +6,12 @@
 > invented. All file paths are relative to the repository roots given in
 > §3 unless a full path is shown.
 
+> **Resource classification (2026-10-13 reorg audit):** §1-35 and §39-42 are KNOWLEDGE
+> (reverse-engineered facts, CONFIRMED/INFERRED/NOT-FOUND tagged — what IS). §36-38 "AI Rebuild
+> Specification" / "Step-by-Step Plan" / "Acceptance Criteria" are a SKILL (procedure, not fact).
+> Left as one file rather than physically split, same rationale as
+> `CORE_UPLOAD_FRAMEWORK_ARCHITECTURE.md`'s note. See `shared/reports/` for the full audit.
+
 ---
 
 ## 1. Executive Summary

@@ -36,3 +36,27 @@ package-lock.json
 
 # ─── Backup files created by installer ───────────────────────────────────
 *.prev
+
+# ─── Machine bootstrap output (per-machine, has real absolute paths) ─────
+install/environment-manifest.md
+install/environment-manifest.json
+
+# ─── Vendored MCP: knowledge-graph-generator (generated / machine-local) ──
+shared/mcp-tools/knowledge-graph-generator/.venv-mcp/
+shared/mcp-tools/knowledge-graph-generator/output/
+shared/mcp-tools/knowledge-graph-generator/kg-config.env
+shared/mcp-tools/knowledge-graph-generator/mcp-config.env
+shared/mcp-tools/knowledge-graph-generator/code-cortex/build/
+shared/mcp-tools/knowledge-graph-generator/code-cortex/.claude/
+shared/mcp-tools/**/__pycache__/
+shared/mcp-tools/**/.pytest_cache/
+
+# ─── Machine-local platform config / build output ─────────────────────────
+paths.local.env
+dist/
+
+shared/mcp-tools/knowledge-graph-generator/.cache/
+shared/mcp-tools/knowledge-graph-generator/output-*/
+
+# Knowledge Graph Generator is its OWN repo (knowledge-graph-generator); an optional local copy here is not tracked
+shared/mcp-tools/knowledge-graph-generator/
