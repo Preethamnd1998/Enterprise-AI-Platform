@@ -1,12 +1,18 @@
 {
   "name": "lifetrenz-internal",
-  "owner": { "name": "Lifetrenz Engineering" },
-  "metadata": { "description": "Lifetrenz internal Claude Code plugins", "version": "4.4.0" },
+  "owner": {
+    "name": "Lifetrenz Engineering"
+  },
+  "metadata": {
+    "description": "Lifetrenz internal Claude Code plugins",
+    "version": "4.14.0"
+  },
   "plugins": [
     {
       "name": "enterprise-ai-platform",
       "source": "./",
-      "description": "Enterprise AI Platform v4.4 — bug-fix, migration, new-development, ui-design-update, data-correction, test, prompt-audit, dev"
+      "description": "Enterprise AI Platform v4.4 \u2014 bug-fix, migration, new-development, ui-design-update, data-correction, test, prompt-audit, dev",
+      "version": "4.14.0"
     }
   ]
 }

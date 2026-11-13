@@ -1,12 +1,12 @@
 ---
-description: Migrate code between branches from a Redmine/MR/commit/branch/release or document file. Approval required before patching. mode=exact (smallest diff) or mode=functionality (full capability). Use auto=true to skip gate.
-argument-hint: "mode=exact|functionality (mr=!N | commit=SHA | branch=B | release=vX..vY | redmine=ID | file=<path.md>) target=<branch> [auto=true]"
+description: Migrate code between branches from a Redmine/MR/commit/branch/release or document file. Auto mode by default; auto=false stops for approval after analysis. mode=exact (smallest diff) or mode=functionality (full capability). Use auto=true to skip gate.
+argument-hint: "mode=exact|functionality (mr=!N | commit=SHA | branch=B | release=vX..vY | redmine=ID | file=<path.md>) target=<branch> [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs, mcp__gitlab-reader__list_merge_request_changed_files, mcp__gitlab-reader__get_merge_request_file_diff, mcp__gitlab-reader__get_commit, mcp__gitlab-reader__get_commit_diff, mcp__gitlab-reader__get_branch_diffs, mcp__gitlab-reader__list_commits, mcp__gitlab-reader__get_file_contents
 ---
 
 # Command: /migration
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **Migration**. Input: `$ARGUMENTS`.
 
@@ -14,7 +14,7 @@ Agent profile: **Migration**. Input: `$ARGUMENTS`.
 
 ## Mode Detection
 
-Parse `auto=true` from arguments. Store as session flag — applies to all tasks this session.
+Parse `auto` from arguments — default `true` (no approval stop); `auto=false` re-enables the stop. Store as session flag — applies to all tasks this session.
 
 **If `$ARGUMENTS` is empty → Session Mode.**
 **If `$ARGUMENTS` is non-empty → Direct Mode** (skip to Input Resolution below).
@@ -37,7 +37,7 @@ Provide mode + source + target for each migration:
   • mode=exact   context        target=release/v2.5  — scan context/ folder
 
 Options:
-  • auto=true    — skip approval gate for this session
+  • auto=false    — stop for approval after analysis (default: auto)
 
 If mode is missing I will suggest one.  Type 'done' to end.
 ```
@@ -45,7 +45,7 @@ If mode is missing I will suggest one.  Type 'done' to end.
 For each migration the user provides in this session:
 
 1. Run **Input Resolution**, then **Phase 1 — Discovery & Analysis**.
-2. Run **Approval Gate** (skip if `auto=true`).
+2. Run **Approval Gate** (auto by default — stops only for `auto=false` or High/Critical risk).
 3. After approval: run **Execution Phase**.
 4. Append **Execution Summary** (contract §13).
 5. Print: `─── Migration complete. Next? (or 'done') ───`
@@ -115,9 +115,9 @@ Complexity: Small / Medium / Large / XLarge
 
 ## Approval Gate (contract §14)
 
-If `auto=true` was set: skip and proceed to Execution Phase.
+Default (`auto`): output the analysis blocks above and proceed to the Execution Phase.
 
-Otherwise: STOP. Output analysis blocks and ask:
+Only if `auto=false` was passed or the §9 risk gate is High/Critical: STOP and ask:
 
 ```text
 Approve implementation? (approve / yes / proceed / implement)
@@ -125,7 +125,7 @@ Approve implementation? (approve / yes / proceed / implement)
 
 ---
 
-## Execution Phase (after approval or auto=true)
+## Execution Phase (auto by default, or after approval when the gate engaged)
 
 ### mode=exact
 

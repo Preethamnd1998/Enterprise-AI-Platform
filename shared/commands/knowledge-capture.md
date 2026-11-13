@@ -1,4 +1,5 @@
 ---
+model: claude-haiku-5-5
 description: After implementing something, capture what was learned as a new (or extended) file under shared/knowledge/ for future agents to reuse. Explicit, on-demand only — never runs automatically at the end of a task.
 argument-hint: "[redmine=<id> | mr=!<n> | \"<free text: what was built/fixed>\"] [topic=<custom-flows/<name> | architecture | new>]"
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash, mcp__gitlab-reader__get_commit_diff, mcp__gitlab-reader__get_merge_request_diffs
@@ -6,7 +7,7 @@ allowed-tools: Read, Grep, Glob, Write, Edit, Bash, mcp__gitlab-reader__get_comm
 
 # Command: /knowledge-capture
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **Knowledge Capture**. Input: `$ARGUMENTS`.
 

@@ -1,0 +1,4 @@
+{
+  "_comment": "USD per million tokens. Fill in from https://www.anthropic.com/pricing for the models you use; the report shows cost ONLY for models listed here (nothing is guessed). Keys may be a full model id or its prefix before the date suffix.",
+  "models": {}
+}

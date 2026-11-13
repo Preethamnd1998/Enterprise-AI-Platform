@@ -23,11 +23,11 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 
 ## Bug Fix
 
-**Invoke:** `/bug-fix [redmine=<id>] [mr=!<n>] [commit=<sha>] [auto=true]`
+**Invoke:** `/bug-fix [redmine=<id>] [mr=!<n>] [commit=<sha>] [auto=false]`
 
 **Source:** `shared/commands/bug-fix.md`
 
-**Purpose:** Given a bug identifier (Redmine ticket, MR, commit, stack trace, or screenshot), root-cause the defect and produce a minimal fix. All changes require approval before execution unless `auto=true`.
+**Purpose:** Given a bug identifier (Redmine ticket, MR, commit, stack trace, or screenshot), root-cause the defect and produce a minimal fix. Analysis blocks are output first, then execution continues automatically (auto is the default); `auto=false` stops for approval, and High/Critical risk always stops.
 
 **Input forms:**
 | Input | Example |
@@ -55,7 +55,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 
 ## Migration
 
-**Invoke:** `/migration [redmine=<id>] [mr=!<n>] [branch=<b>] [release=vX..vY] [mode=exact|functionality] [target=<branch>] [auto=true]`
+**Invoke:** `/migration [redmine=<id>] [mr=!<n>] [branch=<b>] [release=vX..vY] [mode=exact|functionality] [target=<branch>] [auto=false]`
 
 **Source:** `shared/commands/migration.md`
 
@@ -85,7 +85,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 
 ## New Development
 
-**Invoke:** `/new-development [redmine=<id>] [mr=!<n>] [auto=true]`
+**Invoke:** `/new-development [redmine=<id>] [mr=!<n>] [auto=false]`
 
 **Source:** `shared/commands/new-development.md`
 
@@ -99,7 +99,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 5. **Execution** — implement across all required layers
 6. **Validation** — Gate A + Gate B
 
-**High-risk triggers (require manual approval even with `auto=true`):**
+**High-risk triggers (always stop for manual approval; auto mode does not apply):**
 - DB schema changes (Flyway)
 - Permission or role changes
 - Authentication flow changes
@@ -108,7 +108,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 
 ## Data Correction
 
-**Invoke:** `/data-correction [redmine=<id>] [auto=true]`
+**Invoke:** `/data-correction [redmine=<id>] [auto=false]`
 
 **Source:** `shared/commands/data-correction.md`
 
@@ -121,13 +121,13 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 - Affected tables
 - Approval gate summary
 
-**Security:** Data corrections always require approval (cannot be skipped by `auto=true`). Corrections touching patient data, billing data, or audit tables require explicit escalation to the Security Lead.
+**Security:** Data corrections always require approval (auto mode never applies to script generation or execution). Corrections touching patient data, billing data, or audit tables require explicit escalation to the Security Lead.
 
 ---
 
 ## UI Design Update
 
-**Invoke:** `/ui-design-update [redmine=<id>] [mr=!<n>] [auto=true]`
+**Invoke:** `/ui-design-update [redmine=<id>] [mr=!<n>] [auto=false]`
 
 **Source:** `shared/commands/ui-design-update.md`
 
@@ -151,7 +151,7 @@ All commands are defined in `shared/` and have exactly one implementation. Adapt
 
 ## Test
 
-**Invoke:** `/test [redmine=<id>] [mr=!<n>] [commit=<sha>] [auto=true]`
+**Invoke:** `/test [redmine=<id>] [mr=!<n>] [commit=<sha>] [auto=false]`
 
 **Source:** `shared/commands/test.md`
 
@@ -189,7 +189,7 @@ See [PROMPT-GUIDELINES.md](PROMPT-GUIDELINES.md) for the full CRISP framework.
 
 ## AI Developer Agent
 
-**Invoke:** `/dev [multi] file=<path.md>[,<path2.md>] | context [auto=true]`
+**Invoke:** `/dev [multi] file=<path.md>[,<path2.md>] | context [auto=false]`
 
 **Source:** `shared/commands/dev.md`
 
@@ -236,7 +236,7 @@ listing the two valid modes.
 
 | Option | Applies to | Effect |
 |---|---|---|
-| `auto=true` | All commands | Skip approval gate; proceed directly to execution |
+| `auto=false` | All commands | Re-enable the approval stop after analysis (since v4.14 the default is auto; High/Critical risk always stops) |
 | `redmine=<id>` | All commands | Fetch Redmine issue #id as the primary input |
 | `mr=!<n>` | bug-fix, migration, new-development, test | Use GitLab MR as input |
 | `commit=<sha>` | bug-fix, migration, test | Use git commit as input |

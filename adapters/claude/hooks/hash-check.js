@@ -21,7 +21,12 @@ function extractKernel(content) {
   const si = content.indexOf(START);
   const ei = content.indexOf(END);
   if (si < 0 || ei < 0) return null;
-  return content.substring(si, ei + END.length);
+  let kernel = content.substring(si, ei + END.length);
+  // v4.14: the installer resolves {{EAP_ROOT}} to this machine's plugin path;
+  // fold it back so the hash equals the source kernel's (shared/contract.md.sha256).
+  const root = /Plugin root: `([^`]+)`/.exec(kernel);
+  if (root && root[1] !== '{{EAP_ROOT}}') kernel = kernel.split(root[1]).join('{{EAP_ROOT}}');
+  return kernel;
 }
 
 function sha256(text) {

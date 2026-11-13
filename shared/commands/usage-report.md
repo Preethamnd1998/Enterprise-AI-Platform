@@ -1,12 +1,13 @@
 ---
+model: claude-haiku-5-5
 description: Generate a report from the system-wide prompt/session log (~/.claude/usage-logs/), or clear it. Sessions, prompts per session, total prompts, and prompt-quality scoring reusing the shared/prompts/prompt-quality.md rubric — applied retroactively across sessions/days, distinct from the per-session /prompt-audit. Clearing requires typed confirmation.
-argument-hint: "[date=<YYYY-MM-DD>|<start>..<end>] | clear"
+argument-hint: "[date=<YYYY-MM-DD>|<start>..<end>] | tokens [days=N] [baseline=<file>] [html=<out.html>] | clear"
 allowed-tools: Read, Glob, Bash
 ---
 
 # Command: /usage-report
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **Usage Report**. Input: `$ARGUMENTS`.
 
@@ -34,6 +35,20 @@ itself, only read what's currently there.
 ---
 
 ## Mode Detection
+
+- `tokens` present in `$ARGUMENTS` → **Token / Context Report Mode** (Optimization
+  Dashboard). Run, with Bash, and show its Markdown output verbatim (do not re-analyse
+  transcripts yourself):
+
+  ```bash
+  python3 "${CLAUDE_PLUGIN_ROOT}/bin/ctx-report.py" --days <days|10> [--baseline <file>] [--html <out.html>] --md
+  ```
+
+  It measures, from Claude Code's own transcripts: always-on (first-turn) context, context per
+  turn (median/p90/p95), % of turns over `CTX_BUDGET`, cache hit rate, tool-result tokens by
+  tool, skills loaded, MCP calls by server, graph-first ratio, model-wise tokens (cost only when
+  `bin/pricing.json` has prices) and, with `baseline=`, a before/after table. `html=` writes a
+  self-contained dashboard page. Nothing is estimated except tool-result size (chars/4).
 
 - `clear` present in `$ARGUMENTS` → **Clear Mode**.
 - `date=` present → **Dated Report Mode** for that day or range.

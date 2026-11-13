@@ -22,7 +22,7 @@ Analyse test coverage for a change set, produce a gap report, and scaffold missi
 /test mr=!247                              Direct — changed files in MR
 /test commit=abc1234                       Direct — changed files in commit
 /test file=path/to/Service.java            Direct — named file
-/test auto=true                            Skip approval gate (not recommended for test scaffolding)
+/test auto=false                            Stop for approval before scaffolding (default: auto)
 /test agents=2                             Enable 2 subagents for parallel analysis
 /test mode=integration                     Include integration tests in scope
 /test mode=e2e                             Include E2E tests in scope
@@ -84,7 +84,7 @@ Run Gate A (completeness) and Gate B (regression) per `shared/standards/testing.
 ### Phase 5 — Output (per output contract §6)
 
 Emit all 7 sections defined in `shared/standards/testing.md §6`.
-Stop at section 7 (APPROVAL GATE) unless `auto=true`.
+Section 7 (APPROVAL GATE) is auto by default; stop there only when `auto=false` is passed or risk is High/Critical.
 
 ### Phase 6 — Implementation (post-approval only)
 

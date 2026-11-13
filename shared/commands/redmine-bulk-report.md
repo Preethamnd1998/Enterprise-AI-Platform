@@ -1,12 +1,13 @@
 ---
+model: claude-haiku-5-5
 description: Take a list of Redmine issue IDs and produce one dated report — what each task is, its status, and (where the evidence supports it) a root-cause finding backed by code/DB/log citations. Read-only. Built to feed straight into /planning or /plan-reviewer.
-argument-hint: "ids=<comma/space-separated Redmine IDs> [env=<override>] [auto=true]"
+argument-hint: "ids=<comma/space-separated Redmine IDs> [env=<override>] [auto=false]"
 allowed-tools: Read, Grep, Glob, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_search, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs, mcp__gitlab-reader__get_commit_diff
 ---
 
 # Command: /redmine-bulk-report
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **Redmine Bulk Reporter**. Input: `$ARGUMENTS`.
 

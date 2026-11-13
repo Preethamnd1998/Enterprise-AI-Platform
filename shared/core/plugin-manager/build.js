@@ -80,6 +80,42 @@ export function rewriteRefs(text, root) {
   return t;
 }
 
+// Vendored MCP servers + the Knowledge Graph Generator, so the package carries
+// the code its MCP entries run. Machine-local state is never shipped: venvs,
+// built indexes (output*/, *.db), caches, generated code-cortex/build, env
+// files (kg-config.env / mcp-config.env hold credentials), and the ~1 GB of
+// vendored tree-sitter grammar sources + benchmark evidence logs (too large
+// for a plugin payload; the rest of code-cortex source is kept). Matched on the
+// path RELATIVE to mcp-tools/ so an ancestor dir named e.g. "output" cannot exclude all.
+const MCP_TOOLS_SKIP = /(^|[\\/])(\.venv[^\\/]*|\.cache|\.git|\.pytest_cache|__pycache__|node_modules|output[^\\/]*|\.DS_Store)([\\/]|$)|(^|[\\/])code-cortex[\\/](build|internal[\\/]cbm[\\/]vendored[\\/]grammars|docs[\\/]benchmarks)([\\/]|$)|\.db$|\.env$/;
+function copyMcpTools(ctx, out, { only = null, exclude = [] } = {}) {
+  const src = path.join(ctx.repoRoot, "shared", "mcp-tools");
+  if (!fs.existsSync(src)) return;
+  const top = (rel) => rel.split(/[\\/]/)[0];
+  fs.cpSync(src, path.join(out, "mcp-tools"), {
+    recursive: true,
+    filter: (s) => {
+      const rel = path.relative(src, s);
+      if (!rel) return true;
+      if (MCP_TOOLS_SKIP.test(rel)) return false;
+      if (only && !only.includes(top(rel)) && !/^MIGRATION\.md$/.test(rel)) return false;
+      if (exclude.includes(top(rel))) return false;
+      return true;
+    },
+  });
+}
+
+// Context Manager tools shipped under <plugin>/bin (eap-run, mcp-env, ctx-report, ctx-meter).
+function copyContextTools(ctx, out) {
+  const src = path.join(ctx.repoRoot, "shared", "core", "context");
+  if (!fs.existsSync(src)) return;
+  for (const f of fs.readdirSync(src)) {
+    const name = f.replace(/\.sh$/, "");
+    fs.cpSync(path.join(src, f), path.join(out, "bin", name));
+    try { fs.chmodSync(path.join(out, "bin", name), 0o755); } catch { /* windows */ }
+  }
+}
+
 function rewriteTree(dir, root) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const f = path.join(dir, e.name);
@@ -91,23 +127,41 @@ function rewriteTree(dir, root) {
   }
 }
 
-function kernelOf(ctx) {
+export function kernelOf(ctx, root = "${CLAUDE_PLUGIN_ROOT}") {
   const t = read(path.join(ctx.repoRoot, "shared", "contract.md"));
   const m = /<!-- enterprise-ai-platform:kernel:start -->([\s\S]*?)<!-- enterprise-ai-platform:kernel:end -->/.exec(t);
-  return (m ? m[1] : t).trim();
+  return (m ? m[1] : t).trim().replace(/\{\{EAP_ROOT\}\}/g, root);
+}
+
+// Claude Code reads ~/.claude/CLAUDE.md on EVERY turn: it must hold the kernel
+// only (prompt-cache prefix), never the full contract. Content outside the
+// markers is the user's own and is preserved.
+export function globalKernelText(ctx, pluginRoot, existing = "") {
+  const block = `<!-- enterprise-ai-platform:kernel:start -->\n${kernelOf(ctx, pluginRoot)}\n<!-- enterprise-ai-platform:kernel:end -->`;
+  const re = /<!-- enterprise-ai-platform:kernel:start -->[\s\S]*?<!-- enterprise-ai-platform:kernel:end -->/;
+  let out = re.test(existing) ? existing.replace(re, block) : (existing.trim() ? existing.trimEnd() + "\n\n" + block + "\n" : block + "\n");
+  // Drop a previously injected FULL contract (v3 header) that followed the kernel.
+  out = out.replace(/\n# Enterprise AI Platform — Shared Execution Contract \(v3\)[\s\S]*$/, "\n");
+  return out;
 }
 
 const authorOf = { name: "Lifetrenz Engineering" };
 const DESC = "Enterprise AI Platform: shared commands, skills, standards and code-intelligence MCPs (unified-trace, knowledge graph, code cortex).";
+
+const KG_DESC = "Knowledge Graph plugin: cross-stack UI<->API<->service<->DB graph MCP (token-budgeted get_context_pack, search_knowledge, resolve_ui_api) + indexing skill. Used internally by enterprise-ai-platform's unified-trace.";
 
 function buildClaude(ctx, root, ver, reg, settings, refRoot, info) {
   const plugin = path.join(root, "plugins", "enterprise-ai-platform");
   writeJson(path.join(root, ".claude-plugin", "marketplace.json"), {
     name: "eap-local",
     owner: authorOf,
-    metadata: { description: "Local build of the Enterprise AI Platform plugin", version: ver },
-    plugins: [{ name: "enterprise-ai-platform", source: "./plugins/enterprise-ai-platform", description: DESC, version: ver }],
+    metadata: { description: "Local build of the Enterprise AI Platform plugins", version: ver },
+    plugins: [
+      { name: "enterprise-ai-platform", source: "./plugins/enterprise-ai-platform", description: DESC, version: ver },
+      { name: "knowledge-graph", source: "./plugins/knowledge-graph", description: KG_DESC, version: ver },
+    ],
   });
+  buildClaudeKnowledgeGraph(ctx, root, ver, reg, settings);
   writeJson(path.join(plugin, ".claude-plugin", "plugin.json"), {
     name: "enterprise-ai-platform", version: ver, description: DESC, author: authorOf, license: "UNLICENSED",
     keywords: ["enterprise", "mcp", "knowledge-graph"],
@@ -115,8 +169,10 @@ function buildClaude(ctx, root, ver, reg, settings, refRoot, info) {
   copyShared(ctx, plugin);
   copyBundle(ctx, plugin);
   rewriteTree(plugin, "${CLAUDE_PLUGIN_ROOT}");
+  copyMcpTools(ctx, plugin, { exclude: ["knowledge-graph-generator"] }); // after rewriteTree: vendored MCP docs ship verbatim; KG ships in its own plugin
+  copyContextTools(ctx, plugin);
   const mcp = {};
-  for (const id of serversForClient(reg, "claude-code", ctx.platform)) {
+  for (const id of serversForClient(reg, "claude-code", ctx.platform).filter((i) => (reg.servers[i].plugin ?? "enterprise-ai-platform") === "enterprise-ai-platform")) {
     // Claude does NOT dedupe: a plugin server and a same-named user-scope server
     // both start (verified). Skip ids the user already registered unless asked.
     if (info.userScope.includes(id)) { info.skipped.push(id); continue; }
@@ -124,20 +180,51 @@ function buildClaude(ctx, root, ver, reg, settings, refRoot, info) {
     mcp[id] = { command: l.command, args: l.args };
   }
   writeJson(path.join(plugin, ".mcp.json"), { mcpServers: mcp });
-  // Hooks are OPT-IN (--with-hooks): audit.js writes <cwd>/.claude/audit/log.jsonl in EVERY project
-  // once a plugin is enabled globally, and usage-logger logs every prompt to ~/.claude/usage-logs.
+  // Context Manager hooks ship by default (lightweight, global log files only):
+  //   usage-logger.js  UserPromptSubmit  → ~/.claude/usage-logs/<day>.jsonl (prompt log)
+  //   ctx-meter.cjs     UserPromptSubmit  → one advisory line only when context > CTX_BUDGET
+  //   ctx-meter.cjs     Stop              → tokens-<day>.jsonl record + <project>/.claude/checkpoints/current.md
+  // audit.js (per-repo PostToolUse telemetry in EVERY project) stays OPT-IN via --with-hooks.
+  const hooksSrc = path.join(ctx.repoRoot, "adapters", "claude", "hooks");
+  fs.cpSync(path.join(hooksSrc, "usage-logger.js"), path.join(plugin, "hooks", "scripts", "usage-logger.js"));
+  fs.cpSync(path.join(ctx.repoRoot, "shared", "core", "context", "ctx-meter.cjs"), path.join(plugin, "hooks", "scripts", "ctx-meter.cjs"));
+  const cmd = (f, extra = "") => `node "\${CLAUDE_PLUGIN_ROOT}/hooks/scripts/${f}"${extra}`;
+  const hooks = {
+    UserPromptSubmit: [{ hooks: [
+      { type: "command", command: cmd("usage-logger.js"), timeout: 5 },
+      { type: "command", command: cmd("ctx-meter.cjs", " --event UserPromptSubmit"), timeout: 5 },
+    ] }],
+    Stop: [{ matcher: "", hooks: [{ type: "command", command: cmd("ctx-meter.cjs", " --event Stop"), timeout: 10 }] }],
+  };
   if (info.withHooks) {
-      const hooksSrc = path.join(ctx.repoRoot, "adapters", "claude", "hooks");
-    for (const f of ["audit.js", "usage-logger.js"]) fs.cpSync(path.join(hooksSrc, f), path.join(plugin, "hooks", "scripts", f));
-    const cmd = (f, extra = "") => `node "\${CLAUDE_PLUGIN_ROOT}/hooks/scripts/${f}"${extra}`;
-    writeJson(path.join(plugin, "hooks", "hooks.json"), {
-      hooks: {
-        PostToolUse: [{ matcher: "", hooks: [{ type: "command", command: cmd("audit.js", " --event PostToolUse"), timeout: 5 }] }],
-        Stop: [{ matcher: "", hooks: [{ type: "command", command: cmd("audit.js", " --event Stop"), timeout: 10 }] }],
-        UserPromptSubmit: [{ hooks: [{ type: "command", command: cmd("usage-logger.js"), timeout: 5 }] }],
-      },
-    });
+    fs.cpSync(path.join(hooksSrc, "audit.js"), path.join(plugin, "hooks", "scripts", "audit.js"));
+    hooks.PostToolUse = [{ matcher: "", hooks: [{ type: "command", command: cmd("audit.js", " --event PostToolUse"), timeout: 5 }] }];
+    hooks.Stop[0].hooks.push({ type: "command", command: cmd("audit.js", " --event Stop"), timeout: 10 });
   }
+  writeJson(path.join(plugin, "hooks", "hooks.json"), { hooks });
+  return plugin;
+}
+
+// The Knowledge Graph as its own Claude plugin: the generator + MCP server code,
+// one skill (how/when to query and re-index), and the `knowledge-graph` MCP
+// entry. unified-trace (enterprise-ai-platform plugin) keeps spawning the same
+// server through path-resolver's kgDir(), so the two plugins share one index.
+function buildClaudeKnowledgeGraph(ctx, root, ver, reg, settings) {
+  const plugin = path.join(root, "plugins", "knowledge-graph");
+  writeJson(path.join(plugin, ".claude-plugin", "plugin.json"), {
+    name: "knowledge-graph", version: ver, description: KG_DESC, author: authorOf, license: "UNLICENSED",
+    keywords: ["knowledge-graph", "mcp", "code-intelligence"],
+  });
+  const skillsSrc = path.join(ctx.repoRoot, "shared", "plugins", "knowledge-graph", "skills");
+  if (fs.existsSync(skillsSrc)) copyDir(skillsSrc, path.join(plugin, "skills"));
+  rewriteTree(plugin, "${CLAUDE_PLUGIN_ROOT}");
+  copyMcpTools(ctx, plugin, { only: ["knowledge-graph-generator"] });
+  const mcp = {};
+  for (const id of serversForClient(reg, "claude-code", ctx.platform).filter((i) => reg.servers[i].plugin === "knowledge-graph")) {
+    const l = clientLaunch(id, ctx, settings);
+    mcp[id] = { command: l.command, args: l.args };
+  }
+  writeJson(path.join(plugin, ".mcp.json"), { mcpServers: mcp });
   return plugin;
 }
 

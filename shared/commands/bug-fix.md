@@ -1,12 +1,12 @@
 ---
-description: Root-cause and fix a defect from a Redmine ID, stack trace, error log, screenshot, user story, or document file. Approval required before any change. Use auto=true to skip gate.
-argument-hint: "redmine=<id> | mr=!<n> | commit=<sha> | file=<path.md> | \"<stack trace>\" [auto=true]"
+description: Root-cause and fix a defect from a Redmine ID, stack trace, error log, screenshot, user story, or document file. Runs in auto mode (analysis blocks, then execution); pass auto=false to stop for approval after analysis. High/Critical risk always stops.
+argument-hint: "redmine=<id> | mr=!<n> | commit=<sha> | file=<path.md> | \"<stack trace>\" [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_file_blame, mcp__gitlab-reader__get_commit, mcp__gitlab-reader__get_commit_diff, mcp__chrome-devtools-mcp__take_snapshot, mcp__chrome-devtools-mcp__take_screenshot, mcp__chrome-devtools-mcp__list_console_messages
 ---
 
 # Command: /bug-fix
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **Bug Fix**. Input: `$ARGUMENTS`.
 
@@ -14,7 +14,7 @@ Agent profile: **Bug Fix**. Input: `$ARGUMENTS`.
 
 ## Mode Detection
 
-Parse `auto=true` from arguments. Store as session flag — applies to all tasks this session.
+Parse `auto` from arguments — default `true` (no approval stop); `auto=false` re-enables the stop. Store as session flag — applies to all tasks this session.
 
 **If `$ARGUMENTS` is empty → Session Mode.**
 **If `$ARGUMENTS` is non-empty → Direct Mode** (skip to Input Resolution below).
@@ -38,7 +38,7 @@ Describe your bug using any of:
   • Attach a screenshot       — error UI or console snapshot
 
 Options:
-  • auto=true                 — skip approval gate for this session
+  • auto=false                 — stop for approval after analysis (default: auto)
 
 Type 'done' to end the session.
 ```
@@ -46,7 +46,7 @@ Type 'done' to end the session.
 For each bug the user provides in this session:
 
 1. Run **Input Resolution**, then **Phase 1 — Discovery & Analysis**.
-2. Run **Approval Gate** (skip if `auto=true`).
+2. Run **Approval Gate** (auto by default — stops only for `auto=false` or High/Critical risk).
 3. After approval: run **Execution Phase**.
 4. Append **Execution Summary** (contract §13).
 5. Print: `─── Fix complete. Next bug? (or 'done') ───`
@@ -117,9 +117,9 @@ Complexity: Small / Medium / Large
 
 ## Approval Gate (contract §14)
 
-If `auto=true` was set: skip and proceed to Execution Phase.
+Default (`auto`): output the analysis blocks above and proceed to the Execution Phase.
 
-Otherwise: STOP. Output the analysis blocks above and ask:
+Only if `auto=false` was passed or the §9 risk gate is High/Critical: STOP and ask:
 
 ```text
 Approve implementation? (approve / yes / proceed / implement)
@@ -129,7 +129,7 @@ Wait for approval before any changes.
 
 ---
 
-## Execution Phase (after approval or auto=true)
+## Execution Phase (auto by default, or after approval when the gate engaged)
 
 1. Apply the fix — smallest possible diff. Preserve APIs, validations, workflows, permissions.
 2. UI bugs only: if trace/screenshot indicates a render/console error, use chrome read-only tools to confirm before fixing.

@@ -1,6 +1,6 @@
 // Central MCP registry: ONE definition per server. Client adapters only render
 // launch specs from here; they never contain server logic or OS paths.
-import { loadSettings, resolveNode, resolveVenvPython, resolveCodeCortex, inRepoKgDir } from "../path-resolver/index.js";
+import { loadSettings, resolveNode, resolveVenvPython, resolveCodeCortex, inRepoKgDir, kgDir } from "../path-resolver/index.js";
 
 const CLIENTS = new Set(["claude-code", "cursor", "opencode"]);
 const RUNTIMES = new Set(["node", "python", "binary"]);
@@ -41,7 +41,7 @@ export function serversForClient(reg, client, platform) {
 export function launchSpec(id, reg, ctx, settings = loadSettings(ctx)) {
   const s = reg.servers[id];
   if (!s) throw new Error(`unknown MCP server: ${id}`);
-  const base = s.entryBase === "kg" ? inRepoKgDir(ctx, settings) : ctx.repoRoot;
+  const base = s.entryBase === "kg" ? kgDir(ctx, settings) : ctx.repoRoot; // same resolution unified-trace uses → both plugins share ONE index
   const entry = ctx.p.join(base, ...s.entry.split("/"));
   if (s.runtime === "node") {
     const node = resolveNode(ctx, settings);

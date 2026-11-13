@@ -97,30 +97,42 @@ inject_markers() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
-# GLOBAL INSTALL — standards, commands, skills, knowledge, contract kernel → ~/.claude/
+# GLOBAL INSTALL — contract KERNEL only → ~/.claude/CLAUDE.md
+# Since v4.14 commands, skills, standards, rules, knowledge and templates are
+# provided ONLY by the enterprise-ai-platform plugin (claude plugin install
+# enterprise-ai-platform@eap-local). Nothing is copied to ~/.claude/commands,
+# ~/.claude/skills, ~/.claude/standards or ~/.claude/knowledge any more: a copy
+# there is loaded a second time on every turn (duplicate skill/command
+# descriptions = always-on token waste). The kernel references the plugin
+# bundle through its absolute dist path.
 # ═══════════════════════════════════════════════════════════════════════════
-log "=== Global install (v$VERSION) ==="
+log "=== Global install (v$VERSION) — kernel only ==="
 
-install_dir "$PLATFORM_ROOT/shared/commands"   "$CLAUDE_GLOBAL/commands"
-install_dir "$PLATFORM_ROOT/shared/standards"  "$CLAUDE_GLOBAL/standards"
-install_dir "$PLATFORM_ROOT/shared/skills"     "$CLAUDE_GLOBAL/skills"
-
-# Knowledge + its index (company-profile.md) — contract kernel §F10 instructs
-# "Read only the matching file(s) under <root>/knowledge/ (index:
-# company-profile.md's topic table)" but, until this fix (2026-10-13 reorg
-# audit), nothing actually installed either one anywhere for this adapter.
-install_dir "$PLATFORM_ROOT/shared/knowledge" "$CLAUDE_GLOBAL/knowledge"
-install_file "$PLATFORM_ROOT/shared/company-profile.md" "$CLAUDE_GLOBAL/company-profile.md"
-
-# Inject contract kernel into ~/.claude/CLAUDE.md
 CLAUDE_MD="$CLAUDE_GLOBAL/CLAUDE.md"
-CONTRACT_SRC="$PLATFORM_ROOT/shared/contract.md"
-
-if [[ -f "$CONTRACT_SRC" ]]; then
-  inject_markers "$CONTRACT_SRC" "$CLAUDE_MD" \
-    "<!-- enterprise-ai-platform:contract:start -->" \
-    "<!-- enterprise-ai-platform:contract:end -->"
+PLUGIN_ROOT="$PLATFORM_ROOT/dist/plugins/claude-code/plugins/enterprise-ai-platform"
+if command -v node >/dev/null 2>&1; then
+  mkdir -p "$CLAUDE_GLOBAL"
+  if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    log "[dry-run] would write kernel to $CLAUDE_MD (plugin root $PLUGIN_ROOT)"
+  else
+    [[ -f "$CLAUDE_MD" ]] && cp "$CLAUDE_MD" "$CLAUDE_MD.prev"
+    node --input-type=module -e '
+      import { createContext } from "'"$PLATFORM_ROOT"'/shared/core/path-resolver/index.js";
+      import { globalKernelText } from "'"$PLATFORM_ROOT"'/shared/core/plugin-manager/build.js";
+      import fs from "node:fs";
+      const [file, root] = process.argv.slice(1);
+      const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+      fs.writeFileSync(file, globalKernelText(createContext(), root, existing));
+    ' "$CLAUDE_MD" "$PLUGIN_ROOT"
+    log "Kernel written: $CLAUDE_MD"
+  fi
+else
+  log "WARN: node not found — kernel not written; run: npm run plugin:install:claude -- --apply"
 fi
+
+for stale in commands standards knowledge; do
+  [[ -d "$CLAUDE_GLOBAL/$stale" ]] && log "NOTE: $CLAUDE_GLOBAL/$stale looks like a pre-4.14 copy of plugin content — remove it to avoid duplicate loading."
+done
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PER-REPO INSTALL — settings.json + hooks + .ai/ → $REPO_PATH/.claude/

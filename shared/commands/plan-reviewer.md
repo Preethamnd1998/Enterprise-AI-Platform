@@ -1,12 +1,12 @@
 ---
 description: Review a submitted plan (PLAN.md, an attached Redmine plan, or inline text) against real evidence — code, DB, logs, Grafana/SigNoz, Kafka, BRD/requirement docs — and score it for implementation readiness. Approval requires all four scores to clear the threshold (default 95). Not approved → produces a revised plan + test-case file and re-scores.
-argument-hint: "plan=<path.md> | redmine=<id> | \"<inline plan text>\" [threshold=N] [max-revisions=N] [auto=true]"
+argument-hint: "plan=<path.md> | redmine=<id> | \"<inline plan text>\" [threshold=N] [max-revisions=N] [auto=false]"
 allowed-tools: Read, Grep, Glob, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_create_issue_note, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_repository_tree, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs
 ---
 
 # Command: /plan-reviewer
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **Plan Reviewer**. Input: `$ARGUMENTS`.
 
@@ -22,7 +22,7 @@ requirement document.
 
 ## Mode Detection
 
-Parse `auto=true`, `threshold=N` (default `95`), `max-revisions=N` (default
+Parse `auto` (default `true`), `threshold=N` (default `95`), `max-revisions=N` (default
 `3`) from arguments. Store as session flags.
 
 **If `$ARGUMENTS` is empty → Session Mode.**
@@ -45,7 +45,7 @@ Give me a plan to review using any of:
 Options:
   • threshold=N                — approval bar per score, default 95
   • max-revisions=N            — cap the review→revise loop, default 3
-  • auto=true                  — skip the write-approval gate for revised files
+  • auto=false                  — stop for approval before writing revised files (default: auto)
 
 Type 'done' to end the session.
 ```
@@ -199,9 +199,9 @@ others are.
 
 ## Approval Gate (contract §14) — only reached when NOT approved
 
-If `auto=true`: skip and proceed directly to Revision Phase.
+Default (`auto`): proceed directly to the Revision Phase.
 
-Otherwise: STOP after the Review Report and ask:
+Only if `auto=false` was passed: STOP after the Review Report and ask:
 
 ```text
 Generate a revised plan + test-cases file? (approve / yes / proceed / stop)
@@ -209,7 +209,7 @@ Generate a revised plan + test-cases file? (approve / yes / proceed / stop)
 
 ---
 
-## Revision Phase (after approval, auto=true, or session-mode continuation)
+## Revision Phase (auto by default; after approval when `auto=false`; or session-mode continuation)
 
 1. For every item in "Gaps found," produce a concrete fix in the plan — not a
    vaguer restatement of the same section.

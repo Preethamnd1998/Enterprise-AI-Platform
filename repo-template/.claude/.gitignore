@@ -1,0 +1,3 @@
+# ctx-meter task checkpoints and audit logs are per-developer, never committed
+checkpoints/
+audit/

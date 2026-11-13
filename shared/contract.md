@@ -9,34 +9,28 @@
 <!-- enterprise-ai-platform:kernel:start -->
 # Enterprise AI Platform — Execution Contract (kernel)
 
-You are a single reasoning agent. No sub-agents, no agent chains.
-Discovery, expansion, and validation are deterministic steps you drive.
+Single reasoning agent; no sub-agents unless `agents=N` (max 3) is passed. Plugin root: `{{EAP_ROOT}}` (bundle `ai-platform/`: standards, rules, knowledge, templates, prompts, contract.md; tools `bin/`).
 
 1. Analyze only what the task requires. Never bulk-load or scan the repository.
-2. Deterministic discovery: resolve the exact change set from the input; never scan to find it.
-3. Hunks not files. Signatures not bodies for unchanged neighbors.
-4. Depth-1 dependency expansion by default. No automatic depth-2.
-5. Prove completeness AND prove no regression before "done".
+2. Deterministic discovery: resolve the exact change set from the input (Redmine / MR / commit / branch); never scan to find it.
+3. Hunks not files. Signatures not bodies for unchanged neighbours. Depth-1 dependency expansion only.
+4. Prove completeness AND no regression before "done" (contract §7–§8).
 
-**No-scan (hard):** A file enters scope ONLY if (a) it is in the change set, (b) something loaded references it, or (c) naming/package convention ties it to a loaded symbol. Never enumerate.
+**No-scan (hard):** a file enters scope only if it is in the change set, something already loaded references it, or naming/package convention ties it to a loaded symbol. Never enumerate.
 
-**Knowledge-graph first (F-KG):** Before any Grep/Glob source scan to establish a code flow, API endpoint, service/Kafka dependency, DB impact, or symbol usage/impact: check whether the `unified-trace` MCP server is connected. It is the single, consolidated entry point — internally it spawns both the Knowledge Generator (UI<->API<->architecture) and Code Cortex (exact AST calls/callers/callees) as its own internal clients and merges their results, and it auto-discovers which projects are indexed (via Code Cortex's `list_projects`) on every call, so no repo/project name list needs to be entered or maintained. Use it first: `saga` for the COMPLETE flow of an action (UI trigger → endpoint → service methods → Feign/WebClient/Kafka hops into other services → DB reads/writes; accepts a gateway URL, endpoint, UI API constant, Kafka topic, or backend method; returns every unfollowable link in `gaps` — read `shared/knowledge/architecture/saga-tracing.md` for how to read and verify it), `trace` for a UI API constant/endpoint/symbol, `trace_usages` for all known callers/UI references of a symbol, `trace_impact` for change-impact analysis, `index_status` to check whether a project's index is stale before trusting a result. It returns exact file paths, classes, methods, and symbols to read directly, satisfying the no-scan rule instead of violating it. Treat it as a navigation/index layer, not implementation truth: open only the exact files/symbols it returns (smallest useful region first), and keep each fact's confidence (VERIFIED/INFERRED/UNRESOLVED) — never present INFERRED/UNRESOLVED as certain.
+**Graph first (F-KG):** before any Grep/Glob over source to establish a flow, endpoint, service/Kafka dependency, DB impact or symbol usage, use the `unified-trace` MCP (merges the Knowledge Graph and Code Cortex; auto-discovers indexed projects): `saga` (complete UI→API→service→Feign/Kafka→DB chain; `gaps` lists every unfollowable link — see `ai-platform/knowledge/architecture/saga-tracing.md`), `trace`, `trace_usages`, `trace_impact`, `index_status`. For a token-budgeted topic overview call the `knowledge-graph` plugin's `get_context_pack(topic, max_tokens≤1500)`. Results are an index, not truth: Read only the cited file:line ranges (offset/limit) and keep each fact's confidence (VERIFIED / INFERRED / UNRESOLVED). Fall back to a scoped scan only when the graph is unavailable or returns unresolved.
 
-Only if `unified-trace` itself is not connected (a legacy/partial install), fall back to whichever of the standalone `knowledge-graph` (`search_knowledge`/`get_context_pack`/`resolve_ui_api`/`find_api`/`get_api_context`/`trace_business_flow`/`get_business_flow`/`get_service_dependencies`/`get_database_impact`/`find_callers`/`find_dependencies`) or `code-cortex-mcp` (`search_graph`/`get_code_snippet`/`get_architecture`) tools are connected — these are no longer registered as separate MCP servers by a current install, so their presence signals an older setup. Fall back to a scoped source scan only when no knowledge/code-graph tool is connected at all, a query comes back unresolved, or a fact needs source verification.
+**Context discipline (F-CTX):**
+- Never re-read a file or re-run a search already summarised this session; keep the summary, drop the raw payload.
+- Builds, tests, log tails and long git output run through `{{EAP_ROOT}}/bin/eap-run <cmd>` (full output kept in a log; only exit code, errors, failing tests and root-cause frames are printed). Otherwise cap with `| tail -n 80`.
+- Context budget 150k tokens (`CTX_BUDGET`). When the prompt-time meter reports over budget: refresh the checkpoint `<project>/.claude/checkpoints/current.md` (requirement, decisions, files touched, next step; ≤40 lines under the agent-state marker) and run `/compact`. On resume or after compaction, Read that checkpoint first instead of re-deriving context.
+- Skills: the SKILL.md is an index — open its `references/` files only for the mode the task needs.
 
-**Lazy standards:** detect languages in change set → Read only matching standards files from `~/.claude/standards/` (CC) or `.github/ai-platform/standards/` (Copilot). `coding-standards.md` is mandatory for any code-touching task — never optional, never skipped, regardless of language. Never bulk-load beyond what's matched.
+**Lazy standards / rules / knowledge:** Read only what the change set needs from `{{EAP_ROOT}}/ai-platform/`: `standards/coding-standards.md` is mandatory for any code change, then standards by language/layer touched; `rules/` by task type (coding-style, testing, security, code-review); `knowledge/` via `company-profile.md`'s topic table. Never bulk-load a directory. Writing/reviewing tests → `standards/testing/README.md` first.
 
-**Lazy rules (Phase D+):** detect task type → Read only applicable rules from `~/.claude/rules/` (CC) or `.github/ai-platform/rules/` (Copilot): `coding-style.md` (production code), `testing.md` (tests), `security.md` (auth/PII), `code-review.md` (Gate A). Never bulk-load all four.
+**Gates:** Phase 1 (Discovery & Analysis) runs in `auto` mode by default — output the §12 analysis blocks, then continue straight into execution. STOP and ask for approval only when the §9 risk gate is High/Critical (DB/Flyway, permissions, security, auth, billing/financial/patient data, application-scope changes), when `auto=false` is passed, or when a command marks a step approval-only (data-correction scripts are never executed). MCP is read-only by allowlist; write-capable MCP tools stay blocked.
 
-**Company knowledge (F10):** for a task touching a documented company/domain flow, Read only the matching file(s) under `<root>/knowledge/` (index: `company-profile.md`'s topic table). Load on demand, never bulk-load the directory.
-
-**MCP — read-only (F5):** MCP is restricted to the read-only allowlist in `.claude/settings.json`. Write-capable MCP tools are blocked by default. `enableAllProjectMcpServers: false`.
-
-**Subagents (C4):** Zero subagents by default. Opt-in only: include `agents=N` (max 3) in the task prompt. Subagent behavior governed by `shared/standards/testing.md §2`. Never chain agents without explicit opt-in.
-
-**Argument parsing:** arguments as `key=value` pairs. Keys: `redmine`, `mr`, `commit`, `branch`, `release`, `target`, `component`, `mode`, `agents`, `auto`. Ask one clarifying question if a required key is missing, then proceed.
-
-**Pause-turn cap (G16):** Within a single command turn, if cumulative file writes/edits reach 10 OR the task expands into a layer not originally scoped, STOP. Output a pause block (see §17) and wait for the engineer to confirm before continuing.
+**Arguments:** `key=value` pairs — `redmine`, `mr`, `commit`, `branch`, `release`, `target`, `component`, `mode`, `agents`, `auto`. Ask one clarifying question if a required key is missing, then proceed.
 <!-- enterprise-ai-platform:kernel:end -->
 
 # Enterprise AI Platform — Shared Execution Contract (v3)
@@ -289,30 +283,21 @@ Replace `<TaskType>` with: Bugs · Features · Migrations · Components · Corre
 
 ## 14. Global Approval Gate (applies to every command)
 
-**Default mode: APPROVAL REQUIRED.**
+**Default mode: AUTO.** After Phase 1 – Discovery & Analysis, output the §12 analysis blocks and proceed directly to the Execution Phase. Do not stop for a textual approval.
 
-No source code changes. No configuration changes. No database changes.
-No generated scripts. No write-capable MCP operations.
-Until explicit user approval is received.
-
-Optional override: include `auto=true` in arguments. Examples:
-
-```text
-/bug-fix auto=true
-/new-development auto=true
-/migration auto=true
-```
-
-**After Phase 1 – Discovery & Analysis, STOP and output §12 analysis blocks, then ask:**
+The gate re-engages — STOP, output the §12 blocks and ask — only when:
+- the §9 risk gate classifies the change as High/Critical, or
+- `auto=false` is passed in the arguments, or
+- the command's own instructions mark a step as approval-only (e.g. `/data-correction` scripts are shown, never executed).
 
 ```text
 Approve implementation? (approve / yes / proceed / implement)
 ```
 
-Only after one of those responses: proceed to the Execution Phase.
-If `auto=true` was set: skip the gate, proceed directly to execution.
-
 Allowed approval responses: `approve` · `yes` · `proceed` · `implement`
+
+**Context checkpoint (F-CTX):** before any `/compact` or `/clear` on an unfinished task, refresh `<project>/.claude/checkpoints/current.md` (agent-state section, ≤40 lines). The ctx-meter hook keeps the structural part (files edited, tokens, prompts) up to date on every Stop.
+
 
 ## 15. Migration Intelligence
 
@@ -328,36 +313,10 @@ For every command, Read `shared/prompts/prompt-quality.md` for the full §16 spe
 (16a Scoring factors · 16b Score bands · 16c Per-task output · 16d Session rollup · 16e Token correlation · 16f Rules).
 Load once per session; reuse. Do NOT embed inline.
 
-## 17. Pause-Turn Cap (G16 — Phase E)
+## 17. (retired)
 
-Within a single approved command turn, the AI must pause and check in with the engineer
-when either of these thresholds is reached:
-
-- **File change threshold:** ≥ 10 file writes or edits in a single turn.
-- **Layer expansion:** the task requires touching a layer not in the original scope
-  (e.g. a bug-fix that discovers it also requires a DB migration; a UI change that
-  requires a new API endpoint).
-
-**Pause block format:**
-```text
-## Pause — Turn Cap Reached
-Reason          : <file-change-threshold | layer-expansion>
-Files changed   : N
-New layer found : <layer name, if layer-expansion>
-Remaining work  : <brief description of what is left>
-Continue? (approve / yes / proceed / stop)
-```
-
-**Behaviour after pause:**
-- If the engineer responds with an approval phrase: continue from where paused.
-- If the engineer responds `stop` or does not respond: emit the Execution Summary (§13)
-  for the work completed so far and end the turn.
-- The pause block is NOT emitted if `auto=true` was set AND the risk level is LOW or MEDIUM.
-- The pause block IS always emitted for HIGH or CRITICAL risk regardless of `auto=true`.
-
-**Why this rule exists:**
-Long autonomous turns reduce engineer oversight. The pause-turn cap ensures the engineer
-remains in the loop at natural decision points during large changes.
+The pause-turn cap (G16) has been removed. There is no file-change or layer-expansion pause threshold;
+the approval gate (§14) and the risk gate (§9) still apply.
 
 ## 18. Redmine Comment Templates (on-demand, never proactive)
 

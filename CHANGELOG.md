@@ -1,5 +1,27 @@
 # Changelog
 
+## [4.14.0] — 2026-11-13 — Context Optimization Architecture
+
+### Added
+- Context Manager (`shared/core/context/`): `ctx-meter.cjs` hook (context-budget advisory on prompt, per-turn token record + task checkpoint on Stop), `eap-run` build/test/log output filter, `mcp-env` MCP profile switcher, `ctx-report.py` token/context report + HTML dashboard (`/usage-report tokens`), `pricing.json` template.
+- `knowledge-graph` Claude plugin (second plugin in the `eap-local` marketplace): KG MCP server + generator + `knowledge-graph` skill; shares one index with unified-trace (registry `launchSpec` now resolves through `kgDir()`).
+- unified-trace: `format: compact|json` (default compact) and `max_nodes` on `trace`, `trace_usages`, `trace_impact`; `render-compact.js` + unit test.
+- Kernel: Context discipline (F-CTX) section; plugin-root placeholder `{{EAP_ROOT}}` resolved by the builder/installer.
+- Tests: `shared/core/tests/context.test.mjs`, `unified-trace-mcp/test/render-compact.test.mjs`.
+- `docs/CONTEXT-OPTIMIZATION.md`.
+
+### Changed
+- Approval gate (§14) default is now **auto**; stops only for High/Critical risk, `auto=false`, or approval-only steps (data-correction). All command texts updated.
+- Light commands run on cheaper models via frontmatter `model:` (usage-report, prompt-audit, redmine-bulk-report, knowledge-capture → Haiku; test, data-correction → Sonnet).
+- Claude installer: global install writes the contract **kernel only** to `~/.claude/CLAUDE.md`; no more copies of commands/skills/standards/knowledge under `~/.claude` (the plugin provides them).
+- Plugin builder: EAP plugin ships Context Manager tools under `bin/` and the ctx-meter/usage-logger hooks by default (`audit.js` stays `--with-hooks`); KG generator moved out of the EAP package into the KG plugin.
+- `running-locally-skill` split into a 3.5 KB index + `references/` (progressive loading).
+- unified-trace tool descriptions shortened.
+
+### Removed
+- Full v3 contract text from the global CLAUDE.md (read on demand from the bundle).
+
+
 All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs).
 
 ## [Unreleased] — Self-contained cross-platform runtime, shared core, client plugins, KG fixes
@@ -10,6 +32,9 @@ All notable changes to the Enterprise AI Platform. Versioning: SemVer (see docs)
 - Client packages built from shared sources: Claude Code plugin (+ local marketplace), Cursor plugin, OpenCode plugin; dry-run-first install/update/uninstall with backups and install manifests; `integrations/opencode/agents/`.
 - `install/{macos,linux}/install-all.sh`, `install/windows/install-all.ps1`, `sync-projects.ps1`, `paths.env.example`, `paths.local.env.example` (gitignored `paths.local.env`).
 - Docs: PLATFORM_ARCHITECTURE, MCP_ARCHITECTURE, PLUGIN_INTEGRATIONS, CROSS_PLATFORM_INSTALLATION, ADDING_NEW_MCP, ADDING_NEW_PLUGIN_INTEGRATION, KG_PARITY_REPORT, SECURITY_FINDINGS.
+
+### Removed
+- **Pause-turn cap (G16, contract §17) removed everywhere**: the kernel paragraph and §17 in `shared/contract.md` (§17 is kept as a "(retired)" stub so §18 numbering is stable), the install snapshots (`install/.github`, `install/.opencode`), the global `~/.claude/CLAUDE.md` copy, and the references in USAGE, GOVERNANCE, RULES, hitl-matrix, capability matrix, rollback, ROADMAP, README and the global-filter-pagination skill. Contract kernel hash re-blessed (`shared/contract.md.sha256`). There is no longer a 10-file / layer-expansion pause; the approval gate (§14) and risk gate (§9) are unchanged. Historical entries for v4.2.0 (RELEASE-NOTES, IMPLEMENTATION-LOG, older CHANGELOG lines) are left as history. Consuming repos with an older installed kernel must re-run the installer to pick this up.
 
 ### Fixed
 - unified-trace / opencode-bridge no longer hardcode `.venv-mcp/bin/python`, `~/.local/bin/code-cortex-mcp` or `/Users/...`; bridge deny-list now handles `\` paths and symlink escapes.

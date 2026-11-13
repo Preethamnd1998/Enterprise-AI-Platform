@@ -15,7 +15,7 @@ VERSION=$(cat VERSION | tr -d '[:space:]')
 echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$' || (echo "ERROR: bad VERSION: $VERSION" && exit 1)
 
 echo "==> Checking all commands embed shared contract..."
-for f in commands/*.md; do
+for f in shared/commands/*.md; do
   grep -q 'shared' "$f" || (echo "ERROR: $f does not reference shared contract" && exit 1)
 done
 

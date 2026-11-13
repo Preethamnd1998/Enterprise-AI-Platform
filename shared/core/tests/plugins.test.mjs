@@ -22,13 +22,26 @@ test("claude-code plugin structure, manifest, MCP, hooks", () => {
   const p = built["claude-code"].pluginDir;
   assert.equal(J(p, ".claude-plugin/plugin.json").version, version);
   assert.equal(J(built["claude-code"].root, ".claude-plugin/marketplace.json").plugins[0].name, "enterprise-ai-platform");
-  assert.deepEqual(Object.keys(J(p, ".mcp.json").mcpServers).sort(), serversForClient(reg, "claude-code", ctx.platform).sort());
+  const eapServers = serversForClient(reg, "claude-code", ctx.platform).filter((i) => (reg.servers[i].plugin ?? "enterprise-ai-platform") === "enterprise-ai-platform");
+  assert.deepEqual(Object.keys(J(p, ".mcp.json").mcpServers).sort(), eapServers.sort());
   for (const s of Object.values(J(p, ".mcp.json").mcpServers)) assert.match(s.args[0], /launcher\.js$/);
-  assert.ok(!fs.existsSync(path.join(p, "hooks")), "hooks are opt-in (audit.js writes into every project's .claude/)");
+  // Context Manager hooks ship by default (global log files only); audit.js stays opt-in.
+  assert.deepEqual(Object.keys(J(p, "hooks/hooks.json").hooks).sort(), ["Stop", "UserPromptSubmit"]);
+  assert.ok(fs.existsSync(path.join(p, "hooks/scripts/ctx-meter.cjs")) && fs.existsSync(path.join(p, "hooks/scripts/usage-logger.js")));
+  assert.ok(!fs.existsSync(path.join(p, "hooks/scripts/audit.js")), "audit.js is opt-in (writes into every project's .claude/)");
+  for (const b of ["eap-run", "mcp-env", "ctx-report.py", "pricing.json"]) assert.ok(fs.existsSync(path.join(p, "bin", b)), `bin/${b}`);
   const hb = buildPlugins(ctx, { clients: ["claude-code"], outDir: fs.mkdtempSync(path.join(os.tmpdir(), "eap-dist5-")), configRoot: emptyCfg, withHooks: true })["claude-code"].pluginDir;
   assert.deepEqual(Object.keys(J(hb, "hooks/hooks.json").hooks).sort(), ["PostToolUse", "Stop", "UserPromptSubmit"]);
   assert.ok(fs.existsSync(path.join(hb, "hooks/scripts/audit.js")));
   assert.ok(fs.existsSync(path.join(p, "commands/planning.md")) && fs.existsSync(path.join(p, "skills/audit-skill/SKILL.md")));
+  assert.ok(!fs.existsSync(path.join(p, "mcp-tools/knowledge-graph-generator")), "KG generator ships in the knowledge-graph plugin, not in EAP");
+  // Second plugin: knowledge-graph
+  const kg = path.join(built["claude-code"].root, "plugins", "knowledge-graph");
+  assert.equal(J(built["claude-code"].root, ".claude-plugin/marketplace.json").plugins[1].name, "knowledge-graph");
+  assert.equal(J(kg, ".claude-plugin/plugin.json").version, version);
+  assert.deepEqual(Object.keys(J(kg, ".mcp.json").mcpServers), ["knowledge-graph"]);
+  assert.ok(fs.existsSync(path.join(kg, "skills/knowledge-graph/SKILL.md")));
+  assert.ok(fs.existsSync(path.join(kg, "mcp-tools/knowledge-graph-generator/mcp_server_main.py")));
 });
 
 test("cursor plugin structure: manifest, rules(.mdc frontmatter), commands, skills, mcp.json", () => {

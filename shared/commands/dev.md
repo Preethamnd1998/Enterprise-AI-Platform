@@ -1,12 +1,12 @@
 ---
-description: Execute a task Markdown file (plan, spec, or ticket) as an autonomous AI Developer Agent. Single Agent Mode by default; opt into Multi-Agent Mode with `multi`. Approval required before any change. Use auto=true to skip gate.
-argument-hint: "[multi] file=<path.md>[,<path2.md>] | context [auto=true]"
+description: Execute a task Markdown file (plan, spec, or ticket) as an autonomous AI Developer Agent. Single Agent Mode by default; opt into Multi-Agent Mode with `multi`. Runs in auto mode (analysis blocks, then execution); pass auto=false to stop for approval after analysis. High/Critical risk always stops.
+argument-hint: "[multi] file=<path.md>[,<path2.md>] | context [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_repository_tree
 ---
 
 # Command: /dev
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **AI Developer Agent**. Input: `$ARGUMENTS`.
 
@@ -28,7 +28,7 @@ folder contents) is always the primary instruction document.
 ## Mode Detection
 
 A **mode word** is a *bare* token in `$ARGUMENTS` — one that is not `key=value` and is not the
-literal shorthand `context`. `file=...`, `auto=true`, `redmine=...`, `context`, etc. are never
+literal shorthand `context`. `file=...`, `auto=false`, `redmine=...`, `context`, etc. are never
 mode words, regardless of position. Find the first bare token, if any, and classify it:
 
 | Mode word found | Mode |
@@ -37,7 +37,7 @@ mode words, regardless of position. Find the first bare token, if any, and class
 | `multi` | **Multi-Agent Mode** |
 | Anything else (e.g. `/dev duo file=PLAN.md`) | **Invalid mode** — see below |
 
-Parse `auto=true` from arguments anywhere. Store as session flag — applies for the rest of this
+Parse `auto` from arguments anywhere (default `true`; `auto=false` re-enables the approval stop). Store as session flag — applies for the rest of this
 task's execution.
 
 **Invalid mode:** if a bare token is present and it is not `multi`, stop and output:
@@ -142,9 +142,9 @@ Mode: Single Agent | Multi-Agent (max 3 sub-agents)
 
 ## Approval Gate (contract §14)
 
-If `auto=true` was set: skip and proceed to Execution Phase.
+Default (`auto`): output the analysis blocks above and proceed to the Execution Phase.
 
-Otherwise: STOP. Output the analysis blocks above and ask:
+Only if `auto=false` was passed or the §9 risk gate is High/Critical: STOP and ask:
 
 ```text
 Approve implementation? (approve / yes / proceed / implement)
@@ -155,7 +155,7 @@ Wait for approval. User may approve all parts or specify a subset:
 
 ---
 
-## Execution Phase (after approval or auto=true)
+## Execution Phase (auto by default, or after approval when the gate engaged)
 
 1. Implement each TASK in the approved scope, in sequence (Single Agent) or via the parent/
    sub-agent split decided in Phase 1 (Multi-Agent — see Multi-Agent Mode above).

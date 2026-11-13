@@ -1,12 +1,12 @@
 ---
-description: Turn a Redmine story, bug report, or free-text requirement into a PLAN.md and a TEST-CASES.xlsx — technical design, gap analysis, task breakdown, and QA test strategy. Approval required before file generation. Use auto=true to skip gate.
-argument-hint: "redmine=<id> | file=<path.md> | \"<feature or bug requirement>\" [auto=true]"
+description: Turn a Redmine story, bug report, or free-text requirement into a PLAN.md and a TEST-CASES.xlsx — technical design, gap analysis, task breakdown, and QA test strategy. Auto mode by default; auto=false stops for approval after analysis.
+argument-hint: "redmine=<id> | file=<path.md> | \"<feature or bug requirement>\" [auto=false]"
 allowed-tools: Read, Grep, Glob, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_get_project, mcp__redmine-reader__redmine_get_wiki_page, mcp__gitlab-reader__search_repositories, mcp__gitlab-reader__get_repository_tree, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs
 ---
 
 # Command: /planning
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **Planning**. Input: `$ARGUMENTS`.
 
@@ -23,7 +23,7 @@ it (see Test-Case Generation below).
 
 ## Mode Detection
 
-Parse `auto=true` from arguments. Store as session flag — applies to all tasks
+Parse `auto` from arguments — default `true` (no approval stop); `auto=false` re-enables the stop. Store as session flag — applies to all tasks
 this session.
 
 **If `$ARGUMENTS` is empty → Session Mode.**
@@ -45,7 +45,7 @@ Describe what needs planning using any of:
   • context                   — scan context/ folder (any filenames)
 
 Options:
-  • auto=true                 — skip approval gate for this session
+  • auto=false                 — stop for approval after analysis (default: auto)
 
 Type 'done' to end the session.
 ```
@@ -53,7 +53,7 @@ Type 'done' to end the session.
 For each item the user provides in this session:
 
 1. Run **Input Resolution**, then **Phase 1 — Discovery & Analysis**.
-2. Run **Approval Gate** (skip if `auto=true`).
+2. Run **Approval Gate** (auto by default — stops only for `auto=false` or High/Critical risk).
 3. After approval: run **Generation Phase**.
 4. Append **Execution Summary** (contract §13).
 5. Print: `─── Plan complete. Next? (or 'done') ───`
@@ -94,9 +94,9 @@ Output the analysis blocks (contract §12) exactly as `planning-engine.md` produ
 
 ## Approval Gate (contract §14)
 
-If `auto=true` was set: skip and proceed to Generation Phase.
+Default (`auto`): output the analysis blocks above and proceed to the Generation Phase.
 
-Otherwise: STOP. Output the analysis blocks above and ask:
+Only if `auto=false` was passed or the §9 risk gate is High/Critical: STOP and ask:
 
 ```text
 Approve plan generation? (approve / yes / proceed / implement)
@@ -104,7 +104,7 @@ Approve plan generation? (approve / yes / proceed / implement)
 
 ---
 
-## Generation Phase (after approval or auto=true)
+## Generation Phase (auto by default, or after approval when the gate engaged)
 
 ### 1 — `PLAN.md`
 

@@ -181,7 +181,7 @@ d:\GitLab Workspace\<repo>\
 | `/usage-report` | Report on, or clear (typed `CONFIRM` required), the system-wide prompt/session log | Direct |
 | `/knowledge-capture` | Turn what was just implemented/verified into a new or extended `shared/knowledge/` file | Direct |
 
-All commands accept `key=value` arguments (`redmine=<id>`, `mr=!<n>`, `commit=<sha>`, `branch=<b>`, `auto=true` to skip the approval gate). Session Mode (invoke with no arguments) keeps a skill loaded across multiple tasks in one chat — type `done` to close it.
+All commands accept `key=value` arguments (`redmine=<id>`, `mr=!<n>`, `commit=<sha>`, `branch=<b>`, `auto=false` to stop for approval after analysis (auto is the default)). Session Mode (invoke with no arguments) keeps a skill loaded across multiple tasks in one chat — type `done` to close it.
 
 **Not real commands (historical note):** `/planning` and `/ui-redesign` existed as *phantom* commands in early v3.0 (referenced but never actually built) and were removed in v3.1. `/planning` was properly rebuilt with a real implementation in v4.5+ (see the table above) — `/ui-redesign` was not; use `/ui-design-update` instead, which covers the same ground with a real design-reference file as input.
 

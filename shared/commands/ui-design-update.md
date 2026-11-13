@@ -1,12 +1,12 @@
 ---
 description: UI agent — fix UI bugs, develop new UI components, or apply design file updates. Supports Angular (web) and Flutter (mobile) — preserves all Angular bindings or Flutter widget structure. Approval required before changes. Use auto=true to skip gate.
-argument-hint: "component=<Name> | file=<path.md> | \"<bug description / user story>\" [auto=true]"
+argument-hint: "component=<Name> | file=<path.md> | \"<bug description / user story>\" [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, mcp__gitlab-reader__get_file_contents, mcp__chrome-devtools-mcp__take_screenshot, mcp__chrome-devtools-mcp__take_snapshot, mcp__chrome-devtools-mcp__list_console_messages
 ---
 
 # Command: /ui-design-update
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **UI Agent**. Input: `$ARGUMENTS`.
 
@@ -14,7 +14,7 @@ Agent profile: **UI Agent**. Input: `$ARGUMENTS`.
 
 ## Mode Detection
 
-Parse `auto=true` from arguments. Store as session flag.
+Parse `auto` from arguments — default `true` (no approval stop); `auto=false` re-enables the stop. Store as session flag.
 
 **If `$ARGUMENTS` is empty → Session Mode.**
 **If `$ARGUMENTS` is non-empty → Direct Mode** (skip to Input Resolution below).
@@ -61,7 +61,7 @@ Provide one of:
   • Format B short args: <project> <component-slug> <design-file>
 
 Options:
-  • auto=true    — skip approval gate for this session
+  • auto=false    — stop for approval after analysis (default: auto)
 
 If the stack (Angular vs Flutter) is not obvious from the input, I will ask once.
 Type 'done' to end the session.
@@ -71,7 +71,7 @@ For each task the user provides in this session:
 
 1. Classify the task type (BUG FIX / NEW DEV / DESIGN UPDATE) from the input.
 2. Run **Input Resolution**, then **Phase 1 — Discovery & Analysis**.
-3. Run **Approval Gate** (skip if `auto=true`).
+3. Run **Approval Gate** (auto by default — stops only for `auto=false` or High/Critical risk).
 4. After approval: run **Execution Phase**.
 5. Append **Execution Summary** (contract §13).
 6. Print: `─── UI task complete. Next? (or 'done') ───`
@@ -191,9 +191,9 @@ Complexity: Small / Medium / Large
 
 ## Approval Gate (contract §14)
 
-If `auto=true` was set: skip and proceed to Execution Phase.
+Default (`auto`): output the analysis blocks above and proceed to the Execution Phase.
 
-Otherwise: STOP. Output analysis blocks and ask:
+Only if `auto=false` was passed or the §9 risk gate is High/Critical: STOP and ask:
 
 ```text
 Approve implementation? (approve / yes / proceed / implement)
@@ -201,7 +201,7 @@ Approve implementation? (approve / yes / proceed / implement)
 
 ---
 
-## Execution Phase (after approval or auto=true)
+## Execution Phase (auto by default, or after approval when the gate engaged)
 
 ### BUG FIX — Angular
 

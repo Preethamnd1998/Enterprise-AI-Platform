@@ -23,7 +23,7 @@ export async function callTool(name, args) {
     const res = await client.callTool({ name, arguments: args }, undefined, { timeout: 300000 });
     const text = res.content?.find((c) => c.type === "text")?.text ?? "";
     if (res.isError) throw new Error(text);
-    return JSON.parse(text);
+    try { return JSON.parse(text); } catch { return { text }; } // compact (non-JSON) output, v4.14
   } finally {
     await client.close();
   }
@@ -33,7 +33,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [, , tool, json] = process.argv;
   try {
     const out = await callTool(tool, json ? JSON.parse(json) : {});
-    if (out.render) {
+    if (out.text !== undefined) {
+      console.log(out.text); // compact text output (v4.14)
+    } else if (out.render) {
       console.log(out.render);
       console.log("\nSUMMARY", JSON.stringify(out.summary));
       console.log("GAPS", JSON.stringify(out.gaps, null, 1));

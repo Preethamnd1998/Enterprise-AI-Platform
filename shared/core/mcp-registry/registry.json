@@ -53,7 +53,8 @@
         "claude-code",
         "cursor",
         "opencode"
-      ]
+      ],
+      "plugin": "enterprise-ai-platform"
     },
     "opencode-bridge": {
       "description": "Claude/Cursor -> OpenCode delegation (sandboxed to approved roots).",
@@ -98,7 +99,8 @@
       "clients": [
         "claude-code",
         "cursor"
-      ]
+      ],
+      "plugin": "enterprise-ai-platform"
     },
     "kafka-mcp": {
       "description": "Read-only Kafka inspection. Needs per-environment broker config, so it is NOT auto-exposed; define instances per environment in project .mcp.json.",
@@ -145,10 +147,11 @@
         "claude-code",
         "cursor",
         "opencode"
-      ]
+      ],
+      "plugin": "enterprise-ai-platform"
     },
     "knowledge-graph": {
-      "description": "Cross-stack (UI<->API<->service<->DB) knowledge graph MCP. Spawned by unified-trace; not exposed directly. Lives in its own repo (knowledge-graph-generator): sibling clone, or KNOWLEDGE_GRAPH_PATH.",
+      "description": "Cross-stack (UI<->API<->service<->DB) knowledge graph MCP, shipped as the `knowledge-graph` plugin. unified-trace (enterprise-ai-platform plugin) spawns it internally; exposed directly for token-budgeted queries (get_context_pack, search_knowledge, resolve_ui_api).",
       "runtime": "python",
       "entry": "mcp_server_main.py",
       "dependencies": {
@@ -179,9 +182,12 @@
         "read:fs:projects",
         "write:fs:kg-output"
       ],
-      "expose": false,
-      "clients": [],
-      "entryBase": "kg"
+      "expose": true,
+      "clients": [
+        "claude-code"
+      ],
+      "entryBase": "kg",
+      "plugin": "knowledge-graph"
     },
     "code-cortex": {
       "description": "Exact AST call-graph MCP (vendored C++ binary, built/installed per OS). Spawned by unified-trace; not exposed directly.",

@@ -418,22 +418,31 @@ function unresolvedFrom(kgData) {
 
 const server = new McpServer({ name: "unified-trace", version: "1.0.0" });
 
+
+import { renderCompact, COMPACT_MAX_NODES_DEFAULT } from "./render-compact.js";
+function toolResult(tool, payload, format, maxNodes) {
+  const text = format === "json" ? JSON.stringify(payload) : renderCompact(tool, payload, maxNodes);
+  return { content: [{ type: "text", text }] };
+}
+const FORMAT_SCHEMA = {
+  format: z.enum(["compact", "json"]).default("compact"),
+  max_nodes: z.number().int().min(10).max(400).default(COMPACT_MAX_NODES_DEFAULT),
+};
+
 server.registerTool(
   "trace",
   {
     description:
-      "Unified cross-stack trace: merges Knowledge Generator (UI<->API<->architecture, confidence-tagged) " +
-      "with Code Cortex (exact AST method-body CALLS/CALLERS/CALLEES) into one compact {nodes,edges,unresolved} result. " +
-      "Accepts a UI API constant (e.g. 'CommonApiConstant.HIS_CS_BED_SITEMASTER'), an endpoint ('POST /bed/sitemaster'), " +
-      "or a symbol/class/method name (e.g. 'BedCategorySiteAssignmentServiceImp.addsiteMaster'). " +
-      "Never guesses an implementation name from convention - AST resolution always wins over naming heuristics.",
+      "Cross-stack trace of a UI API constant, endpoint ('POST /bed/sitemaster') or Class.method: Knowledge Graph + Code Cortex AST calls/callers, confidence-tagged. " +
+      "Default output is compact text (format:\"json\" for the full graph).",
     inputSchema: {
       query: z.string(),
       direction: z.enum(["forward", "reverse", "both"]).default("both"),
       depth: z.number().int().min(1).max(5).default(3),
+      ...FORMAT_SCHEMA,
     },
   },
-  async ({ query, direction, depth }) => {
+  async ({ query, direction, depth, format, max_nodes }) => {
     const start = Date.now();
     const nodes = [];
     const edges = [];
@@ -555,7 +564,7 @@ server.registerTool(
         truncated: nodes.length > MAX_NODES || edges.length > MAX_EDGES,
       },
     };
-    return { content: [{ type: "text", text: JSON.stringify(payload) }] };
+    return toolResult("trace", payload, format, max_nodes);
   }
 );
 
@@ -563,12 +572,10 @@ server.registerTool(
   "trace_usages",
   {
     description:
-      "All known usages of a shared symbol (method/class/function): every caller from Code Cortex " +
-      "(exact call-site level, never just the first match) plus any UI/API references from Knowledge Generator " +
-      "if the symbol is API-facing.",
-    inputSchema: { symbol: z.string(), depth: z.number().int().min(1).max(5).default(2) },
+      "Every known caller of a method/class/function (Code Cortex call sites) plus UI/API references from the Knowledge Graph. Compact text by default.",
+    inputSchema: { symbol: z.string(), depth: z.number().int().min(1).max(5).default(2), ...FORMAT_SCHEMA },
   },
-  async ({ symbol, depth }) => {
+  async ({ symbol, depth, format, max_nodes }) => {
     const start = Date.now();
     const nodes = [];
     const edges = [];
@@ -611,23 +618,16 @@ server.registerTool(
     const dep = await kgCall("find_dependencies", { target: symbol, direction: "incoming", depth });
     if (dep.ok && dep.data && !dep.data.error) ingestKGDependencies(dep.data, symbol, nodes, edges, seen);
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            query: symbol,
-            resolved_qualified_name: resolved?.qualified_name || null,
-            caller_count: callerCount,
-            ui_usage_count: uiUsages.length,
-            nodes: nodes.slice(0, MAX_NODES),
-            edges: dedupeEdges(edges).slice(0, MAX_EDGES),
-            unresolved,
-            metadata: { sources: [...new Set(sources)], durationMs: Date.now() - start },
-          }),
-        },
-      ],
-    };
+    return toolResult("trace_usages", {
+      query: symbol,
+      resolved_qualified_name: resolved?.qualified_name || null,
+      caller_count: callerCount,
+      ui_usage_count: uiUsages.length,
+      nodes: nodes.slice(0, MAX_NODES),
+      edges: dedupeEdges(edges).slice(0, MAX_EDGES),
+      unresolved,
+      metadata: { sources: [...new Set(sources)], durationMs: Date.now() - start, truncated: nodes.length > MAX_NODES || edges.length > MAX_EDGES },
+    }, format, max_nodes);
   }
 );
 
@@ -635,12 +635,10 @@ server.registerTool(
   "trace_impact",
   {
     description:
-      "Change-impact analysis for a symbol/API/table: direct+indirect callers, direct+indirect callees, " +
-      "and (where resolvable) affected APIs/UI and inferred DB tables. Confidence-tagged; never silently " +
-      "upgrades an inferred relationship to verified.",
-    inputSchema: { target: z.string(), depth: z.number().int().min(1).max(5).default(3) },
+      "Change impact of a symbol/API/table: callers, callees, affected APIs/UI and inferred DB tables, confidence-tagged. Compact text by default.",
+    inputSchema: { target: z.string(), depth: z.number().int().min(1).max(5).default(3), ...FORMAT_SCHEMA },
   },
-  async ({ target, depth }) => {
+  async ({ target, depth, format, max_nodes }) => {
     const start = Date.now();
     const nodes = [];
     const edges = [];
@@ -689,21 +687,14 @@ server.registerTool(
       if (dep.ok && dep.data && !dep.data.error) ingestKGDependencies(dep.data, target, nodes, edges, seen);
     }
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify({
-            query: target,
-            nodes: nodes.slice(0, MAX_NODES),
-            edges: dedupeEdges(edges).slice(0, MAX_EDGES),
-            db_impact: dbImpactData,
-            unresolved,
-            metadata: { sources: ["CODE_CORTEX", "KNOWLEDGE_GRAPH"], durationMs: Date.now() - start },
-          }),
-        },
-      ],
-    };
+    return toolResult("trace_impact", {
+      query: target,
+      nodes: nodes.slice(0, MAX_NODES),
+      edges: dedupeEdges(edges).slice(0, MAX_EDGES),
+      db_impact: dbImpactData,
+      unresolved,
+      metadata: { sources: ["CODE_CORTEX", "KNOWLEDGE_GRAPH"], durationMs: Date.now() - start, truncated: nodes.length > MAX_NODES || edges.length > MAX_EDGES },
+    }, format, max_nodes);
   }
 );
 

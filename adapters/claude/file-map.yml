@@ -6,7 +6,7 @@
 #   copy     = direct overwrite; installer backs up to .prev
 #   generate = produced by installer script (not a direct copy)
 
-version: "3.1"
+version: "4.14"
 adapter: claude
 
 install_targets:
@@ -42,19 +42,12 @@ install_targets:
     method: copy
     scope: global
 
-  # Commands (all files from shared/commands/)
-  - source: shared/commands/
-    target: .claude/commands/
-    method: copy
-    recursive: true
+  # Commands: provided by the plugin only (v4.14) — no per-repo or user-level copy.
 
-  # Standards (for lazy loading by commands)
-  - source: shared/standards/
-    target: .github/ai-platform/standards/
-    method: copy
-    recursive: true
+  # Standards/rules/knowledge: plugin bundle ai-platform/ only (v4.14).
 
-  # Skills — installed GLOBAL only (matches the actual installer behavior for
+  # Skills: plugin only (v4.14). A copy in ~/.claude/skills would be loaded twice.
+
   # commands/standards: install.sh/install.ps1 copy these to ~/.claude/, not per-repo).
   # ~/.claude/skills/ is scanned natively by both Claude Code and OpenCode (OpenCode's
   # v2 skill scanner already reads this path by default, verified via `opencode debug skill`)

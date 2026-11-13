@@ -10,7 +10,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { clientPaths } from "../path-resolver/index.js";
-import { buildPlugins, CLIENTS } from "./build.js";
+import { buildPlugins, CLIENTS, globalKernelText } from "./build.js";
 
 const MANIFEST = ".eap-install.json";
 
@@ -80,6 +80,7 @@ function claudeCommands(root, ctx) {
   return [
     `claude plugin marketplace add ${q(root)}`,
     "claude plugin install enterprise-ai-platform@eap-local",
+    "claude plugin install knowledge-graph@eap-local",
   ];
 }
 
@@ -103,7 +104,13 @@ export function planInstall(client, ctx, built, { configRoot = null } = {}) {
     plan.mcpEntries = Object.keys(mcp);
     plan.preserved = b.skippedMcp ?? [];
     if (plan.preserved.length) plan.warnings.push(`duplicate avoided: ${plan.preserved.join(", ")} already registered at user scope — kept yours, NOT added by the plugin (Claude does not dedupe: both would start). To switch to the plugin copies: claude mcp remove -s user <id>, then npm run plugin:build -- --prefer-plugin`);
-    plan.note = "Registered through Claude's own plugin CLI; this tool never edits ~/.claude.json.";
+    plan.note = "Registered through Claude's own plugin CLI; this tool never edits ~/.claude.json. --apply writes the contract KERNEL to ~/.claude/CLAUDE.md (kernel only — the full contract is read on demand from the plugin bundle).";
+    if (configRoot) return plan; // test / alternate config root: never touch the real ~/.claude/CLAUDE.md
+    const claudeMd = path.join(process.env.HOME ?? process.env.USERPROFILE ?? "", ".claude", "CLAUDE.md");
+    const existing = fs.existsSync(claudeMd) ? fs.readFileSync(claudeMd, "utf8") : "";
+    const content = globalKernelText(ctx, b.pluginDir, existing);
+    plan.globalKernel = { file: claudeMd, content, changed: content !== existing };
+    plan.ops.push({ rel: "~/.claude/CLAUDE.md (kernel)", src: "shared/contract.md", dst: claudeMd, action: plan.globalKernel.changed ? (existing ? "update" : "create") : "same" });
     return plan;
   }
   const prev = readManifest(t.dir);
@@ -138,6 +145,12 @@ export function planInstall(client, ctx, built, { configRoot = null } = {}) {
 }
 
 export function applyInstall(plan, { apply = false, now = () => Date.now() } = {}) {
+  if (apply && plan.client === "claude-code" && plan.globalKernel?.changed) {
+    const { file, content } = plan.globalKernel;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    if (fs.existsSync(file)) fs.cpSync(file, `${file}.eap-backup-${now()}`);
+    fs.writeFileSync(file, content);
+  }
   if (!apply || plan.client === "claude-code") return plan;
   fs.mkdirSync(plan.target, { recursive: true });
   const files = [];

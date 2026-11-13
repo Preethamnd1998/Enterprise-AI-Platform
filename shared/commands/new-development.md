@@ -1,12 +1,12 @@
 ---
-description: Design and implement new features or large functionalities from a Redmine story, user story, document, or screenshot. Approval required before implementation. Use auto=true to skip gate.
-argument-hint: "redmine=<id> | file=<path.md> | \"<feature requirement / user story>\" [auto=true]"
+description: Design and implement new features or large functionalities from a Redmine story, user story, document, or screenshot. Runs in auto mode (analysis blocks, then execution); pass auto=false to stop for approval after analysis. High/Critical risk always stops.
+argument-hint: "redmine=<id> | file=<path.md> | \"<feature requirement / user story>\" [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_get_project, mcp__redmine-reader__redmine_get_wiki_page, mcp__gitlab-reader__search_repositories, mcp__gitlab-reader__get_repository_tree, mcp__gitlab-reader__get_file_contents
 ---
 
 # Command: /new-development
 
-<!-- Shared execution contract is loaded via ~/.claude/CLAUDE.md (installed globally). -->
+<!-- Execution contract: KERNEL is always loaded from ~/.claude/CLAUDE.md (plugin install). Full contract (shared/contract.md) is read ON DEMAND from ${CLAUDE_PLUGIN_ROOT}/ai-platform/contract.md — only the §§ a step cites. -->
 
 Agent profile: **New Development**. Input: `$ARGUMENTS`.
 
@@ -14,7 +14,7 @@ Agent profile: **New Development**. Input: `$ARGUMENTS`.
 
 ## Mode Detection
 
-Parse `auto=true` from arguments. Store as session flag — applies to all tasks this session.
+Parse `auto` from arguments — default `true` (no approval stop); `auto=false` re-enables the stop. Store as session flag — applies to all tasks this session.
 
 **If `$ARGUMENTS` is empty → Session Mode.**
 **If `$ARGUMENTS` is non-empty → Direct Mode** (skip to Input Resolution below).
@@ -37,7 +37,7 @@ Describe your feature using any of:
   • Attach a screenshot       — UI mockup or wireframe
 
 Options:
-  • auto=true                 — skip approval gate for this session
+  • auto=false                 — stop for approval after analysis (default: auto)
 
 Type 'done' to end the session.
 ```
@@ -45,7 +45,7 @@ Type 'done' to end the session.
 For each feature the user provides in this session:
 
 1. Run **Input Resolution**, then **Phase 1 — Discovery & Analysis**.
-2. Run **Approval Gate** (skip if `auto=true`).
+2. Run **Approval Gate** (auto by default — stops only for `auto=false` or High/Critical risk).
 3. After approval: run **Execution Phase**.
 4. Append **Execution Summary** (contract §13).
 5. Print: `─── Feature complete. Next? (or 'done') ───`
@@ -122,9 +122,9 @@ Complexity: Small / Medium / Large / XLarge
 
 ## Approval Gate (contract §14)
 
-If `auto=true` was set: skip and proceed to Execution Phase.
+Default (`auto`): output the analysis blocks above and proceed to the Execution Phase.
 
-Otherwise: STOP. Output the analysis blocks above and ask:
+Only if `auto=false` was passed or the §9 risk gate is High/Critical: STOP and ask:
 
 ```text
 Approve implementation? (approve / yes / proceed / implement)
@@ -135,7 +135,7 @@ Wait for approval. User may approve all parts or specify a subset:
 
 ---
 
-## Execution Phase (after approval or auto=true)
+## Execution Phase (auto by default, or after approval when the gate engaged)
 
 Execute only the approved Parts/Phases in order.
 
