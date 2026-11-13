@@ -1,16 +1,6 @@
 ---
 name: pagination-skill
-description: |
-  Sub-skill of global-filter-pagination-skill. Add the standard Lifetrenz footer pagination to a
-  list screen: the custom `<lifetrenz-lt-pagination>` (PrimeNG paginator + page-size dropdown,
-  "N records, M pages in total" report, options 15/25/50/75/100, centred in the table footer),
-  component-scoped `LtPaginatorService`, 0-based `pageNo` + `pageSize` requests, `{data, page: PageDTO}`
-  responses (total records, total pages, current page, page size), page change, page-size change that
-  returns to page 1, filter change that returns to page 1, and independent pagination for several
-  paged lists on one page (one pagination state/service per list). Includes UI spec, host templates
-  (single and multi list), a per-list state service, bug patterns and a spec. MUST be loaded when
-  adding or changing paging on any Lifetrenz list, when a page needs two or more independent
-  paginators, or when diagnosing wrong totals/pages/leaking page state.
+description: Lifetrenz <lifetrenz-lt-pagination> footer: 0-based pageNo/pageSize, {data, page: PageDTO}, page-size reset, independent paginators per list. Load when adding or debugging paging on a list.
 ---
 
 # Pagination Skill

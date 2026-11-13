@@ -2,6 +2,7 @@
 description: Migrate code between branches from a Redmine/MR/commit/branch/release or document file. Auto mode by default; auto=false stops for approval after analysis. mode=exact (smallest diff) or mode=functionality (full capability). Use auto=true to skip gate.
 argument-hint: "mode=exact|functionality (mr=!N | commit=SHA | branch=B | release=vX..vY | redmine=ID | file=<path.md>) target=<branch> [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs, mcp__gitlab-reader__list_merge_request_changed_files, mcp__gitlab-reader__get_merge_request_file_diff, mcp__gitlab-reader__get_commit, mcp__gitlab-reader__get_commit_diff, mcp__gitlab-reader__get_branch_diffs, mcp__gitlab-reader__list_commits, mcp__gitlab-reader__get_file_contents
+disable-model-invocation: true
 ---
 
 # Command: /migration

@@ -3,6 +3,7 @@ model: claude-haiku-5-5
 description: Take a list of Redmine issue IDs and produce one dated report — what each task is, its status, and (where the evidence supports it) a root-cause finding backed by code/DB/log citations. Read-only. Built to feed straight into /planning or /plan-reviewer.
 argument-hint: "ids=<comma/space-separated Redmine IDs> [env=<override>] [auto=false]"
 allowed-tools: Read, Grep, Glob, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_search, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs, mcp__gitlab-reader__get_commit_diff
+disable-model-invocation: true
 ---
 
 # Command: /redmine-bulk-report

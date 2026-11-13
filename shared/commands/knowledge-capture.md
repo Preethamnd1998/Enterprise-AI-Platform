@@ -3,6 +3,7 @@ model: claude-haiku-5-5
 description: After implementing something, capture what was learned as a new (or extended) file under shared/knowledge/ for future agents to reuse. Explicit, on-demand only — never runs automatically at the end of a task.
 argument-hint: "[redmine=<id> | mr=!<n> | \"<free text: what was built/fixed>\"] [topic=<custom-flows/<name> | architecture | new>]"
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash, mcp__gitlab-reader__get_commit_diff, mcp__gitlab-reader__get_merge_request_diffs
+disable-model-invocation: true
 ---
 
 # Command: /knowledge-capture

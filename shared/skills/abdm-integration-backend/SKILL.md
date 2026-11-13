@@ -1,6 +1,6 @@
 ---
 name: abdm-integration-backend
-description: Authoritative backend engineering skill for integrating ABDM (Ayushman Bharat Digital Mission) Milestones M1 (ABHA creation & verification), M2 (HIP – care context linking & health record share), M3 (HIU – consent request & record fetch), and M4 (NHPR – HPR/HFR native registration) into the Lifetrenz HIS Spring Boot microservice stack. Covers gateway session token lifecycle, request signing, Fidelius (ECDH+AES/GCM) encryption envelope, FHIR R4 bundle authoring, callback handler patterns, idempotency, async Kafka choreography, MongoDB clinical storage, PostgreSQL consent/audit storage, certification & WASA readiness, and sandbox/production environment isolation. MUST be loaded by every ABDM-touching backend agent (abdm-backend-engineer, abdm-integration-orchestrator, healthcare-backend-engineer when ABDM scope is detected) before reading, writing or modifying anything inside `abdm-integration-service/` or any service that emits / consumes ABDM data.
+description: ABDM M1–M4 backend (ABHA, HIP/HIU, HPR/HFR) in Lifetrenz Spring Boot services: gateway tokens, Fidelius encryption, FHIR bundles, callbacks, Kafka. Load before touching abdm-integration-service or ABDM data.
 metadata:
   type: skill
   scope: backend

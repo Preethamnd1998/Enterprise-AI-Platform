@@ -2,6 +2,7 @@
 description: Design and implement new features or large functionalities from a Redmine story, user story, document, or screenshot. Runs in auto mode (analysis blocks, then execution); pass auto=false to stop for approval after analysis. High/Critical risk always stops.
 argument-hint: "redmine=<id> | file=<path.md> | \"<feature requirement / user story>\" [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_get_project, mcp__redmine-reader__redmine_get_wiki_page, mcp__gitlab-reader__search_repositories, mcp__gitlab-reader__get_repository_tree, mcp__gitlab-reader__get_file_contents
+disable-model-invocation: true
 ---
 
 # Command: /new-development

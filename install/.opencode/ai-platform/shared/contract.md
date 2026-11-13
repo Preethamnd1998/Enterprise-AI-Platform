@@ -7,30 +7,23 @@
      Phase F (v4.3) will inline all task-class sections into commands; kernel stays lean. -->
 
 <!-- enterprise-ai-platform:kernel:start -->
-# Enterprise AI Platform — Execution Contract (kernel)
+# EAP Execution Contract (kernel)
 
-Single reasoning agent; no sub-agents unless `agents=N` (max 3) is passed. Plugin root: `{{EAP_ROOT}}` (bundle `ai-platform/`: standards, rules, knowledge, templates, prompts, contract.md; tools `bin/`).
+Single reasoning agent; no sub-agents unless `agents=N` (max 3). Plugin root `{{EAP_ROOT}}` — bundle `ai-platform/` (contract.md §0–§18, standards, rules, knowledge, templates), tools `bin/`. Everything below the kernel is read ON DEMAND: only the section, standard, rule or knowledge file the current step cites.
 
-1. Analyze only what the task requires. Never bulk-load or scan the repository.
-2. Deterministic discovery: resolve the exact change set from the input (Redmine / MR / commit / branch); never scan to find it.
-3. Hunks not files. Signatures not bodies for unchanged neighbours. Depth-1 dependency expansion only.
-4. Prove completeness AND no regression before "done" (contract §7–§8).
+1. Analyze only what the task requires; never bulk-load or scan the repository. Deterministic discovery: resolve the exact change set from Redmine / MR / commit / branch.
+2. Hunks not files; signatures not bodies for unchanged neighbours; depth-1 dependency expansion only. A file enters scope only if it is in the change set, something loaded references it, or naming convention ties it to a loaded symbol.
+3. Prove completeness AND no regression before "done" (contract §7–§8).
 
-**No-scan (hard):** a file enters scope only if it is in the change set, something already loaded references it, or naming/package convention ties it to a loaded symbol. Never enumerate.
+**Graph first:** before any Grep/Glob over source for a flow, endpoint, dependency, DB impact or symbol usage, use `unified-trace` (`saga`, `trace`, `trace_usages`, `trace_impact`, `index_status`); for a cheap overview use `knowledge-graph` `get_context_pack(topic, max_tokens≤1500)`. Results are an index: Read only the cited file:line ranges, keep VERIFIED/INFERRED/UNRESOLVED tags. Scoped scan only when the graph is unavailable or unresolved.
 
-**Graph first (F-KG):** before any Grep/Glob over source to establish a flow, endpoint, service/Kafka dependency, DB impact or symbol usage, use the `unified-trace` MCP (merges the Knowledge Graph and Code Cortex; auto-discovers indexed projects): `saga` (complete UI→API→service→Feign/Kafka→DB chain; `gaps` lists every unfollowable link — see `ai-platform/knowledge/architecture/saga-tracing.md`), `trace`, `trace_usages`, `trace_impact`, `index_status`. For a token-budgeted topic overview call the `knowledge-graph` plugin's `get_context_pack(topic, max_tokens≤1500)`. Results are an index, not truth: Read only the cited file:line ranges (offset/limit) and keep each fact's confidence (VERIFIED / INFERRED / UNRESOLVED). Fall back to a scoped scan only when the graph is unavailable or returns unresolved.
+**Context discipline:** never re-read a file or re-run a search already summarised; drop raw payloads. Builds, tests, log tails, long git output → `{{EAP_ROOT}}/bin/eap-run <cmd>` (else `| tail -n 80`). Budget 150k (`CTX_BUDGET`): when the meter warns, refresh `<project>/.claude/checkpoints/current.md` (agent-state section ≤40 lines) and `/compact`; after resume/compaction Read that checkpoint first. SKILL.md is an index — open `references/` only for the mode needed.
 
-**Context discipline (F-CTX):**
-- Never re-read a file or re-run a search already summarised this session; keep the summary, drop the raw payload.
-- Builds, tests, log tails and long git output run through `{{EAP_ROOT}}/bin/eap-run <cmd>` (full output kept in a log; only exit code, errors, failing tests and root-cause frames are printed). Otherwise cap with `| tail -n 80`.
-- Context budget 150k tokens (`CTX_BUDGET`). When the prompt-time meter reports over budget: refresh the checkpoint `<project>/.claude/checkpoints/current.md` (requirement, decisions, files touched, next step; ≤40 lines under the agent-state marker) and run `/compact`. On resume or after compaction, Read that checkpoint first instead of re-deriving context.
-- Skills: the SKILL.md is an index — open its `references/` files only for the mode the task needs.
+**Lazy loading:** `ai-platform/standards/coding-standards.md` is mandatory for any code change, then standards by language/layer; `rules/` by task type; `knowledge/` via `company-profile.md`'s topic table; tests → `standards/testing/README.md` first.
 
-**Lazy standards / rules / knowledge:** Read only what the change set needs from `{{EAP_ROOT}}/ai-platform/`: `standards/coding-standards.md` is mandatory for any code change, then standards by language/layer touched; `rules/` by task type (coding-style, testing, security, code-review); `knowledge/` via `company-profile.md`'s topic table. Never bulk-load a directory. Writing/reviewing tests → `standards/testing/README.md` first.
+**Gates:** auto by default — output the §12 analysis blocks, then execute. STOP for approval only when §9 risk is High/Critical (DB/Flyway, permissions, auth/security, billing/financial/patient data, application scope), when `auto=false`, or for approval-only steps (data-correction scripts are never executed). MCP is read-only by allowlist.
 
-**Gates:** Phase 1 (Discovery & Analysis) runs in `auto` mode by default — output the §12 analysis blocks, then continue straight into execution. STOP and ask for approval only when the §9 risk gate is High/Critical (DB/Flyway, permissions, security, auth, billing/financial/patient data, application-scope changes), when `auto=false` is passed, or when a command marks a step approval-only (data-correction scripts are never executed). MCP is read-only by allowlist; write-capable MCP tools stay blocked.
-
-**Arguments:** `key=value` pairs — `redmine`, `mr`, `commit`, `branch`, `release`, `target`, `component`, `mode`, `agents`, `auto`. Ask one clarifying question if a required key is missing, then proceed.
+**Arguments:** `key=value` — `redmine`, `mr`, `commit`, `branch`, `release`, `target`, `component`, `mode`, `agents`, `auto`. One clarifying question if a required key is missing, then proceed.
 <!-- enterprise-ai-platform:kernel:end -->
 
 # Enterprise AI Platform — Shared Execution Contract (v3)

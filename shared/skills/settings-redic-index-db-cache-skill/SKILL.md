@@ -1,6 +1,6 @@
 ---
 name: settings-redic-index-db-cache-skill
-description: Institutional pattern for the two-tier Redis (accelerator) + IndexedDB (client cache) architecture used to make Settings-driven data (mandatory fields, component/speciality/role/user access, and any future settings domain) fetch-once, cache-aware, and save-invalidated across the whole platform — settings-module admin screens AND the patient-facing clinical screens that render the same data. MUST be loaded by any agent or developer asked to onboard a new settings domain onto this cache, migrate an existing screen's settings fetch onto it, or debug why a cached settings value is stale/wrong. Built and live-verified end-to-end (backend Redis dirty-check, frontend IndexedDB store, 6 real consumer screens across 4 Angular projects) against the Customize Consult Screen / mandatory-component feature family.
+description: Two-tier Redis + IndexedDB cache for Settings-driven data (mandatory fields, component/speciality/role access): onboard a new settings domain, migrate a screen, or debug stale cached values.
 metadata:
   type: skill
   scope: frontend-backend-cache-architecture

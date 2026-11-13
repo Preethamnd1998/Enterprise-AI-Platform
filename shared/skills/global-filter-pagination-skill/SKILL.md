@@ -1,16 +1,6 @@
 ---
 name: global-filter-pagination-skill
-description: |
-  Master skill for building a filterable, paginated list screen the Lifetrenz way: the top-bar
-  "global filter" panel (time-range chips + custom From/To dates + field filters + Save Filter /
-  default filter), the custom `<lifetrenz-lt-pagination>` footer, and the backend that serves
-  both (Spring Boot, PostgreSQL via custom string-built `SQL` classes in the sql-query.md format,
-  or MongoDB via Query/Aggregation) returning the canonical `{ data, page: PageDTO }` payload.
-  Owns the end-to-end contract, backend templates, the SQL-format rules and the list of known
-  doc-vs-source discrepancies; delegates UI detail to the two sub-skills
-  `global-filter-skill` and `pagination-skill`. MUST be loaded by any agent or developer asked to
-  add a searchable/filterable/paginated list, a saved/default filter, or a paginated API to any
-  Lifetrenz Angular app + Spring service, or to review/port such a screen.
+description: Build or review a filterable, paginated Lifetrenz list screen end to end (global filter panel + lt-pagination footer + Spring/Mongo backend returning {data, page}). Load for any list/filter/pagination/saved-filter task.
 ---
 
 # Global Filter + Pagination — Master Skill
@@ -97,7 +87,6 @@ Saved filters: ConponentSearchService ⇄ /opd/component/filter  (JSON blob of t
   PrimeNG modules already used by the reference. No raw `<p-paginator>` in features.
 - Cross-module import rules still apply (e.g. emergency must not import `@inpatient`) — copy locally.
 - No PHI in filter names, logs or saved `formValue` beyond what the form already holds.
-- 10+ file edits in one turn ⇒ pause per kernel §17.
 
 ## Files in this skill
 

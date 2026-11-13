@@ -1,12 +1,6 @@
 ---
 name: knowledge-graph
-description: |
-  Lifetrenz Knowledge Graph (UI <-> API <-> service <-> DB) shipped as the `knowledge-graph`
-  plugin: when to query it directly (token-budgeted get_context_pack, search_knowledge,
-  resolve_ui_api, find_api, get_database_impact) versus going through unified-trace's `saga`,
-  how to check index freshness and re-index (indexer.py / sync-projects), and the output-size
-  rules. Load when a task needs a flow/API/DB overview, when unified-trace reports a project
-  NOT_INDEXED/STALE, or when asked to index/refresh the knowledge graph.
+description: Lifetrenz Knowledge Graph plugin: when to call get_context_pack/search_knowledge/resolve_ui_api directly vs unified-trace saga, output-size rules, index_status and re-indexing. Load for flow/API/DB overviews or when an index is STALE/NOT_INDEXED.
 metadata:
   type: skill
   scope: code-intelligence

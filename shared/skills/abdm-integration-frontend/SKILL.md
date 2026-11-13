@@ -1,6 +1,6 @@
 ---
 name: abdm-integration-frontend
-description: Authoritative Angular frontend skill for ABDM patient-facing and clinician-facing flows across Milestones M1 (ABHA creation & verification), M2 (consent capture + care context awareness for HIP), M3 (consent request + records view as HIU), and M4 (HPR / HFR registration screens). Covers Aadhaar/Mobile OTP UX, NHA consent language enforcement, ABHA QR scan + decode, ABHA card download, KYC consent overlay, consent artefact viewer, records timeline, scan-and-share, accessibility (WCAG 2.1 AA per NHA guidelines), error/empty/loading states, and the precise endpoint contract consumed from abdm-integration-service. MUST be loaded by every ABDM-touching Angular agent (abdm-ui-engineer, abdm-integration-orchestrator, angular-healthcare-ui when ABDM scope is detected) before changing any component under lifetrenz-core that talks to abdm-integration-service.
+description: ABDM Angular flows (ABHA create/verify, consent, records view, HPR/HFR screens) and the abdm-integration-service endpoint contract. Load before changing ABDM UI components.
 metadata:
   type: skill
   scope: frontend

@@ -1,16 +1,6 @@
 ---
 name: global-filter-skill
-description: |
-  Sub-skill of global-filter-pagination-skill. Build the Lifetrenz "global filter" for a list
-  screen exactly like the All Appointments reference: top-bar search box + expand arrow that
-  opens a 480px overlay hosting a named `searchbar` router-outlet; inside it a 30/70 splitter with
-  time-range chips (Today / Last 24 hours / Last 7, 15, 30 days / Next 7, 15, 30 days), From/To
-  calendars for custom dates, the field filters, Clear / Search buttons, Save Filter overlay and
-  the saved-filter list (set default, rename, delete). Defaults to Today when the screen has a date
-  range, a saved default filter wins, Clear restores the default. Covers the exact markup, SCSS,
-  button colours, form controls, SearchMenuService events, shared form service, saved-filter API,
-  host-page wiring and a behaviour matrix. MUST be loaded when adding or porting a filter panel,
-  search, saved/default filter or time-range filter on any Lifetrenz Angular list screen.
+description: Lifetrenz top-bar global filter panel (time-range chips, From/To dates, field filters, Save/default filter) exactly like All Appointments. Load when adding or porting a list-screen filter.
 ---
 
 # Global Filter Skill

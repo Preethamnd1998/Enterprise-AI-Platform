@@ -1,16 +1,6 @@
 ---
 name: contextual-help-skill
-description: |
-  Create and place a Contextual Help button + dialog (the "?" icon in a card header that opens a
-  branded dialog with About / How to use / Field descriptions / Business rules / Examples /
-  Important notes / FAQs) on any Angular + PrimeNG screen, pixel-identical to the reference
-  implementation `lib-ccc-help` in Clinical Component Configuration (settings UI library).
-  Covers the exact icons, colours, gradient header, section card styling, placement in the
-  p-card header, tab-aware content switching, the typed content model, how to write the copy
-  (questions, rules, examples, notes), copy-ready templates, a placement decision table, a spec
-  template and a QA checklist. MUST be loaded by any agent or developer asked to add, port,
-  extend or review contextual help / help dialog / "?" info button on a Lifetrenz Angular screen
-  (settings, clinical, billing, support-ticket or any other ui-library module).
+description: Add or review the contextual help '?' button + dialog on a Lifetrenz Angular/PrimeNG screen, pixel-identical to lib-ccc-help. Load for any help dialog / info button task.
 ---
 
 # Contextual Help Skill

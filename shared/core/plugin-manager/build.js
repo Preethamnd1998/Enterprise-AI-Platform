@@ -26,7 +26,7 @@ function withFrontmatter(md, file) {
   if (/^---\r?\n/.test(md)) return md;
   const h1 = /^#\s+(.+)$/m.exec(md);
   const desc = (h1 ? h1[1] : file.replace(/\.md$/, "")).replace(/["\n]/g, " ").trim();
-  return `---\ndescription: ${desc}\n---\n\n${md}`;
+  return `---\ndescription: ${desc}\ndisable-model-invocation: true\n---\n\n${md}`; // slash commands are user-typed: no always-on description cost
 }
 
 function copyShared(ctx, out, { commands = true, skills = true } = {}) {

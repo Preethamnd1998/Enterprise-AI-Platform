@@ -1,23 +1,6 @@
 ---
 name: print-header-footer-browserprint-skill
-description: |
-  Institutional root-cause-and-fix reference for this codebase's shared browser-print technique
-  (iframe + <table><thead>/<tbody>/<tfoot>) used across multiple casesheet/report print flows to
-  make a header repeat on every printed page and a footer stay pinned to the bottom of every
-  page — this is COMMON, shared print functionality, not a one-off: at least three real
-  components (ProcedureSummaryComponent, PacPrintOutComponent, PrintOrderComponent) independently
-  port the same pattern. Covers: logo/header not repeating on every printed page, footer not
-  pinned to the bottom, print output blank or unstyled after moving to an iframe, content
-  silently clipped at a page boundary, a blank gap under the header, too many nested borders,
-  content split/garbled across a page break on a box with a border/background
-  (box-decoration-break), a PrimeFlex utility-class override (!important) silently losing to an
-  Angular-encapsulated attribute selector, a flex-laid-out block (e.g. a signature block) getting
-  cut in half across two printed pages, or print output not fitting on one page. Distilled from
-  Redmine #49419 (PAC/Procedure print flow) and updated with the newer, more robust fixes found in
-  PrintOrderComponent's independent port of the same pattern. MUST be loaded by any agent asked to
-  fix a print-layout bug on a casesheet/report component, port this iframe print technique to a
-  new component, or diagnose why printed output is blank/unstyled/clipped/split-across-pages/
-  missing a repeating header or pinned footer/not fitting on one page.
+description: Shared iframe + table thead/tfoot browser-print technique (repeating header, pinned footer, page-break fixes) used by casesheet/report print components. Load for any print-layout bug or new print flow.
 metadata:
   type: skill
   scope: frontend-print-layout

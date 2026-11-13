@@ -2,6 +2,7 @@
 description: Root-cause and fix a defect from a Redmine ID, stack trace, error log, screenshot, user story, or document file. Runs in auto mode (analysis blocks, then execution); pass auto=false to stop for approval after analysis. High/Critical risk always stops.
 argument-hint: "redmine=<id> | mr=!<n> | commit=<sha> | file=<path.md> | \"<stack trace>\" [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_file_blame, mcp__gitlab-reader__get_commit, mcp__gitlab-reader__get_commit_diff, mcp__chrome-devtools-mcp__take_snapshot, mcp__chrome-devtools-mcp__take_screenshot, mcp__chrome-devtools-mcp__list_console_messages
+disable-model-invocation: true
 ---
 
 # Command: /bug-fix

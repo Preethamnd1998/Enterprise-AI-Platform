@@ -3,6 +3,7 @@ model: claude-sonnet-5-5
 description: Analyse production/support data issues and generate correction scripts. Scripts are shown for manual review — never executed. Approval required before script generation.
 argument-hint: "\"<issue description>\" | redmine=<id> | table=<name> | collection=<name> [id=<record>]"
 allowed-tools: Read, Grep, Glob, Write, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__gitlab-reader__get_file_contents, mcp__canary-core-service-db__query, mcp__canary-ipd-service-db__query, mcp__canary-inventory-service-db__query, mcp__canary-supplimentory-service-db__query, mcp__local-core-service-db__query, mcp__local-inventory-service-db__query, mcp__local-ipd-service-db__query, mcp__local-supplimentory-service-db__query, mcp__aster-uat-core-db__query, mcp__medvista-qa-core-db__query, mcp__medvista-qa-ipd-db__query, mcp__smiles-stage-core-service-db__query, mcp__smiles-stage-inventory-service-db__query, mcp__smiles-stage-ipd-service-db__query, mcp__smiles-stage-supplimentory-service-db__query, mcp__v2qa-core-service-db__query, mcp__v2qa-inventory-service-db__query, mcp__v2qa-invsupplimentory-service-db__query, mcp__v2qa-ipd-service-db__query, mcp__canary_mongo_db__find, mcp__canary_mongo_db__count, mcp__canary_mongo_db__aggregate, mcp__canary_mongo_db__collection-schema, mcp__canary_mongo_db__explain
+disable-model-invocation: true
 ---
 
 # Command: /data-correction

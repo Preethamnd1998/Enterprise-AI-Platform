@@ -2,6 +2,7 @@
 description: UI agent — fix UI bugs, develop new UI components, or apply design file updates. Supports Angular (web) and Flutter (mobile) — preserves all Angular bindings or Flutter widget structure. Approval required before changes. Use auto=true to skip gate.
 argument-hint: "component=<Name> | file=<path.md> | \"<bug description / user story>\" [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, mcp__gitlab-reader__get_file_contents, mcp__chrome-devtools-mcp__take_screenshot, mcp__chrome-devtools-mcp__take_snapshot, mcp__chrome-devtools-mcp__list_console_messages
+disable-model-invocation: true
 ---
 
 # Command: /ui-design-update

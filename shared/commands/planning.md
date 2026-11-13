@@ -2,6 +2,7 @@
 description: Turn a Redmine story, bug report, or free-text requirement into a PLAN.md and a TEST-CASES.xlsx — technical design, gap analysis, task breakdown, and QA test strategy. Auto mode by default; auto=false stops for approval after analysis.
 argument-hint: "redmine=<id> | file=<path.md> | \"<feature or bug requirement>\" [auto=false]"
 allowed-tools: Read, Grep, Glob, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_get_project, mcp__redmine-reader__redmine_get_wiki_page, mcp__gitlab-reader__search_repositories, mcp__gitlab-reader__get_repository_tree, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs
+disable-model-invocation: true
 ---
 
 # Command: /planning

@@ -1,13 +1,6 @@
 ---
 name: running-locally-skill
-description: |
-  How to run the Lifetrenz lifetrenz-core monolith and its backend services locally — fully
-  local, hybrid (local UI/BE mixed with canary-dev via dev-proxy), or pointed entirely at
-  canary-dev. Covers npm start-* scripts, environment.local.ts baseUrl/appDomain, the dev-proxy
-  port table (local port -> service), start-local.bat, STS/Eclipse env vars + VM args, and
-  Feign's explicit-URL requirement with Consul discovery disabled. Load when asked to
-  start/run/debug a Lifetrenz service or UI module locally, diagnose why a local service
-  can't reach another, or find which local port a backend service listens on.
+description: Run Lifetrenz UI modules and Spring Boot services locally (fully local, hybrid via dev-proxy, or against canary-dev): npm start-* scripts, environment.local.ts, port table, start-local.bat, STS run config, Feign explicit URLs. Load when starting/debugging anything locally or asking which port a service uses.
 metadata:
   type: skill
   scope: local-dev-environment

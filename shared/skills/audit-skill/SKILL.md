@@ -1,16 +1,6 @@
 ---
 name: audit-skill
-description: |
-  How auditing works across Lifetrenz and how to add it to any screen/endpoint: the Postgres
-  `@Audited` aspect (core-service and ipd-service → `activity_audit` table), the Mongo `@Auditable`
-  aspect (ipd-clinical-service → `api_audit_log` collection), the Kafka event audit trail, how old vs
-  new data is captured and parsed on BE and UI (including the `previousValue` pattern and per-event
-  history reconstruction), how timestamps are stored and displayed across India/Dubai users and
-  differently-located databases (UTC storage, zoneless vs `Z` serialization, TimezoneService /
-  appDate pipe), and how the UI renders audit (timeline card, history table). Includes copy-ready
-  backend and UI templates and a review checklist. MUST be loaded by any agent or developer asked
-  to add, change, review or debug auditing / audit log / history / activity log / "who changed
-  what" on any Lifetrenz Angular + Spring screen (Postgres or Mongo).
+description: Lifetrenz auditing: Postgres @Audited aspect, Mongo @Auditable aspect, Kafka audit trail, old/new value capture, timezone display, UI timeline/history. Load for any audit log / history / 'who changed what' task.
 ---
 
 # Audit Skill

@@ -2,6 +2,7 @@
 description: Execute a task Markdown file (plan, spec, or ticket) as an autonomous AI Developer Agent. Single Agent Mode by default; opt into Multi-Agent Mode with `multi`. Runs in auto mode (analysis blocks, then execution); pass auto=false to stop for approval after analysis. High/Critical risk always stops.
 argument-hint: "[multi] file=<path.md>[,<path2.md>] | context [auto=false]"
 allowed-tools: Read, Grep, Glob, Edit, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_repository_tree
+disable-model-invocation: true
 ---
 
 # Command: /dev

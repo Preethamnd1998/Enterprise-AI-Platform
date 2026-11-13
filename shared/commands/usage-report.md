@@ -3,6 +3,7 @@ model: claude-haiku-5-5
 description: Generate a report from the system-wide prompt/session log (~/.claude/usage-logs/), or clear it. Sessions, prompts per session, total prompts, and prompt-quality scoring reusing the shared/prompts/prompt-quality.md rubric — applied retroactively across sessions/days, distinct from the per-session /prompt-audit. Clearing requires typed confirmation.
 argument-hint: "[date=<YYYY-MM-DD>|<start>..<end>] | tokens [days=N] [baseline=<file>] [html=<out.html>] | clear"
 allowed-tools: Read, Glob, Bash
+disable-model-invocation: true
 ---
 
 # Command: /usage-report

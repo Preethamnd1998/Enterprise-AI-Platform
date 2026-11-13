@@ -1,16 +1,6 @@
 ---
 name: notification-link-skill
-description: |
-  How to add a NEW notification type end to end on Lifetrenz, from the business trigger to the screen the recipient
-  opens: trigger event on Kafka `lt.notification.events` -> notification-service (request type, handler, templates for
-  EMAIL / SMS / WHATSAPP / INBOX, default channels, Settings seed) -> tiny URL generation (10-char code, `url_mapping`,
-  `lt.mobility.notification-url`) -> Mobility link API (`notification_url`, state, expiry, login type, `/complete`) ->
-  public-gateway allowlist (client token, `user-token-required`, `required-params`) -> NotiShell screen (React, no
-  iframe). Covers the rules and regulations (what may be in a URL, token handling, expiry per type, one decision per
-  link, who is notified, PHI in SMS), how to send the URL by each channel, a worked example (discount / refund
-  approval, Redmine #54064), a file-by-file checklist and a test/verification matrix. MUST be loaded by any agent or
-  developer asked to add or change a notification, a mail/SMS/WhatsApp message with a link, an approval-by-link or
-  view-by-link flow, a NotiShell screen, a Mobility link purpose, or to debug "Link not recognised / expired / not valid".
+description: Lifetrenz notification deep links: how notification-service and the Mobility link API build/resolve links and how the UI handles them. Load for any notification link / approval notification task.
 ---
 
 # Notification Link Skill — new notification, URL, and NotiShell screen

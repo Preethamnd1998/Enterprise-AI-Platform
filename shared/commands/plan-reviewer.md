@@ -2,6 +2,7 @@
 description: Review a submitted plan (PLAN.md, an attached Redmine plan, or inline text) against real evidence — code, DB, logs, Grafana/SigNoz, Kafka, BRD/requirement docs — and score it for implementation readiness. Approval requires all four scores to clear the threshold (default 95). Not approved → produces a revised plan + test-case file and re-scores.
 argument-hint: "plan=<path.md> | redmine=<id> | \"<inline plan text>\" [threshold=N] [max-revisions=N] [auto=false]"
 allowed-tools: Read, Grep, Glob, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_create_issue_note, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_repository_tree, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs
+disable-model-invocation: true
 ---
 
 # Command: /plan-reviewer
