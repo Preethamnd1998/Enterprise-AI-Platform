@@ -498,5 +498,5 @@ Phase 2 — Execution (after approval)
 
 ---
 
-*Enterprise AI Platform v4.3 · Lifetrenz Engineering*
+*Enterprise AI Platform v4.3 · Preetham.ND*
 *Repository: https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git*

@@ -164,7 +164,7 @@ export function globalKernelText(ctx, pluginRoot, existing = "") {
   return out.replace(/^\s+/, "");
 }
 
-const authorOf = { name: "Lifetrenz Engineering" };
+const authorOf = { name: "Preetham.ND", url: "https://preethamnd1998.github.io/" };
 const DESC = "Enterprise AI Platform: shared commands, skills, standards and code-intelligence MCPs (unified-trace, knowledge graph, code cortex).";
 
 const KG_DESC = "Knowledge Graph plugin: cross-stack UI<->API<->service<->DB graph MCP (token-budgeted get_context_pack, search_knowledge, resolve_ui_api) + indexing skill. Used internally by enterprise-ai-platform's unified-trace.";

@@ -340,4 +340,4 @@ See [CHANGELOG.md](CHANGELOG.md) for the full detail behind each of these, plus 
 
 ## License
 
-Internal — Lifetrenz Engineering. All rights reserved.
+Copyright © 2026 Preetham.ND — https://preethamnd1998.github.io/. All rights reserved.
