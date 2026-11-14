@@ -16,7 +16,7 @@ export const S = {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export function createClient({ key, model = DEFAULT_MODEL, baseUrl = DEFAULT_BASE_URL, fetchImpl = fetch, timeoutMs = 60000, maxOutputTokens = 8192, retryDelays = RETRY_DELAYS_MS } = {}) {
+export function createClient({ key, model = DEFAULT_MODEL, baseUrl = DEFAULT_BASE_URL, fetchImpl = fetch, timeoutMs = 120000, maxOutputTokens = 8192, retryDelays = RETRY_DELAYS_MS } = {}) {
   const scrub = (s) => (key ? String(s).split(key).join("***") : String(s));
 
   async function generate({ system, prompt, schema, maxTokens = maxOutputTokens, temperature = 0.2 }) {
@@ -42,13 +42,18 @@ export function createClient({ key, model = DEFAULT_MODEL, baseUrl = DEFAULT_BAS
           if (attempt < retryDelays.length) { await sleep(retryDelays[attempt]); continue; }
           return last;
         }
-        if (status === 404) return { ok: false, code: "MODEL", reason: `model "${model}" not found — set GEMINI_MODEL` };
+        if (status === 404) {
+          const hint = /use models\/([A-Za-z0-9._-]+)/.exec(msg)?.[1];
+          return { ok: false, code: "MODEL", reason: `model "${model}" is not available to your key${hint ? ` (Google suggests ${hint})` : ""} — set GEMINI_MODEL or re-run gemini:setup --check` };
+        }
         if (status === 400 && /api key/i.test(msg)) return { ok: false, code: "AUTH", reason: "the Gemini API rejected the key" };
         if (status === 401 || status === 403) return { ok: false, code: "AUTH", reason: "the Gemini API rejected the key or the key lacks access" };
         return { ok: false, code: "BAD_REQUEST", reason: scrub(`Gemini API ${status}: ${msg}`.slice(0, 300)) };
       } catch (e) {
-        last = { ok: false, code: "NETWORK", reason: scrub(`${e.name === "TimeoutError" ? "request timed out" : "network error"}: ${e.message ?? e}`.slice(0, 200)) };
-        if (attempt < retryDelays.length) { await sleep(retryDelays[attempt]); continue; }
+        const timedOut = e.name === "TimeoutError" || e.name === "AbortError";
+        last = { ok: false, code: "NETWORK", reason: scrub(`${timedOut ? `request timed out after ${Math.round(timeoutMs / 1000)}s (the Gemini service is slow or busy; raise GEMINI_TIMEOUT_MS if inputs are large)` : `network error: ${e.message ?? e}`}`.slice(0, 240)) };
+        // a timeout is not retried: the request may still be running upstream and a retry would only double the wait
+        if (!timedOut && attempt < retryDelays.length) { await sleep(retryDelays[attempt]); continue; }
         return last;
       }
     }

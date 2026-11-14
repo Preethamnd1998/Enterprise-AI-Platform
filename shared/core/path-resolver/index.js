@@ -20,7 +20,7 @@ export const SETTING_KEYS = [
   "NODE_PATH",
   "KG_SOURCE", // auto (default) | legacy | in-repo — which Knowledge Graph unified-trace uses
   "GEMINI_ENABLED", // optional Gemini analysis MCP: off unless true (written by `gemini:setup`)
-  "GEMINI_MODEL", // default gemini-2.5-flash
+  "GEMINI_MODEL", // default gemini-3.5-flash
   "GEMINI_ALLOWED_ROOTS", // comma list; default PROJECTS_DIR
   "GEMINI_ENV_FILE", // gitignored file holding GEMINI_API_KEY; default <repo>/.env
 ];

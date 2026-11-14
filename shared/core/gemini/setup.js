@@ -1,7 +1,7 @@
 // gemini:setup / gemini:status — the optional-feature switch. Disabled by default; nothing in
 // the platform changes until a user runs `gemini:setup`. Never prints the key.
 import {
-  detectKey, envFilePath, geminiStatus, saveKey, forgetKey, setSetting, isGitIgnored, promptHidden, checkApi, normalizeKeyInput, explainKeyProblem, DEFAULT_MODEL,
+  detectKey, envFilePath, geminiStatus, saveKey, forgetKey, setSetting, isGitIgnored, promptHidden, checkApi, candidateModels, normalizeKeyInput, explainKeyProblem, DEFAULT_MODEL,
 } from "./index.js";
 import { loadSettings } from "../path-resolver/index.js";
 
@@ -29,6 +29,7 @@ export async function runSetup(ctx, opts = {}, deps = {}) {
   const log = deps.log ?? console.log;
   const prompt = deps.prompt ?? promptHidden;
   const check = deps.check ?? checkApi;
+  const pick = deps.pick ?? candidateModels;
   const interactive = deps.interactive ?? !!process.stdin.isTTY;
   const apply = opts.apply !== false;
   const settings = loadSettings(ctx);
@@ -88,10 +89,28 @@ export async function runSetup(ctx, opts = {}, deps = {}) {
   }
 
   if (det.key && (opts.check || interactive)) {
-    const model = settings.GEMINI_MODEL || DEFAULT_MODEL;
-    const r = await check({ key: det.key, model });
-    log(r.ok ? `API check: OK (model ${model})` : `API check: ${r.code} — ${r.reason}`);
-    if (!r.ok && r.code === "AUTH") { log("the key was not enabled — fix it and re-run; integration stays disabled."); return { enabled: false, code: 3 }; }
+    let model = settings.GEMINI_MODEL || DEFAULT_MODEL;
+    log(`checking "${model}" with a real request (Google can take 20–60 s to answer)…`);
+    let r = await check({ key: det.key, model });
+    if (!r.ok && r.code === "MODEL") {
+      // the configured/default model is retired or not offered to this key: find one that works
+      const names = [r.suggestion, ...(await pick({ key: det.key }))].filter((n, i, a) => n && a.indexOf(n) === i && n !== model).slice(0, 3);
+      for (const n of names) {
+        log(`trying "${n}"…`);
+        const probe = await check({ key: det.key, model: n });
+        if (probe.ok) {
+          log(`model "${model}" is not available to your key; using "${n}" instead${apply ? " (saved as GEMINI_MODEL in paths.local.env)" : ""}.`);
+          if (apply) setSetting(ctx, "GEMINI_MODEL", n);
+          model = n; r = probe;
+          break;
+        }
+      }
+    }
+    if (r.ok) log(`API check: OK (real request, model ${model})`);
+    else log(`API check: ${r.code} — ${r.reason}`);
+    if (!r.ok && r.code === "AUTH") { log("the key was not accepted — fix it and re-run; integration stays disabled."); return { enabled: false, code: 3 }; }
+    if (!r.ok && (r.code === "UNAVAILABLE" || r.code === "QUOTA" || r.code === "NETWORK")) log("the key was not rejected, but Google is slow, busy or limiting requests right now — enabling anyway; tool calls wait up to 120 s (GEMINI_TIMEOUT_MS) and 429/5xx are retried.");
+    if (!r.ok && r.code === "MODEL") log(`no working model found automatically — set GEMINI_MODEL in paths.local.env to a model your key can use.`);
   }
 
   if (apply) setSetting(ctx, "GEMINI_ENABLED", "true");

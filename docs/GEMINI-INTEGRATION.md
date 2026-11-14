@@ -56,12 +56,12 @@ Set in `paths.local.env` (or the environment — environment wins). See `paths.e
 | Setting | Default | Meaning |
 |---|---|---|
 | `GEMINI_ENABLED` | off | master switch |
-| `GEMINI_MODEL` | `gemini-2.5-flash` | any model your key can use; `gemini:setup --check` reports an unknown model |
+| `GEMINI_MODEL` | `gemini-3.5-flash` | a model your key can generate with. `gemini:setup --check` verifies it with a real tiny request and, if Google answers "no longer available" (as it now does for the 2.5 models), picks a working one and records it here. `gemini-flash-latest` follows the newest model, which can be overloaded at launch — not the default |
 | `GEMINI_ALLOWED_ROOTS` | `PROJECTS_DIR` | comma list of folders the file/diff tools may read |
 | `GEMINI_ENV_FILE` | `<repo>/.env` | where the key file lives |
 
 Environment-only tuning: `GEMINI_MAX_INPUT_CHARS` (400000), `GEMINI_MAX_OUTPUT_TOKENS` (8192 — Gemini 2.5 models spend part of this on internal reasoning, so it is larger than the JSON answer needs),
-`GEMINI_TIMEOUT_MS` (60000), `GEMINI_REDACT_PII` (`false` turns off email/phone/id masking; secrets are
+`GEMINI_TIMEOUT_MS` (120000 — a tiny request currently takes 20–30 s; large inputs take longer; a timeout is not retried), `GEMINI_REDACT_PII` (`false` turns off email/phone/id masking; secrets are
 always masked), `GEMINI_BASE_URL` (https only; `http` only for localhost, used by tests and proxies).
 
 The key is looked up on every call, so adding or changing it in the env file works without restarting
@@ -136,7 +136,8 @@ No existing Gemini integration was present in the platform, so none was reused.
 | `unavailable … NO_KEY` | key not in the environment of the process that started Claude Code — store it with `gemini:setup --prompt-key` |
 | `unavailable … AUTH` | key rejected or the Generative Language API is not enabled for it |
 | `unavailable … BAD_RESPONSE` ("output was cut off") | raise `GEMINI_MAX_OUTPUT_TOKENS` or narrow the input |
-| `unavailable … MODEL` | set `GEMINI_MODEL` to a model your key can list |
+| `unavailable … MODEL` ("no longer available to new users") | the model was retired: run `gemini:setup --check` (finds and records a working one) or set `GEMINI_MODEL` |
+| `unavailable … NETWORK` "timed out" | Google is slow right now (20–30 s per request is normal today); raise `GEMINI_TIMEOUT_MS`, or retry later |
 | `NO_ROOTS` / "outside allowed roots" | set `PROJECTS_DIR` or `GEMINI_ALLOWED_ROOTS` to the folders that may be read |
 | `unavailable … QUOTA` | rate limit — wait, or use a key/project with more quota |
 | Unsure whether the server starts | `GEMINI_ENABLED=true node shared/core/cli.js mcp:selftest` |

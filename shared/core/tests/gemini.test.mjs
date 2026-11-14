@@ -1,3 +1,5 @@
+// NOTE: "disabled" cases pin GEMINI_ENABLED=false in the environment (an empty value would fall through to the
+// developer's own paths.local.env, which may have the integration enabled).
 // Optional Gemini integration — platform side: key handling, setup flows, registry gating and
 // package contents. Disabled-by-default is the contract: nothing changes unless GEMINI_ENABLED.
 import test from "node:test";
@@ -11,7 +13,8 @@ import { loadRegistry, validateRegistry, serversForClient, isEnabled } from "../
 import { planRuntime } from "../runtime-manager/index.js";
 import { buildPlugins } from "../plugin-manager/index.js";
 import { PassThrough } from "node:stream";
-import { parseDotenv, detectKey, envFilePath, saveKey, forgetKey, setSetting, geminiStatus, describeKey, validateBaseUrl, promptHidden, normalizeKeyInput, explainKeyProblem } from "../gemini/index.js";
+import { parseDotenv, detectKey, envFilePath, saveKey, forgetKey, setSetting, geminiStatus, describeKey, validateBaseUrl, promptHidden, normalizeKeyInput, explainKeyProblem, checkApi, candidateModels, DEFAULT_MODEL } from "../gemini/index.js";
+import http from "node:http";
 import { runSetup } from "../gemini/setup.js";
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
@@ -133,6 +136,96 @@ test("promptHidden: terminal escape sequences from a paste are not kept as key t
   const p = promptHidden("Key: ", { input, output });
   input.write(`\u001b[200~${KEY}\u001b[201~\r`);
   assert.equal(await p, KEY);
+});
+
+// A local stand-in for Google that behaves like the real one did: the retired model is still LISTED and
+// answers metadata requests with 200, but generateContent says 404 "no longer available to new users".
+async function fakeGoogle({ working = ["gemini-3.5-flash"], busy = [] } = {}) {
+  const posts = [];
+  const server = http.createServer((req, res) => {
+    let body = "";
+    req.on("data", (c) => (body += c));
+    req.on("end", () => {
+      const send = (status, json) => { res.writeHead(status, { "content-type": "application/json" }); res.end(JSON.stringify(json)); };
+      if (req.method === "GET" && req.url.startsWith("/v1beta/models?")) {
+        return send(200, { models: ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-preview", "gemini-flash-latest", "gemini-3.5-transcribe", "text-embedding-004"].map((n) => ({ name: `models/${n}`, supportedGenerationMethods: n.startsWith("text-embedding") ? ["embedContent"] : ["generateContent"] })) });
+      }
+      if (req.method === "GET") return send(200, { name: req.url });                         // metadata: always "fine"
+      const model = /models\/([^:]+):generateContent/.exec(req.url)?.[1];
+      posts.push(model);
+      if (req.headers["x-goog-api-key"] !== KEY) return send(400, { error: { message: "API key not valid. Please pass a valid API key." } });
+      if (busy.includes(model)) return send(503, { error: { message: "high demand" } });
+      if (!working.includes(model)) return send(404, { error: { message: `This model models/${model} is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features.` } });
+      send(200, { candidates: [{ content: { parts: [{ text: "{}" }] }, finishReason: "STOP" }] });
+    });
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  server.unref(); // a failing assertion must never leave a listening server that keeps the test process alive
+  return { url: `http://127.0.0.1:${server.address().port}`, posts, close: () => { server.closeAllConnections?.(); return new Promise((r) => server.close(r)); } };
+}
+
+test("checkApi uses a real generation request: a retired-but-listed model is caught, with Google's suggestion", async () => {
+  assert.equal(DEFAULT_MODEL, "gemini-3.5-flash");
+  const g = await fakeGoogle();
+  const ok = await checkApi({ key: KEY, model: "gemini-3.5-flash", baseUrl: g.url });
+  assert.deepEqual([ok.ok, ok.model], [true, "gemini-3.5-flash"]);
+  const old = await checkApi({ key: KEY, model: "gemini-2.5-flash", baseUrl: g.url });
+  assert.deepEqual([old.ok, old.code, old.suggestion], [false, "MODEL", "gemini-3.8-flash"]);
+  assert.match(old.reason, /not available to your key \(Google suggests gemini-3\.8-flash\)/);
+  assert.equal((await checkApi({ key: "wrong-key-wrong-key-wrong", model: "gemini-3.5-flash", baseUrl: g.url })).code, "AUTH");
+  assert.deepEqual(g.posts, ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash"], "every check was a POST generateContent");
+  await g.close();
+  const b = await fakeGoogle({ busy: [DEFAULT_MODEL] });
+  const busy = await checkApi({ key: KEY, model: DEFAULT_MODEL, baseUrl: b.url });
+  assert.deepEqual([busy.ok, busy.code], [false, "UNAVAILABLE"]);
+  assert.ok(!JSON.stringify(busy).includes(KEY));
+  await b.close();
+});
+
+test("candidateModels: stable flash models only, newest first", async () => {
+  const g = await fakeGoogle();
+  assert.deepEqual(await candidateModels({ key: KEY, baseUrl: g.url }), ["gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-2.5-flash"]);
+  await g.close();
+  assert.deepEqual(await candidateModels({ key: KEY, baseUrl: "http://127.0.0.1:9" }), [], "an unreachable API yields no candidates, not an exception");
+});
+
+test("setup --check: a retired default model is replaced by one that works and the choice is recorded", async () => {
+  const g = await fakeGoogle({ working: ["gemini-3.6-flash"] });   // 3.8 is suggested but NOT available to this key
+  const s = sandbox({ GEMINI_API_KEY: KEY, GEMINI_MODEL: "gemini-2.5-flash" });
+  const out = collect();
+  const check = (a) => checkApi({ ...a, baseUrl: g.url });
+  const pick = (a) => candidateModels({ ...a, baseUrl: g.url });
+  const r = await runSetup(s.ctx, { check: true }, { log: out.log, interactive: false, check, pick });
+  assert.deepEqual([r.enabled, r.code], [true, 0]);
+  assert.match(out.lines.join("\n"), /model "gemini-2\.5-flash" is not available to your key; using "gemini-3\.6-flash"/);
+  assert.match(fs.readFileSync(s.local, "utf8"), /GEMINI_MODEL=gemini-3\.6-flash/);
+  assert.match(fs.readFileSync(s.local, "utf8"), /GEMINI_ENABLED=true/);
+  assert.deepEqual(g.posts, ["gemini-2.5-flash", "gemini-3.8-flash", "gemini-3.7-flash", "gemini-3.6-flash"], "tried the configured model, Google's suggestion, then the next candidates newest first");
+  assert.ok(!out.lines.join("\n").includes(KEY));
+  await g.close();
+});
+
+test("setup --check: a busy service does not block enabling; a bad key still does; no model found is explained", async () => {
+  const busyG = await fakeGoogle({ busy: [DEFAULT_MODEL] });
+  const a = sandbox({ GEMINI_API_KEY: KEY });
+  const o1 = collect();
+  const r1 = await runSetup(a.ctx, { check: true }, { log: o1.log, interactive: false, check: (x) => checkApi({ ...x, baseUrl: busyG.url }) });
+  assert.deepEqual([r1.enabled, r1.code], [true, 0]);
+  assert.match(o1.lines.join("\n"), /Google is slow, busy or limiting requests right now/);
+  await busyG.close();
+  const g = await fakeGoogle({ working: [] });
+  const b = sandbox({ GEMINI_API_KEY: KEY });
+  const o2 = collect();
+  const r2 = await runSetup(b.ctx, { check: true }, { log: o2.log, interactive: false, check: (x) => checkApi({ ...x, baseUrl: g.url }), pick: (x) => candidateModels({ ...x, baseUrl: g.url }) });
+  assert.equal(r2.enabled, true);
+  assert.match(o2.lines.join("\n"), /no working model found automatically/);
+  assert.ok(!fs.existsSync(path.join(b.root, "paths.local.env")) || !/GEMINI_MODEL=/.test(fs.readFileSync(b.local, "utf8")));
+  await g.close();
+  const c = sandbox({ GEMINI_API_KEY: "wrong-key-wrong-key-wrong" });
+  const g2 = await fakeGoogle();
+  const r3 = await runSetup(c.ctx, { check: true }, { log: collect().log, interactive: false, check: (x) => checkApi({ ...x, baseUrl: g2.url }) });
+  assert.deepEqual([r3.enabled, r3.code], [false, 3]);
+  await g2.close();
 });
 
 // ---- gemini:setup flows ----------------------------------------------------------------
@@ -258,7 +351,7 @@ test("registry: gemini-assistant is valid, optional, and absent unless GEMINI_EN
 });
 
 test("runtime plan installs the server's npm deps only when enabled", () => {
-  const off = planRuntime(createContext({ repoRoot, env: { ...process.env, GEMINI_ENABLED: "" } })).map((s) => s.id);
+  const off = planRuntime(createContext({ repoRoot, env: { ...process.env, GEMINI_ENABLED: "false" } })).map((s) => s.id);
   assert.ok(!off.includes("npm:gemini-assistant"));
   const on = planRuntime(createContext({ repoRoot, env: { ...process.env, GEMINI_ENABLED: "true" } })).map((s) => s.id);
   assert.ok(on.includes("npm:gemini-assistant"));
@@ -266,7 +359,7 @@ test("runtime plan installs the server's npm deps only when enabled", () => {
 
 test("package build: no trace of Gemini by default; server + skill + tools folder when enabled (all clients)", () => {
   const cfg = tmp("gcfg-");
-  const off = buildPlugins(createContext({ repoRoot, env: { ...process.env, GEMINI_ENABLED: "" } }), { outDir: tmp("goff-"), configRoot: cfg });
+  const off = buildPlugins(createContext({ repoRoot, env: { ...process.env, GEMINI_ENABLED: "false" } }), { outDir: tmp("goff-"), configRoot: cfg });
   const p0 = off["claude-code"].pluginDir;
   assert.ok(!fs.readFileSync(path.join(p0, ".mcp.json"), "utf8").includes("gemini"));
   assert.ok(!fs.existsSync(path.join(p0, "skills", "gemini-delegation")));

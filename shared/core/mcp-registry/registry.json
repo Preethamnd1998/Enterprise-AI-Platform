@@ -236,7 +236,7 @@
         },
         "GEMINI_MODEL": {
           "required": false,
-          "description": "default gemini-2.5-flash"
+          "description": "default gemini-3.5-flash (gemini:setup --check records a working replacement if it is retired)"
         },
         "GEMINI_ALLOWED_ROOTS": {
           "required": false,

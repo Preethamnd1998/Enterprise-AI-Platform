@@ -10,7 +10,8 @@ import { createContext } from "../path-resolver/index.js";
 import { loadRegistry, serversForClient } from "../mcp-registry/index.js";
 import { buildPlugins, planInstall, applyInstall, planUninstall, applyUninstall, selectClients } from "../plugin-manager/index.js";
 
-const ctx = createContext();
+// Structural tests describe the default (Gemini off) layout regardless of the developer's own paths.local.env.
+const ctx = createContext({ env: { ...process.env, GEMINI_ENABLED: "false" } });
 const reg = loadRegistry(ctx);
 const dist = fs.mkdtempSync(path.join(os.tmpdir(), "eap-dist-"));
 const emptyCfg = fs.mkdtempSync(path.join(os.tmpdir(), "eap-cfg-"));

@@ -31,7 +31,7 @@ const client = {
     const { key } = detectKey(CTX, { settings: SETTINGS });
     return createClient({
       key, model: MODEL, baseUrl: env.GEMINI_BASE_URL || DEFAULT_BASE_URL,
-      timeoutMs: num(env.GEMINI_TIMEOUT_MS, 60000), maxOutputTokens: num(env.GEMINI_MAX_OUTPUT_TOKENS, 8192),
+      timeoutMs: num(env.GEMINI_TIMEOUT_MS, 120000), maxOutputTokens: num(env.GEMINI_MAX_OUTPUT_TOKENS, 8192),
     }).generate(args);
   },
 };

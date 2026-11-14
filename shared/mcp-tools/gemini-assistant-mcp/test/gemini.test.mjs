@@ -39,7 +39,8 @@ async function mock(respond) {
     });
   });
   await new Promise((r) => server.listen(0, "127.0.0.1", r));
-  return { url: `http://127.0.0.1:${server.address().port}`, requests, close: () => new Promise((r) => server.close(r)) };
+  server.unref(); // never keep the test process alive if an assertion fails before close()
+  return { url: `http://127.0.0.1:${server.address().port}`, requests, close: () => { server.closeAllConnections?.(); return new Promise((r) => server.close(r)); } };
 }
 const ok = (data, extra = {}) => ({ json: { candidates: [{ content: { parts: [{ text: JSON.stringify(data) }] }, finishReason: "STOP" }], usageMetadata: { promptTokenCount: 11, candidatesTokenCount: 7 }, ...extra } });
 
@@ -106,6 +107,14 @@ test("client: failures map to codes, never throw, never contain the key", async 
   assert.equal(cfg.code, "CONFIG");
 });
 
+test("client: a retired model reports Google's suggested replacement", async () => {
+  const m = await mock(() => ({ status: 404, json: { error: { message: "This model models/gemini-2.5-flash is no longer available to new users. Please update your code to use models/gemini-3.8-flash for the latest features." } } }));
+  const r = await createClient({ key: KEY, model: "gemini-2.5-flash", baseUrl: m.url, retryDelays: [] }).generate({ prompt: "x" });
+  assert.equal(r.code, "MODEL");
+  assert.match(r.reason, /not available to your key \(Google suggests gemini-3\.8-flash\).*gemini:setup --check/);
+  await m.close();
+});
+
 test("client: retries 429 and 5xx, then succeeds or gives up", async () => {
   const m = await mock((_, n) => (n < 3 ? { status: 429, json: { error: { message: "slow down" } } } : ok({ done: true })));
   const r = await createClient({ key: KEY, baseUrl: m.url, retryDelays: [1, 1] }).generate({ prompt: "x" });
@@ -120,6 +129,18 @@ test("client: retries 429 and 5xx, then succeeds or gives up", async () => {
   const r3 = await createClient({ key: KEY, baseUrl: m3.url, retryDelays: [] }).generate({ prompt: "x" });
   assert.equal(r3.code, "QUOTA");
   await m3.close();
+});
+
+test("client: a timeout is reported once and NOT retried (the request may still be running upstream)", async () => {
+  let hits = 0;
+  const hang = http.createServer(() => { hits += 1; });
+  await new Promise((r) => hang.listen(0, "127.0.0.1", r));
+  const r = await createClient({ key: KEY, baseUrl: `http://127.0.0.1:${hang.address().port}`, timeoutMs: 100, retryDelays: [1, 1] }).generate({ prompt: "x" });
+  assert.deepEqual([r.ok, r.code], [false, "NETWORK"]);
+  assert.match(r.reason, /timed out after 0s|timed out after \d+s .*GEMINI_TIMEOUT_MS/);
+  assert.equal(hits, 1, "exactly one request was made");
+  hang.closeAllConnections?.();
+  await new Promise((rr) => hang.close(rr));
 });
 
 test("client: network failure and timeout are reported, not thrown", async () => {

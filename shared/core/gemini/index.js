@@ -8,7 +8,11 @@ import { execFileSync } from "node:child_process";
 import { loadSettings } from "../path-resolver/index.js";
 
 export const KEY_VARS = ["GEMINI_API_KEY", "GOOGLE_API_KEY"];
-export const DEFAULT_MODEL = "gemini-2.5-flash";
+// A concrete model verified against the live API (2026-11-14). Not the "gemini-flash-latest" alias: that
+// follows Google's newest model, which was overloaded at launch (503 / no answer within 100 s). Names do go
+// stale (gemini-2.5-flash now answers 404 "no longer available to new users"), so `gemini:setup --check`
+// probes with a real request and records a working replacement in GEMINI_MODEL when this one is gone.
+export const DEFAULT_MODEL = "gemini-3.5-flash";
 export const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
 // Classic Google API keys are 39 chars (AIza…); newer formats may contain a "." — accept a wider but
 // still injection-safe set (no whitespace, quotes, $, #, backticks, newlines) of 20–200 characters.
@@ -175,16 +179,48 @@ export function promptHidden(question, { input = process.stdin, output = process
   });
 }
 
-// Cheap connectivity/credential check: GET the model metadata (no tokens consumed).
-export async function checkApi({ key, model = DEFAULT_MODEL, baseUrl = DEFAULT_BASE_URL, fetchImpl = fetch, timeoutMs = 15000 } = {}) {
+// Credential + model check with a REAL tiny generation request. (A metadata GET is not enough: Google
+// still lists retired models and answers 200 for them, while generateContent returns 404.)
+// 503/429/timeouts mean the key was accepted but the service is busy or slow (a tiny request currently takes
+// 20–30 s) — reported, not treated as a bad key. Only a 404 triggers a model switch.
+export async function checkApi({ key, model = DEFAULT_MODEL, baseUrl = DEFAULT_BASE_URL, fetchImpl = fetch, timeoutMs = 60000 } = {}) {
   if (!key) return { ok: false, code: "NO_KEY", reason: "no API key configured" };
   try {
-    const url = `${validateBaseUrl(baseUrl)}/v1beta/models/${encodeURIComponent(model)}`;
-    const res = await fetchImpl(url, { headers: { "x-goog-api-key": key }, signal: AbortSignal.timeout(timeoutMs) });
+    const url = `${validateBaseUrl(baseUrl)}/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    const res = await fetchImpl(url, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Reply with {}" }] }], generationConfig: { maxOutputTokens: 64, responseMimeType: "application/json" } }),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     if (res.ok) return { ok: true, status: res.status, model };
-    const code = res.status === 404 ? "MODEL" : res.status === 429 ? "QUOTA" : res.status === 400 || res.status === 401 || res.status === 403 ? "AUTH" : "HTTP";
-    return { ok: false, status: res.status, code, reason: code === "MODEL" ? `model "${model}" not found — set GEMINI_MODEL to a model your key can use` : code === "AUTH" ? "the API rejected the key" : code === "QUOTA" ? "quota or rate limit reached" : `HTTP ${res.status}` };
+    let msg = "";
+    try { msg = (await res.json())?.error?.message ?? ""; } catch { /* non-JSON */ }
+    const s = res.status;
+    if (s === 404) {
+      const hint = /use models\/([A-Za-z0-9._-]+)/.exec(msg)?.[1] ?? null;
+      return { ok: false, status: s, code: "MODEL", suggestion: hint, reason: `model "${model}" is not available to your key${hint ? ` (Google suggests ${hint})` : ""}` };
+    }
+    if (s === 401 || s === 403 || (s === 400 && /api key/i.test(msg))) return { ok: false, status: s, code: "AUTH", reason: "the API rejected the key" };
+    if (s === 429) return { ok: false, status: s, code: "QUOTA", reason: "quota or rate limit reached" };
+    if (s >= 500) return { ok: false, status: s, code: "UNAVAILABLE", reason: `Google reports the service busy (HTTP ${s})` };
+    return { ok: false, status: s, code: "HTTP", reason: `HTTP ${s}` };
   } catch (e) {
     return { ok: false, code: "NETWORK", reason: String(e.message ?? e).split(key).join("***") };
   }
+}
+
+// Stable Flash models the key can generate with, newest first (gemini-3.8-flash before gemini-3.5-flash).
+// Previews, lite/image/tts/live variants and dated snapshots are excluded.
+export async function candidateModels({ key, baseUrl = DEFAULT_BASE_URL, fetchImpl = fetch, timeoutMs = 20000 } = {}) {
+  try {
+    const res = await fetchImpl(`${validateBaseUrl(baseUrl)}/v1beta/models?pageSize=200`, { headers: { "x-goog-api-key": key }, signal: AbortSignal.timeout(timeoutMs) });
+    if (!res.ok) return [];
+    const re = /^gemini-(\d+(?:\.\d+)?)-flash$/;
+    return ((await res.json()).models ?? [])
+      .filter((m) => (m.supportedGenerationMethods ?? []).includes("generateContent"))
+      .map((m) => String(m.name).replace(/^models\//, ""))
+      .filter((n) => re.test(n))
+      .sort((a, b) => parseFloat(re.exec(b)[1]) - parseFloat(re.exec(a)[1]));
+  } catch { return []; }
 }
