@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.15.0] — 2026-11-14 — Plugin-only setup for new and existing users
+
+### Added
+- `platform:migrate` (`shared/core/migrate/`): moves an existing machine to the plugin-only layout. Dry-run by default; removes only copies of platform content that older installers placed under `~/.claude` (matched by name against `shared/`), rewrites `CLAUDE.md` to the kernel (legacy `contract:start/end` blocks and the full v3 contract are dropped, user text kept), drops a duplicate user-level usage-logger hook, removes user-scope/project MCP entries the plugins register (via `claude mcp remove -s user`); backs up everything with a MANIFEST; refuses to remove anything until the plugin that provides it is installed and enabled. Tests: `shared/core/tests/migrate.test.mjs`.
+- Setup prompt rewritten (`Auto setup claude prompt/…MASTER PROMPT.md`): plugin-only, cross-platform, idempotent, one flow for NEW, EXISTING-OLD and EXISTING-CURRENT machines, with explicit verification of `/context` (no duplicates, kernel-only CLAUDE.md).
+
+### Changed
+- `adapters/claude/install.sh` and `install.ps1` no longer copy commands/skills/standards/knowledge into `~/.claude`; both run `plugin:install claude-code --apply`, the `claude plugin` install/update commands, then `platform:migrate --apply`.
+- The knowledge-graph plugin ships the generator from wherever the path-resolver finds it (sibling clone, `KNOWLEDGE_GRAPH_PATH` or local copy), so a fresh machine with only the sibling clone gets a complete plugin.
+- `globalKernelText` cleans legacy contract blocks before inserting the kernel (fixes a kernel-lost-on-old-files ordering bug found by the new test).
+- `docs/INSTALL-CLAUDE.md` describes the plugin-only flow.
+
 ## [4.14.0] — 2026-11-13 — Context Optimization Architecture
 
 ### Added

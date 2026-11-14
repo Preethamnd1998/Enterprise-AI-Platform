@@ -1,1659 +1,252 @@
-> **⚠ SUPERSEDED — DO NOT USE AS-IS.** This document predates the decision to
-> **not adopt GraphRAG**: it was evaluated and dropped in favor of Knowledge
-> Generator (cross-stack knowledge) + Code Cortex (exact AST/call graph),
-> merged through the Unified Trace MCP (`shared/mcp-tools/unified-trace-mcp/`)
-> — see that tool's README and `docs/opencode-setup.md` for the current
-> architecture. Every `GraphRAG` reference below (clone steps, health checks,
-> verification output) is stale and should be ignored. This file is kept for
-> historical reference only (it's the origin of the Windows/PowerShell
-> installer scripts under `install/`) pending a full rewrite as part of the
-> cross-platform machine-bootstrap effort. Do not feed this to an agent as a
-> live setup prompt.
+# MASTER PROMPT — LOCAL AI DEVELOPMENT ENVIRONMENT SETUP (plugins only, v4.15)
 
-# MASTER PROMPT — COMPLETE LOCAL AI DEVELOPMENT ENVIRONMENT BOOTSTRAP
+Paste this whole file into Claude Code on the machine to set up. It works for **new users** (nothing
+installed) and **existing users** (older install with copies under `~/.claude`): every step is
+idempotent, detects the current state first, and only changes what is out of date. Run it again any
+time to repair or update.
 
-You are the **Local AI Environment Bootstrap & Integration Agent**.
-
-Your responsibility is to take this Windows machine from its current state to a **fully installed, configured, integrated, tested, and directly usable local AI development environment**.
-
-Do NOT simply provide instructions.
-
-You must **inspect, install, configure, integrate, test, diagnose, fix, retest, and verify** the environment yourself.
-
-Do not claim something works unless you actually verify it.
+> Replaces the earlier Windows-only, GraphRAG-based prompt (kept in git history). GraphRAG is **not**
+> part of the platform. Code intelligence = Knowledge Graph + Code Cortex, merged by `unified-trace`.
 
 ---
 
-# 1. REQUIRED COMPONENTS
+## 0. Role and rules
 
-The final environment consists of these four repositories.
+You are the **Environment Setup Agent**. Inspect, install, configure, test, fix and verify — do not
+just print instructions, and do not claim anything works until you have run the check that proves it.
 
-## 1. Enterprise AI Platform
+Hard rules:
 
-```text
-https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform
-```
-
-Expected local path:
-
-```text
-D:\GitHub Repos\enterprise-ai-platform
-```
-
-Purpose:
-
-- Claude Code integration
-- global AI development contract
-- commands
-- standards
-- rules
-- company knowledge
-- MCP policy
-- Claude hooks
-- audit
-- contract integrity
-- autonomous runner
-- project configuration
+1. **Plugins only.** Commands, skills, standards, rules, knowledge and MCP servers come from two
+   Claude Code plugins in the local marketplace `eap-local`: `enterprise-ai-platform` and
+   `knowledge-graph`. Never copy those things into `~/.claude/skills`, `commands`, `standards`,
+   `rules` or `knowledge`. The only thing written to `~/.claude/CLAUDE.md` is the contract **kernel**
+   (done by the CLI below, never by hand).
+2. **Use the platform CLI, not ad-hoc edits.** `node shared/core/cli.js <command>` (npm scripts are
+   aliases). Never edit `~/.claude.json` directly; MCP changes go through `claude mcp …`.
+3. **Back up before removing.** Removal of old copies happens only through `platform:migrate`, which
+   backs up everything it touches and writes a manifest. Dry-run first, show the result, then `--apply`.
+4. **Never remove or disable what is not ours:** Trail/graft/code-cortex skills and hooks, other
+   plugins, user-authored skills or commands, monitoring MCP servers (Grafana, SigNoz, lths, Kafka),
+   DB MCP servers, templates, `paths.env` / `paths.local.env` values the user set.
+5. **Git safety:** no force-push, no `reset --hard`, no overwriting a dirty working tree. If a repo has
+   local changes, skip its update and report it.
+6. **Secrets:** never print or log credentials. Connection strings stay in MCP config / env vars.
+7. **Ask the user only** for a credential, a permission prompt, a destructive choice, or a path you
+   cannot discover (for example where the project repos live). Otherwise decide and continue.
+8. Keep tool output small: run builds/tests through `bin/eap-run` once the plugin is installed, or
+   `| tail -n 60`. Report failures with the root-cause lines, not whole logs.
 
 ---
 
-## 2. Knowledge Graph Generator
+## 1. Discover the machine and the current state (read-only)
 
-```text
-https://git.lifetrenz.com/Preetham.ND/knowledge-graph-generator
-```
+Run and record the results:
 
-Expected local path:
+| Check | Command | Needed |
+|---|---|---|
+| OS / shell | `uname -a` (macOS/Linux) or `$PSVersionTable` (Windows) | any |
+| Git | `git --version` | yes |
+| Node | `node --version` | **20+** |
+| Python | `python3 --version` (Windows: `python --version`) | **3.10+** (Knowledge Graph venv) |
+| Claude Code CLI | `claude --version` | yes |
+| Platform repo | folder containing `shared/core/cli.js` | clone if missing |
+| Knowledge Graph repo | sibling `knowledge-graph-generator/` containing `mcp_server_main.py` | clone if missing |
+| Plugins installed | `claude plugin list` | see §5 |
+| Old copies present | `ls ~/.claude/skills ~/.claude/commands ~/.claude/standards ~/.claude/knowledge` | see §6 |
+| Project repos | folder that holds `BE/` and `UI/` checkouts | ask if not found |
 
-```text
-D:\GitHub Repos\knowledge-graph-generator
-```
+Classify the machine: **NEW** (no platform repo, no plugins), **EXISTING-OLD** (plugins missing or
+`~/.claude` contains copies of platform content), or **EXISTING-CURRENT** (plugins at the repo
+version, nothing to migrate). Say which one in one line, then continue — the steps below apply to
+all three and skip what is already satisfied.
 
-Purpose:
-
-- Java code knowledge graph
-- Angular knowledge graph
-- React support where implemented
-- service dependencies
-- API relationships
-- UI → API relationships
-- business flows
-- cross-service relationships
-- MCP knowledge access
-
----
-
-## 3. Code Cortex MCP
-
-Expected local path:
-
-```text
-D:\GitHub Repos\code-cortex-mcp
-```
-
-Official remote:
-
-```text
-https://github.com/tigercosmos/code-cortex-mcp.git
-```
-
-If missing, clone it.
-
-If present, verify the Git remote.
-
-Expected:
-
-```text
-origin  https://github.com/tigercosmos/code-cortex-mcp.git
-```
-
-Do NOT replace this repository with another Code Cortex implementation.
+Install missing prerequisites with the OS package manager only if the user's tools allow it;
+otherwise stop and list exactly what is missing.
 
 ---
 
-## 4. GraphRAG
+## 2. Repositories
 
-Expected local path:
-
-```text
-D:\GitHub Repos\GraphRAG
-```
-
-Official remote:
+Layout (paths are examples; keep the user's existing locations if the repos already exist):
 
 ```text
-https://github.com/MvdB/GraphRAG.git
+<ROOT>/enterprise-ai-platform          https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform.git
+<ROOT>/knowledge-graph-generator       https://git.lifetrenz.com/Preetham.ND/knowledge-graph-generator.git   (sibling)
 ```
 
-If missing, clone it.
-
-If present, verify the Git remote.
-
-Expected:
-
-```text
-origin  https://github.com/MvdB/GraphRAG.git
-```
+- Missing → `git clone`. Present and clean → `git fetch` then `git pull --ff-only` on the checked-out
+  branch. Present and dirty or diverged → leave untouched and report.
+- Verify each remote URL; if a repo points elsewhere, report it, do not rewrite it.
+- If the Knowledge Graph repo lives somewhere else, set `KNOWLEDGE_GRAPH_PATH=<path>` in
+  `enterprise-ai-platform/paths.local.env` (never in the tracked `paths.env`).
+- Set `PROJECTS_DIR=<folder holding BE/ and UI/>` in `paths.local.env` (create the file if missing).
+  If an existing value is there and valid, keep it.
 
 ---
 
-# 2. IMPORTANT — DO NOT ASSUME THE ARCHITECTURE
+## 3. Runtime (Node tools, Knowledge Graph venv, Code Cortex)
 
-Before integration, inspect all four repositories.
+From the platform repo:
 
-Determine from the actual code and documentation:
-
-```text
-enterprise-ai-platform
-        │
-        ├── Claude Code
-        │
-        ├── MCP configuration
-        │
-        ├── autonomous runner
-        │
-        └── project configuration
-                │
-                ├── knowledge-graph-generator
-                │
-                ├── code-cortex-mcp
-                │
-                └── GraphRAG
+```bash
+node shared/core/cli.js platform:doctor                     # what is missing, per OS
+node shared/core/cli.js platform:install                    # dry-run plan
+node shared/core/cli.js platform:install --apply --with-cortex
 ```
 
-Do not invent integrations.
-
-Do not force components together simply because they are present.
-
-Determine whether each component is:
-
-```text
-required
-optional
-complementary
-upstream
-downstream
-alternative
-```
-
-Use repository source code and documentation as the source of truth.
+This installs the MCP servers' npm dependencies, creates the Knowledge Graph virtualenv
+(`.venv-mcp`) with `requirements-mcp.txt`, and downloads the prebuilt Code Cortex binary
+(Windows: edits the *user* PATH — mention that to the user). Re-run `platform:doctor` until it has
+no `FAIL`. A `blocked` step names the exact missing prerequisite — fix that, then re-run.
 
 ---
 
-# 3. EXECUTION MODE
+## 4. Build the plugins and write the kernel
 
-You are an implementation agent.
-
-Follow this lifecycle:
-
-```text
-DISCOVER
-   ↓
-PLAN
-   ↓
-INSTALL
-   ↓
-CONFIGURE
-   ↓
-INTEGRATE
-   ↓
-BUILD
-   ↓
-TEST
-   ↓
-DIAGNOSE
-   ↓
-FIX
-   ↓
-RETEST
-   ↓
-VERIFY
+```bash
+node shared/core/cli.js plugin:install claude-code          # dry-run: shows files, kernel change, run-commands
+node shared/core/cli.js plugin:install claude-code --apply  # builds dist/, writes the kernel into ~/.claude/CLAUDE.md (backup kept)
 ```
 
-Do not stop after generating commands.
-
-Actually execute commands.
-
-When something fails:
-
-```text
-ERROR
- ↓
-READ ERROR
- ↓
-INSPECT SOURCE/DOCUMENTATION
- ↓
-IDENTIFY ROOT CAUSE
- ↓
-APPLY SMALLEST SAFE FIX
- ↓
-RETRY
- ↓
-VERIFY
-```
-
-Only ask the user when a human decision, credential, permission, or destructive action is genuinely required.
+`dist/plugins/claude-code/` is a per-machine build (absolute paths) — never copy it between
+machines; every user builds their own. The kernel in `~/.claude/CLAUDE.md` is about 3 KB; text the
+user wrote outside the kernel markers is preserved; legacy contract blocks from older installs are
+removed.
 
 ---
 
-# 4. MACHINE DISCOVERY
+## 5. Install or update the two plugins (Claude's own CLI)
 
-Start by inspecting the machine.
-
-Run:
-
-```powershell
-$PSVersionTable
-
-git --version
-node --version
-npm --version
-
-python --version
-py --version
-
-java --version
-mvn --version
-gradle --version
-
-docker --version
-docker compose version
-
-claude --version
-
-winget --version
-pwsh --version
+```bash
+claude plugin marketplace add "<platform>/dist/plugins/claude-code"   # already added → run: claude plugin marketplace update eap-local
+claude plugin install enterprise-ai-platform@eap-local
+claude plugin install knowledge-graph@eap-local
+# already installed? update instead:
+claude plugin update enterprise-ai-platform@eap-local
+claude plugin update knowledge-graph@eap-local
+claude plugin list          # both: Version = repo VERSION, Status = enabled
 ```
 
-Also inspect:
-
-```text
-D:\GitHub Repos
-%USERPROFILE%\.claude
-%USERPROFILE%\.claude.json
-```
-
-Determine:
-
-- Windows version
-- PowerShell version
-- Git version
-- Node version
-- Python version
-- Java version
-- Maven/Gradle availability
-- Docker availability
-- Claude Code availability
-- PATH configuration
-- existing Claude configuration
-
-Do not reinstall an already-compatible dependency.
+If `eap-local` is registered with a different path (the repo moved), run
+`claude plugin marketplace remove eap-local` first, then add the current path.
+The plugins take effect in **new** Claude Code sessions; tell the user to restart.
 
 ---
 
-# 5. REPOSITORY DISCOVERY
+## 6. Existing users — migrate to the plugin-only layout
 
-Check:
+Do this after §5 (the migration refuses to remove anything until the plugins are installed and enabled):
 
-```text
-D:\GitHub Repos\enterprise-ai-platform
-D:\GitHub Repos\knowledge-graph-generator
-D:\GitHub Repos\code-cortex-mcp
-D:\GitHub Repos\GraphRAG
+```bash
+node shared/core/cli.js platform:migrate --project "<each project root that has a .mcp.json>"   # dry-run
+node shared/core/cli.js platform:migrate --apply --project "<same>"
 ```
 
-For each existing repository:
+What it does, and nothing else:
 
-```powershell
-git status
-git remote -v
-git branch --show-current
-git log -1 --oneline
-```
+| Old state (pre-4.14 installers) | Action |
+|---|---|
+| `~/.claude/skills/*`, `commands/*`, `standards/*`, `rules/*`, `knowledge/*` whose **name exists in `shared/`**, and `company-profile.md` | removed (the plugin provides them) |
+| `~/.claude/CLAUDE.md` with the full contract / `contract:start…end` block / "SHARED CONTRACT v3" header | rewritten to the kernel only; user text kept |
+| user-level `usage-logger` hook (the plugin registers its own) | hook entry and file removed |
+| user-scope MCP `unified-trace`, `opencode-bridge`, `knowledge-graph` (plugins register them; Claude Code does not dedupe) | removed with `claude mcp remove -s user` |
+| the same names inside a project `.mcp.json` | removed from that file |
 
-Then:
+Everything removed is copied to `~/.claude/backups/eap-migrate-<timestamp>/` with a `MANIFEST.json`;
+copying files back undoes it. Read the dry-run output and check that every line matches the table
+above. If every line matches, run `--apply`. If any line does not match, do not apply: stop and ask
+the user.
 
-```powershell
-git fetch --all --prune
-```
-
-Never destroy uncommitted work.
-
-NEVER automatically run:
-
-```text
-git reset --hard
-git clean -fd
-git checkout .
-```
-
-Never overwrite local modifications.
+Also, as advice only (do not change without asking):
+- a user-scope `code-cortex-mcp` MCP server is redundant (unified-trace runs Code Cortex itself);
+- plugins that duplicate each other (for example two copies of the same skill pack) and plugins that
+  time out on start — name them, let the user decide;
+- many always-on DB MCP servers: `bin/mcp-env` (shipped in the plugin) can split a project
+  `.mcp.json` into profiles (`core`, `monitoring`, `db-<env>`); never drop monitoring servers.
 
 ---
 
-# 6. CLONE MISSING REPOSITORIES
+## 7. Index the code (needed for real answers from unified-trace)
 
-If missing, clone:
+Check first, index only what is missing or stale (indexing is slow and rewrites the index):
 
-```powershell
-git clone https://git.lifetrenz.com/Preetham.ND/enterprise-ai-platform D:\GitHub\ Repos\enterprise-ai-platform
-```
+1. Call `index_status` on the `unified-trace` MCP (or ask Claude Code to). `INDEXED` → done.
+2. Knowledge Graph: from the Knowledge Graph repo run `sync-projects.sh` (Windows: `sync-projects.ps1`
+   or `run-knowledge-graph.bat`). It reads `PROJECTS_DIR`. Output: `output/knowledge_graph.db`.
+3. Code Cortex: `code-cortex-mcp cli index_repository --repo_path <repo root>` per repository
+   (or let unified-trace's `index_status` tell you which are `NOT_INDEXED`).
+4. Re-run `index_status`; it must report the project repos as indexed.
 
-Use the correct PowerShell-safe command/path.
-
-Clone:
-
-```text
-https://git.lifetrenz.com/Preetham.ND/knowledge-graph-generator
-```
-
-to:
-
-```text
-D:\GitHub Repos\knowledge-graph-generator
-```
-
-Clone:
-
-```text
-https://github.com/tigercosmos/code-cortex-mcp.git
-```
-
-to:
-
-```text
-D:\GitHub Repos\code-cortex-mcp
-```
-
-Clone:
-
-```text
-https://github.com/MvdB/GraphRAG.git
-```
-
-to:
-
-```text
-D:\GitHub Repos\GraphRAG
-```
-
-After cloning, verify every remote.
+If the user's repos are not available yet, finish the rest of the setup and report indexing as
+pending with the exact commands.
 
 ---
 
-# 7. INSPECT EACH REPOSITORY BEFORE INSTALLATION
+## 8. Other clients (optional — only if the user uses them)
 
-For each repository inspect relevant files including:
-
-```text
-README.md
-AGENTS.md
-package.json
-package-lock.json
-requirements.txt
-requirements-*.txt
-pyproject.toml
-pom.xml
-build.gradle
-build.gradle.kts
-Dockerfile
-docker-compose.yml
-.env.example
-*.env.example
-.mcp.json
-install/
-scripts/
-tools/
-docs/
-```
-
-Also inspect source code where necessary.
-
-Determine:
-
-```text
-runtime
-language
-package manager
-required versions
-build process
-test process
-MCP entry points
-MCP configuration
-environment variables
-credentials
-database requirements
-Docker requirements
-CLI entry points
-health checks
-```
-
-Do not guess dependency versions.
+- OpenCode: `node shared/core/cli.js plugin:install opencode --apply`
+- Cursor: `node shared/core/cli.js plugin:install cursor --apply` (documented path, untested here)
+- Copilot: unchanged per-repo flow (`install/install-copilot.ps1`); it vendors its own kernel copy.
 
 ---
 
-# 8. ENTERPRISE AI PLATFORM
+## 9. Verify — every line must pass
 
-Inspect:
-
-```text
-D:\GitHub Repos\enterprise-ai-platform
+```bash
+claude plugin list                                        # eap-local plugins enabled at repo VERSION
+claude mcp list                                           # unified-trace, opencode-bridge, knowledge-graph: Connected
+node shared/core/cli.js mcp:selftest                      # every registry server starts through the launcher
+node shared/core/cli.js platform:migrate                  # → "nothing to migrate — already plugin-only"
+bash ci/validate.sh && npm test                           # platform checks (Windows: run from Git Bash or WSL)
+claude -p "/context" --output-format json                 # in a project folder; read the result field
 ```
 
-Especially:
+Read the `/context` output and confirm:
 
-```text
-install/
-adapters/claude/
-shared/
-shared/mcp/
-shared/contract.md
-docs/INSTALL-CLAUDE.md
-docs/QUICK-START.md
-docs/prerequisites.md
-docs/mcp-setup.md
-autonomous-runner/
-```
+- no skill or command appears twice, and every platform skill's **Source is `Plugin (...)`**, none `User`;
+- Memory files lists `~/.claude/CLAUDE.md` at roughly 1k tokens (kernel only);
+- the platform plugins' skills add ≈ 1–2k tokens in total; slash commands are not listed (they are
+  user-invoked only).
 
-Use the repository's own installer.
+Smoke test the graph (skip with a note if no project is indexed):
+`node shared/mcp-tools/unified-trace-mcp/test/run-tool.mjs trace '{"query":"<a known Class.method>","depth":2}'`
+→ compact text (not a JSON blob) with VERIFIED/INFERRED edges.
 
-If available, use:
-
-```powershell
-pwsh install/install-claude.ps1
-```
-
-from the repository root.
-
-Do not manually reproduce installation steps if the repository already provides a supported installer.
-
-The objective is to configure Claude Code globally.
-
-Verify:
-
-```text
-%USERPROFILE%\.claude\CLAUDE.md
-```
-
-and all expected Claude configuration/hooks/settings.
-
-Verify:
-
-```text
-contract
-contract hash
-Claude adapter
-hooks
-audit
-MCP policy
-commands
-standards
-rules
-knowledge
-templates
-```
-
-Do not create a second competing global Claude configuration.
-
-Preserve the platform's existing architecture.
+Measurement baseline for later comparison (optional but recommended):
+`python3 shared/core/context/ctx-report.py --days 30 --save-baseline <folder>/baseline.json --html <folder>/baseline.html`
+then `/usage-report tokens days=7 baseline=<folder>/baseline.json` after a week of use.
 
 ---
 
-# 9. CLAUDE GLOBAL CONFIGURATION
+## 10. Failure handling
 
-Verify that Claude Code can find the Enterprise AI Platform configuration.
+For any failing step: read the error, find the root cause in the repo docs or source
+(`docs/TROUBLESHOOTING.md`, `docs/INSTALL-CLAUDE.md`), apply the smallest safe fix, retry once, verify.
+Typical causes: Node < 20, Python < 3.10 or a missing `venv` module, Code Cortex binary not on PATH,
+`KNOWLEDGE_GRAPH_PATH` wrong, corporate proxy blocking `git.lifetrenz.com` or the Code Cortex download,
+marketplace registered with a stale path. A plugin MCP server that shows "failed, cached" in a running
+session is retried automatically after ~15 minutes or on restart — confirm with `claude mcp list`.
+Stop and ask only when the fix needs a credential, VPN access or a destructive action.
 
-The global environment should conceptually be:
-
-```text
-Claude Code
-     ↓
-~/.claude/CLAUDE.md
-     ↓
-Enterprise AI Platform contract
-     ↓
-commands / standards / rules / knowledge
-     ↓
-MCP policy
-     ↓
-project .mcp.json
-```
-
-Test this from a fresh PowerShell session.
-
-Do not rely on environment variables set only in the current shell.
+OS notes: on Windows use PowerShell for the commands above; shell scripts (`*.sh`) have `.ps1`/`.bat`
+twins in the repos; path separators in `paths.local.env` may be either style.
 
 ---
 
-# 10. KNOWLEDGE GRAPH GENERATOR
-
-Inspect:
+## 11. Final report (plain, short)
 
 ```text
-D:\GitHub Repos\knowledge-graph-generator
+Machine state     : NEW | EXISTING-OLD | EXISTING-CURRENT  (OS, node, python, claude versions)
+Repos             : platform <branch@sha, clean?> · knowledge-graph <branch@sha, clean?>
+Plugins           : enterprise-ai-platform <ver> enabled · knowledge-graph <ver> enabled
+Migration         : <n items removed, backup path>  or  nothing to migrate
+CLAUDE.md         : kernel only, <bytes>
+MCP               : unified-trace / opencode-bridge / knowledge-graph connected (yes/no each)
+Index             : <projects indexed / pending, with command>
+Always-on context : <tokens from /context>, duplicates: none | <list>
+Checks            : platform:doctor · mcp:selftest · ci/validate · npm test  → PASS/FAIL each
+Needs the user    : <restart Claude Code; anything blocked, with the exact command>
 ```
 
-Identify the actual:
-
-```text
-indexer
-MCP server
-configuration
-database output
-Python environment
-startup script
-```
-
-Do not assume the entry point.
-
-Use the repository's current documentation/source.
-
-If the MCP server requires a virtual environment:
-
-```powershell
-python -m venv .venv-mcp
-```
-
-and install only the required dependencies:
-
-```powershell
-pip install -r requirements-mcp.txt
-```
-
-if that file exists and is the documented mechanism.
-
-Do not install the MCP SDK globally unless explicitly required.
-
----
-
-# 11. KNOWLEDGE GRAPH CONFIGURATION
-
-Discover the actual Java/Angular development workspace on the machine.
-
-Do not assume the example paths in documentation are the user's real workspace.
-
-Find the main application/project roots.
-
-Identify:
-
-```text
-Java backend projects
-Angular projects
-React projects
-microservices
-shared libraries
-```
-
-Configure the Knowledge Graph Generator against the actual source tree.
-
-Use the repository's supported configuration mechanism.
-
-If the repository supports:
-
-```text
-ROOT_PATH
-BACKEND_SERVICES
-ANGULAR_PROJECT
-ANGULAR_SUBPROJECTS
-REACT_PROJECT_PATH
-OUTPUT_DIR
-SINGLE_DATABASE
-INDEX_MODE
-```
-
-configure them based on the actual workspace.
-
-Prefer a unified/single graph database when the repository supports it and when cross-service/UI-to-backend tracing requires it.
-
-Never point the graph generator at an invalid or nonexistent directory.
-
----
-
-# 12. BUILD THE KNOWLEDGE GRAPH
-
-Run the actual supported indexer.
-
-Do not stop after confirming that Python starts.
-
-Verify that the database is generated.
-
-Verify:
-
-```text
-database exists
-database readable
-database non-empty
-nodes exist
-edges exist
-services exist
-classes exist
-methods exist
-endpoints exist
-relationships exist
-```
-
-Run representative supported graph queries.
-
-Test capabilities such as:
-
-```text
-summary
-search
-deps
-dependents
-endpoints
-cross-service
-table
-jobs
-kafka
-async
-ui-to-api
-api-callers
-service-calls
-full-flow
-flow
-```
-
-Use only commands/tools actually implemented by the current repository.
-
----
-
-# 13. KNOWLEDGE GRAPH MCP
-
-Identify the real MCP entry point.
-
-If the repository currently uses:
-
-```text
-mcp_server_main.py
-```
-
-use it.
-
-Do not assume:
-
-```text
-python -m mcp_server.server
-```
-
-unless the current repository supports it.
-
-Configure the MCP server using the actual implementation.
-
-The final MCP configuration must point to the real generated graph database.
-
-Use absolute paths when required.
-
-The server must work regardless of the current working directory.
-
----
-
-# 14. CODE CORTEX MCP
-
-Inspect:
-
-```text
-D:\GitHub Repos\code-cortex-mcp
-```
-
-Verify:
-
-```text
-git remote -v
-```
-
-Expected:
-
-```text
-origin  https://github.com/tigercosmos/code-cortex-mcp.git
-```
-
-Inspect:
-
-```text
-README
-package.json
-requirements
-MCP configuration
-server entry point
-build scripts
-test scripts
-```
-
-Install its dependencies.
-
-Build it.
-
-Run its tests.
-
-Determine its actual MCP capabilities.
-
-Determine whether it overlaps with the Knowledge Graph MCP.
-
-Do not duplicate functionality unnecessarily.
-
-If it is appropriate to expose it to Claude Code, configure it through the supported Enterprise AI Platform MCP mechanism.
-
----
-
-# 15. GRAPHRAG
-
-Inspect:
-
-```text
-D:\GitHub Repos\GraphRAG
-```
-
-Verify:
-
-```text
-git remote -v
-```
-
-Expected:
-
-```text
-origin  https://github.com/MvdB/GraphRAG.git
-```
-
-Inspect the repository fully enough to determine:
-
-```text
-installation
-dependencies
-CLI
-configuration
-indexing
-querying
-storage
-LLM requirements
-embedding requirements
-Docker requirements
-MCP support
-```
-
-Do not install expensive cloud/GPU/model dependencies unless actually required.
-
-Determine its actual role:
-
-```text
-required
-optional
-complementary
-alternative
-upstream
-downstream
-```
-
-Integrate only if the repositories actually support the integration.
-
----
-
-# 16. AUTONOMOUS RUNNER
-
-Inspect:
-
-```text
-D:\GitHub Repos\enterprise-ai-platform\autonomous-runner
-```
-
-Build using the repository's actual commands.
-
-Typically verify:
-
-```powershell
-npm install
-npm run build
-npm test
-```
-
-but use the current repository scripts as the source of truth.
-
-Verify the CLI.
-
-Verify:
-
-```text
-Analyze
-→ Plan
-→ Execute
-→ Validate
-→ Fix
-```
-
-Verify:
-
-```text
-max iterations
-max build attempts
-max test attempts
-timeout
-agent limit
-resume
-audit
-safety controls
-```
-
-Do not weaken safety controls.
-
----
-
-# 17. TARGET PROJECT DEPENDENCIES
-
-Important:
-
-The autonomous runner may not automatically install dependencies for arbitrary target repositories.
-
-Therefore, during environment bootstrap, inspect the actual main Java/Angular projects.
-
-For each supported main project:
-
-### Java
-
-If Maven:
-
-```powershell
-mvn dependency:resolve
-```
-
-or the repository's documented dependency/build command.
-
-If Gradle:
-
-```powershell
-gradle dependencies
-```
-
-or the repository's documented command.
-
-### Angular / Node
-
-If `package.json` exists:
-
-```powershell
-npm install
-```
-
-or preferably:
-
-```powershell
-npm ci
-```
-
-when a valid lock file exists.
-
-Do not modify application dependencies unnecessarily.
-
-Only install dependencies required by the existing project.
-
-Do not run production deployments.
-
----
-
-# 18. MAIN PROJECT ROOT DISCOVERY
-
-This is mandatory.
-
-Search:
-
-```text
-D:\GitHub Repos
-```
-
-for the user's actual main Java + Angular application roots.
-
-Do NOT simply configure every folder containing `pom.xml` or `package.json`.
-
-Determine the real root/workspace.
-
-For example:
-
-```text
-D:\GitHub Repos\MY-PROJECT
-│
-├── backend
-│   ├── service-a
-│   │   └── pom.xml
-│   └── service-b
-│       └── pom.xml
-│
-└── frontend
-    ├── angular.json
-    └── package.json
-```
-
-The preferred MCP configuration location is:
-
-```text
-D:\GitHub Repos\MY-PROJECT\.mcp.json
-```
-
-not automatically every nested service.
-
-If multiple independent main projects exist, configure each independent root.
-
----
-
-# 19. `.mcp.json` FOR MAIN PROJECT ROOTS
-
-For every discovered main project root:
-
-```text
-<MAIN_PROJECT_ROOT>\.mcp.json
-```
-
-must be created or safely updated.
-
-Before modifying an existing file:
-
-1. Read it.
-2. Validate it.
-3. Preserve unrelated configuration.
-4. Identify existing MCP servers.
-5. Merge rather than blindly overwrite.
-6. Remove only clearly invalid/duplicate configuration.
-
-The `.mcp.json` must contain the actual MCP servers that are supported and installed.
-
-Potential servers:
-
-```text
-knowledge-graph
-code-cortex
-GraphRAG
-```
-
-Do NOT invent server names.
-
-Use the real server names and commands discovered from source code.
-
----
-
-# 20. MCP PATH REQUIREMENTS
-
-Project `.mcp.json` configuration must work from any working directory.
-
-Do not rely on:
-
-```text
-./server.py
-./dist/index.js
-.
-```
-
-unless the MCP implementation explicitly resolves its own root.
-
-Prefer robust absolute paths such as:
-
-```text
-D:\GitHub Repos\knowledge-graph-generator\...
-D:\GitHub Repos\code-cortex-mcp\...
-D:\GitHub Repos\GraphRAG\...
-```
-
-Use the real entry points discovered during inspection.
-
----
-
-# 21. MCP SECURITY
-
-Do not put secrets into `.mcp.json`.
-
-Use environment variables.
-
-Example:
-
-```json
-{
-  "env": {
-    "SOME_SECRET": "${env:SOME_SECRET}"
-  }
-}
-```
-
-Use the actual supported syntax for the installed Claude Code version.
-
-Never commit:
-
-```text
-API keys
-PATs
-database passwords
-tokens
-private credentials
-```
-
-Never print secrets into logs.
-
----
-
-# 22. PROJECT `.mcp.json` AUTOMATIC DISCOVERY
-
-The intended user workflow must be:
-
-```powershell
-cd <main-project-root>
-claude
-```
-
-Claude Code should automatically discover the project-level MCP configuration according to its current configuration behavior.
-
-Actually test this.
-
-Do not merely validate that `.mcp.json` contains valid JSON.
-
-Verify that Claude Code sees the configured MCP servers.
-
-If Claude Code requires a trust/approval action, perform it if safe or clearly report the one-time manual action.
-
----
-
-# 23. MCP END-TO-END VALIDATION
-
-For every configured MCP server:
-
-```text
-[ ] command resolves
-[ ] process starts
-[ ] process remains alive
-[ ] environment variables resolve
-[ ] paths exist
-[ ] MCP handshake works
-[ ] tools are discoverable
-[ ] at least one real tool call succeeds
-```
-
-For Knowledge Graph MCP:
-
-Perform a real query against the generated graph.
-
-For Code Cortex MCP:
-
-Perform a real supported query.
-
-For GraphRAG:
-
-Perform a real supported operation if integrated.
-
-Do not report PASS based only on configuration files.
-
----
-
-# 24. GLOBAL VS PROJECT CONFIGURATION
-
-Maintain clear configuration ownership.
-
-Global:
-
-```text
-%USERPROFILE%\.claude\
-```
-
-contains the Enterprise AI Platform's global Claude integration.
-
-Project:
-
-```text
-<MAIN_PROJECT_ROOT>\.mcp.json
-```
-
-contains project-specific MCP configuration.
-
-Do not create multiple conflicting global configurations.
-
-Do not duplicate the same server unnecessarily.
-
-If the Enterprise AI Platform already provides a supported global mechanism, preserve it.
-
-If project-level `.mcp.json` is needed for automatic project discovery, configure it.
-
----
-
-# 25. REPEATABLE BOOTSTRAP SCRIPT
-
-Create:
-
-```text
-D:\GitHub Repos\local-ai-environment
-```
-
-if it does not exist.
-
-Create:
-
-```text
-D:\GitHub Repos\local-ai-environment\bootstrap.ps1
-```
-
-The script must be:
-
-```text
-idempotent
-safe
-non-destructive
-Windows compatible
-repeatable
-explicit about errors
-secret-safe
-```
-
-It should:
-
-```text
-1. Check prerequisites
-2. Locate/clone repositories
-3. Verify remotes
-4. Install dependencies
-5. Build required components
-6. Configure Enterprise AI Platform
-7. Configure Claude
-8. Configure Knowledge Graph
-9. Configure MCP
-10. Configure Code Cortex
-11. Configure GraphRAG where supported
-12. Build autonomous runner
-13. Discover main projects
-14. Create/update project .mcp.json
-15. Run health checks
-16. Run end-to-end tests
-17. Generate final manifest
-```
-
-Running the bootstrap twice must not corrupt anything.
-
----
-
-# 26. ENVIRONMENT MANIFEST
-
-Create:
-
-```text
-D:\GitHub Repos\local-ai-environment\environment-manifest.md
-```
-
-Record:
-
-```text
-========================================
-LOCAL AI ENVIRONMENT MANIFEST
-========================================
-
-Enterprise AI Platform
-  Path:
-  Remote:
-  Branch:
-  Commit:
-  Status:
-
-Knowledge Graph Generator
-  Path:
-  Remote:
-  Branch:
-  Commit:
-  Status:
-
-Code Cortex MCP
-  Path:
-  Remote:
-  Branch:
-  Commit:
-  Status:
-
-GraphRAG
-  Path:
-  Remote:
-  Branch:
-  Commit:
-  Status:
-
-Claude Code
-  Version:
-  Status:
-
-Node
-  Version:
-
-Python
-  Version:
-
-Java
-  Version:
-
-Maven
-  Version:
-
-Gradle
-  Version:
-
-Docker
-  Version:
-
-Knowledge Graph
-  Database:
-  Node count:
-  Edge count:
-  Status:
-
-MCP
-  Knowledge Graph:
-  Code Cortex:
-  GraphRAG:
-
-Autonomous Runner
-  Build:
-  Tests:
-  CLI:
-
-Main Projects
-  <project path>
-    .mcp.json:
-    MCP:
-    Java:
-    Angular:
-
-Overall Status:
-```
-
-Never store secrets.
-
----
-
-# 27. SAFETY / GIT RULES
-
-You may:
-
-```text
-clone
-fetch
-install
-build
-test
-configure
-create local configuration
-create local scripts
-```
-
-You must NOT automatically:
-
-```text
-git commit
-git push
-git merge
-create MR
-deploy
-modify production systems
-write to production databases
-delete user code
-destroy uncommitted work
-```
-
-Do not use destructive Git commands.
-
-Do not weaken MCP security restrictions.
-
-Do not disable approval gates merely to make tests pass.
-
----
-
-# 28. FAILURE HANDLING
-
-If installation fails:
-
-Do not immediately ask the user.
-
-First attempt to diagnose and fix.
-
-For example:
-
-```text
-PATH problem
-→ inspect PATH
-→ correct PATH if safe
-→ open fresh shell
-→ retry
-
-npm problem
-→ inspect package.json
-→ inspect Node requirement
-→ install correct dependency
-→ retry
-
-Python problem
-→ inspect Python requirement
-→ inspect venv
-→ install correct packages
-→ retry
-
-MCP problem
-→ inspect actual entry point
-→ verify paths
-→ verify environment
-→ retry
-
-Knowledge Graph empty
-→ verify ROOT_PATH
-→ verify source repositories
-→ rerun indexer
-
-Claude MCP unavailable
-→ inspect project .mcp.json
-→ inspect Claude configuration
-→ verify server startup
-→ retry
-```
-
-If a failure cannot safely be fixed automatically, report:
-
-```text
-BLOCKER:
-CAUSE:
-WHAT WAS ALREADY COMPLETED:
-WHAT THE USER MUST PROVIDE:
-EXACT NEXT STEP:
-```
-
----
-
-# 29. END-TO-END TEST
-
-Perform a real end-to-end test.
-
-Use a safe local/disposable test project where necessary.
-
-The test must demonstrate:
-
-```text
-Developer
-   ↓
-main Java/Angular project
-   ↓
-claude
-   ↓
-Enterprise AI Platform
-   ↓
-project .mcp.json
-   ↓
-Knowledge Graph MCP
-   ↓
-real knowledge graph
-   ↓
-real repository information
-```
-
-Test at least:
-
-```text
-service lookup
-code search/context
-dependency lookup
-API lookup
-UI → API lookup where supported
-business flow lookup where supported
-```
-
-If autonomous-runner is tested, use a disposable test repository.
-
-Do not perform destructive tests against a production repository.
-
----
-
-# 30. FRESH SESSION TEST
-
-After all installation is complete:
-
-1. Open a new PowerShell process.
-2. Verify PATH.
-3. Verify Claude Code.
-4. `cd` into a real main project root.
-5. Start Claude Code.
-6. Verify project MCP discovery.
-7. Verify MCP tools.
-8. Execute a real knowledge query.
-9. Confirm the returned information comes from the actual repository.
-
-This test is mandatory.
-
----
-
-# 31. SUCCESS CRITERIA
-
-The environment is considered:
-
-```text
-READY
-```
-
-ONLY if:
-
-```text
-[PASS] Claude Code installed
-[PASS] Enterprise AI Platform installed
-[PASS] Global Claude contract configured
-[PASS] Contract integrity verified
-[PASS] MCP configuration verified
-[PASS] Knowledge Graph installed
-[PASS] Knowledge Graph generated
-[PASS] Knowledge Graph MCP works
-[PASS] Code Cortex installed/tested
-[PASS] GraphRAG inspected/configured where applicable
-[PASS] Autonomous Runner builds/tests
-[PASS] Main project roots discovered
-[PASS] Main project .mcp.json created/updated
-[PASS] Fresh Claude session tested
-[PASS] Real MCP query tested
-[PASS] No destructive changes made
-```
-
-If any required component fails, do not falsely report READY.
-
----
-
-# 32. FINAL REPORT
-
-Finish with:
-
-```text
-====================================================
-LOCAL AI ENVIRONMENT BOOTSTRAP RESULT
-====================================================
-
-Overall Status:
-READY / PARTIAL / BLOCKED
-
-----------------------------------------------------
-REPOSITORIES
-----------------------------------------------------
-
-Enterprise AI Platform:
-Path:
-Remote:
-Branch:
-Commit:
-Status:
-
-Knowledge Graph Generator:
-Path:
-Remote:
-Branch:
-Commit:
-Status:
-
-Code Cortex MCP:
-Path:
-Remote:
-Branch:
-Commit:
-Status:
-
-GraphRAG:
-Path:
-Remote:
-Branch:
-Commit:
-Status:
-
-----------------------------------------------------
-CLAUDE CODE
-----------------------------------------------------
-
-Version:
-Global configuration:
-Contract:
-Hooks:
-Audit:
-Status:
-
-----------------------------------------------------
-KNOWLEDGE GRAPH
-----------------------------------------------------
-
-Database:
-Nodes:
-Edges:
-Services:
-Endpoints:
-Status:
-
-----------------------------------------------------
-MCP
-----------------------------------------------------
-
-Knowledge Graph:
-Code Cortex:
-GraphRAG:
-
-----------------------------------------------------
-AUTONOMOUS RUNNER
-----------------------------------------------------
-
-Build:
-Tests:
-CLI:
-Status:
-
-----------------------------------------------------
-MAIN PROJECT ROOTS
-----------------------------------------------------
-
-For every discovered main project:
-
-Project:
-Java:
-Angular:
-.mcp.json:
-Knowledge Graph MCP:
-Code Cortex MCP:
-GraphRAG:
-Status:
-
-----------------------------------------------------
-END-TO-END
-----------------------------------------------------
-
-Fresh Claude session:
-PASS / FAIL
-
-MCP discovery:
-PASS / FAIL
-
-Real knowledge query:
-PASS / FAIL
-
-UI → API:
-PASS / FAIL / NOT AVAILABLE
-
-Business flow:
-PASS / FAIL / NOT AVAILABLE
-
-----------------------------------------------------
-BLOCKERS
-----------------------------------------------------
-
-<none or exact blockers>
-
-----------------------------------------------------
-MANUAL ACTIONS
-----------------------------------------------------
-
-<none or exact required actions>
-
-----------------------------------------------------
-BOOTSTRAP FILES
-----------------------------------------------------
-
-Bootstrap:
-D:\GitHub Repos\local-ai-environment\bootstrap.ps1
-
-Manifest:
-D:\GitHub Repos\local-ai-environment\environment-manifest.md
-
-====================================================
-```
-
-Only say:
-
-```text
-Overall Status: READY
-```
-
-after actually performing the verification.
-
----
-
-# 33. MOST IMPORTANT RULE
-
-DO NOT JUST TELL ME HOW TO INSTALL THIS.
-
-YOU ARE RESPONSIBLE FOR ACTUALLY INSTALLING AND VERIFYING IT.
-
-Do not finish with:
-
-```text
-"Run these commands yourself."
-```
-
-Instead:
-
-```text
-inspect → execute → verify → fix → retest
-```
-
-The desired final user experience is:
-
-```text
-Open PowerShell
-       ↓
-cd <main Java/Angular project>
-       ↓
-claude
-       ↓
-Everything is already configured
-       ↓
-MCP automatically available
-       ↓
-Enterprise AI Platform active
-       ↓
-Knowledge Graph available
-       ↓
-Code Cortex available where supported
-       ↓
-GraphRAG available where supported
-       ↓
-Developer can immediately work
-```
-
-START NOW.
-
-Begin with:
-
-```text
-PHASE 1 — MACHINE DISCOVERY
-```
-
-and continue automatically through the entire bootstrap and validation process.
-
-Do not skip phases.
-
-Do not guess.
-
-Do not claim PASS without testing.
+Report only what you verified. Mark anything skipped or blocked as such, with the reason.

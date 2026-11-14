@@ -5,7 +5,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { loadSettings, clientPaths } from "../path-resolver/index.js";
+import { loadSettings, clientPaths, inRepoKgDir } from "../path-resolver/index.js";
 import { loadRegistry, serversForClient, clientLaunch } from "../mcp-registry/index.js";
 
 export const CLIENTS = ["claude-code", "cursor", "opencode"];
@@ -105,6 +105,19 @@ function copyMcpTools(ctx, out, { only = null, exclude = [] } = {}) {
   });
 }
 
+// The generator is its OWN repo (knowledge-graph-generator): ship it from wherever the
+// path-resolver finds it (KNOWLEDGE_GRAPH_PATH > local copy > sibling clone), so a fresh
+// machine with only the sibling clone still gets a complete knowledge-graph plugin.
+function copyKnowledgeGraphGenerator(ctx, out, settings) {
+  const src = inRepoKgDir(ctx, settings);
+  if (!fs.existsSync(path.join(src, "mcp_server_main.py"))) return false;
+  fs.cpSync(src, path.join(out, "mcp-tools", "knowledge-graph-generator"), {
+    recursive: true,
+    filter: (s) => !MCP_TOOLS_SKIP.test(path.join("knowledge-graph-generator", path.relative(src, s))),
+  });
+  return true;
+}
+
 // Context Manager tools shipped under <plugin>/bin (eap-run, mcp-env, ctx-report, ctx-meter).
 function copyContextTools(ctx, out) {
   const src = path.join(ctx.repoRoot, "shared", "core", "context");
@@ -138,11 +151,17 @@ export function kernelOf(ctx, root = "${CLAUDE_PLUGIN_ROOT}") {
 // markers is the user's own and is preserved.
 export function globalKernelText(ctx, pluginRoot, existing = "") {
   const block = `<!-- enterprise-ai-platform:kernel:start -->\n${kernelOf(ctx, pluginRoot)}\n<!-- enterprise-ai-platform:kernel:end -->`;
-  const re = /<!-- enterprise-ai-platform:kernel:start -->[\s\S]*?<!-- enterprise-ai-platform:kernel:end -->/;
-  let out = re.test(existing) ? existing.replace(re, block) : (existing.trim() ? existing.trimEnd() + "\n\n" + block + "\n" : block + "\n");
-  // Drop a previously injected FULL contract (v3 header) that followed the kernel.
-  out = out.replace(/\n# Enterprise AI Platform — Shared Execution Contract \(v3\)[\s\S]*$/, "\n");
-  return out;
+  const KERNEL_RE = /<!-- enterprise-ai-platform:kernel:start -->[\s\S]*?<!-- enterprise-ai-platform:kernel:end -->/;
+  const HOLD = "\u0000EAP_KERNEL\u0000";
+  // 1. park the current kernel block (keeps its position), 2. drop legacy (pre-4.14) text:
+  //    contract:start/end block, the "SHARED CONTRACT v3" header comment, and a FULL v3 contract
+  //    that followed the kernel; 3. put the fresh kernel back (or append it).
+  let base = existing.replace(KERNEL_RE, HOLD);
+  base = base.replace(/<!-- enterprise-ai-platform:contract:start -->[\s\S]*?<!-- enterprise-ai-platform:contract:end -->\s*/g, "");
+  base = base.replace(/<!-- SHARED CONTRACT v3[\s\S]*?-->\s*/g, "");
+  base = base.replace(/\n# Enterprise AI Platform — Shared Execution Contract \(v3\)[\s\S]*$/, "\n");
+  const out = base.includes(HOLD) ? base.replace(HOLD, () => block) : (base.trim() ? base.trimEnd() + "\n\n" + block + "\n" : block + "\n");
+  return out.replace(/^\s+/, "");
 }
 
 const authorOf = { name: "Lifetrenz Engineering" };
@@ -218,7 +237,7 @@ function buildClaudeKnowledgeGraph(ctx, root, ver, reg, settings) {
   const skillsSrc = path.join(ctx.repoRoot, "shared", "plugins", "knowledge-graph", "skills");
   if (fs.existsSync(skillsSrc)) copyDir(skillsSrc, path.join(plugin, "skills"));
   rewriteTree(plugin, "${CLAUDE_PLUGIN_ROOT}");
-  copyMcpTools(ctx, plugin, { only: ["knowledge-graph-generator"] });
+  copyKnowledgeGraphGenerator(ctx, plugin, settings);
   const mcp = {};
   for (const id of serversForClient(reg, "claude-code", ctx.platform).filter((i) => reg.servers[i].plugin === "knowledge-graph")) {
     const l = clientLaunch(id, ctx, settings);

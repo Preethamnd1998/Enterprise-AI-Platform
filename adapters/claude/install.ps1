@@ -1,7 +1,7 @@
 # adapters/claude/install.ps1
-# Enterprise AI Platform — Claude Code adapter installer (v3.1)
+# Enterprise AI Platform — Claude Code adapter installer (v4.15, plugins only)
 # Usage:
-#   Global install (no -RepoPath):  installs contract kernel + commands + standards + skills to ~/.claude/
+#   Global install (no -RepoPath):  builds + installs the plugins, writes the contract kernel to ~/.claude/CLAUDE.md, migrates old copies
 #   Per-repo install (-RepoPath x): installs settings.json, hooks, .ai/ to a specific repo
 
 param(
@@ -18,67 +18,33 @@ Write-Step "Enterprise AI Platform v$version -- Claude adapter install"
 if ($DryRun)  { Write-Warn2 "DRY RUN -- no files will be written" }
 if ($Force)   { Write-Warn2 "FORCE -- skipping idempotency check" }
 
-# ─── GLOBAL INSTALL ──────────────────────────────────────────────────────────
-Write-Step "Global: contract kernel + commands + standards + skills -> ~/.claude/"
+# ─── GLOBAL INSTALL (plugins only) ───────────────────────────────────────────
+# Since v4.14 commands, skills, standards, rules and knowledge ship ONLY in the
+# enterprise-ai-platform / knowledge-graph plugins. ~/.claude gets the contract
+# KERNEL (CLAUDE.md) and nothing else: a second copy under ~/.claude would be
+# loaded again on every turn.
+Write-Step "Global: build plugins, write contract kernel, install via claude CLI, migrate old copies"
 
-$globalDir  = Join-Path $env:USERPROFILE '.claude'
-$contractSrc = Join-Path $root 'shared\contract.md'
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw "node not found on PATH (Node 20+ required). Install it, then re-run." }
+$cli = Join-Path $root 'shared\core\cli.js'
+$dist = Join-Path $root 'dist\plugins\claude-code'
 
-# 1. Inject contract kernel into ~/.claude/CLAUDE.md
-if (-not $DryRun) {
-  Install-MarkerInject `
-    -SourceFile $contractSrc `
-    -TargetFile (Join-Path $globalDir 'CLAUDE.md') `
-    -StartMarker 'enterprise-ai-platform:contract:start' `
-    -EndMarker   'enterprise-ai-platform:contract:end' `
-    -KernelMarkerStart '<!-- enterprise-ai-platform:kernel:start -->' `
-    -KernelMarkerEnd   '<!-- enterprise-ai-platform:kernel:end -->'
+if ($DryRun) {
+  & node $cli plugin:install claude-code
+  & node $cli platform:migrate
 } else {
-  Write-Dry "Would inject contract kernel into ~/.claude/CLAUDE.md"
-}
-
-# 2. Copy commands to ~/.claude/commands/
-if (-not $DryRun) {
-  Install-DirectoryCopy `
-    -Source (Join-Path $root 'shared\commands') `
-    -Target (Join-Path $globalDir 'commands')
-} else {
-  Write-Dry "Would copy shared/commands/ -> ~/.claude/commands/"
-}
-
-# 3. Copy standards to ~/.claude/standards/
-if (-not $DryRun) {
-  Install-DirectoryCopy `
-    -Source (Join-Path $root 'shared\standards') `
-    -Target (Join-Path $globalDir 'standards')
-} else {
-  Write-Dry "Would copy shared/standards/ -> ~/.claude/standards/"
-}
-
-# 4. Copy skills to ~/.claude/skills/
-if (-not $DryRun) {
-  Install-DirectoryCopy `
-    -Source (Join-Path $root 'shared\skills') `
-    -Target (Join-Path $globalDir 'skills')
-} else {
-  Write-Dry "Would copy shared/skills/ -> ~/.claude/skills/"
-}
-
-# 5. Copy knowledge + its index (company-profile.md) to ~/.claude/
-# Contract kernel F10 instructs "Read only the matching file(s) under
-# <root>/knowledge/ (index: company-profile.md's topic table)" but, until
-# this fix (2026-10-13 reorg audit), nothing actually installed either one
-# anywhere for this adapter.
-if (-not $DryRun) {
-  Install-DirectoryCopy `
-    -Source (Join-Path $root 'shared\knowledge') `
-    -Target (Join-Path $globalDir 'knowledge')
-  Install-FileCopy `
-    -Source (Join-Path $root 'shared\company-profile.md') `
-    -Target (Join-Path $globalDir 'company-profile.md')
-} else {
-  Write-Dry "Would copy shared/knowledge/ -> ~/.claude/knowledge/"
-  Write-Dry "Would copy shared/company-profile.md -> ~/.claude/company-profile.md"
+  & node $cli plugin:install claude-code --apply
+  if (Get-Command claude -ErrorAction SilentlyContinue) {
+    & claude plugin marketplace add $dist 2>&1 | Out-Null
+    foreach ($p in 'enterprise-ai-platform','knowledge-graph') {
+      & claude plugin install "$p@eap-local" 2>&1 | Out-Null
+      & claude plugin update  "$p@eap-local"
+    }
+    # Existing users: remove the pre-4.14 copies the plugins now provide (backup + manifest kept).
+    & node $cli platform:migrate --apply
+  } else {
+    Write-Warn2 "'claude' CLI not on PATH -- install the plugins manually, then run: node $cli platform:migrate --apply"
+  }
 }
 
 Write-Ok "Global install complete"

@@ -23,8 +23,12 @@ test("validator catches bad entries", () => {
 
 test("exposure: internal servers hidden, kafka not auto-exposed, bridge not offered to opencode itself", () => {
   assert.deepEqual(serversForClient(reg, "opencode", "darwin"), ["unified-trace"]);
-  assert.deepEqual(serversForClient(reg, "claude-code", "linux").sort(), ["opencode-bridge", "unified-trace"]);
+  // Claude Code gets knowledge-graph from its own plugin (knowledge-graph@eap-local); the EAP plugin
+  // itself ships only the servers whose registry `plugin` is enterprise-ai-platform (default).
+  assert.deepEqual(serversForClient(reg, "claude-code", "linux").sort(), ["knowledge-graph", "opencode-bridge", "unified-trace"]);
+  assert.equal(reg.servers["knowledge-graph"].plugin, "knowledge-graph");
   assert.ok(!serversForClient(reg, "cursor", "win32").includes("knowledge-graph"));
+  assert.ok(!serversForClient(reg, "opencode", "darwin").includes("knowledge-graph"));
 });
 
 test("launchSpec fails with actionable message when venv/binary absent (mock ctx)", () => {

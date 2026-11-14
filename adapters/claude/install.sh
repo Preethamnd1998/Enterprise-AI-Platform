@@ -106,33 +106,32 @@ inject_markers() {
 # descriptions = always-on token waste). The kernel references the plugin
 # bundle through its absolute dist path.
 # ═══════════════════════════════════════════════════════════════════════════
-log "=== Global install (v$VERSION) — kernel only ==="
+log "=== Global install (v$VERSION) — plugins only ==="
 
-CLAUDE_MD="$CLAUDE_GLOBAL/CLAUDE.md"
-PLUGIN_ROOT="$PLATFORM_ROOT/dist/plugins/claude-code/plugins/enterprise-ai-platform"
-if command -v node >/dev/null 2>&1; then
-  mkdir -p "$CLAUDE_GLOBAL"
-  if [[ "${DRY_RUN:-false}" == "true" ]]; then
-    log "[dry-run] would write kernel to $CLAUDE_MD (plugin root $PLUGIN_ROOT)"
-  else
-    [[ -f "$CLAUDE_MD" ]] && cp "$CLAUDE_MD" "$CLAUDE_MD.prev"
-    node --input-type=module -e '
-      import { createContext } from "'"$PLATFORM_ROOT"'/shared/core/path-resolver/index.js";
-      import { globalKernelText } from "'"$PLATFORM_ROOT"'/shared/core/plugin-manager/build.js";
-      import fs from "node:fs";
-      const [file, root] = process.argv.slice(1);
-      const existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
-      fs.writeFileSync(file, globalKernelText(createContext(), root, existing));
-    ' "$CLAUDE_MD" "$PLUGIN_ROOT"
-    log "Kernel written: $CLAUDE_MD"
-  fi
-else
-  log "WARN: node not found — kernel not written; run: npm run plugin:install:claude -- --apply"
+CLI="$PLATFORM_ROOT/shared/core/cli.js"
+if ! command -v node >/dev/null 2>&1; then
+  log "ERROR: node not found (Node 20+ required) — install it, then re-run"; exit 1
 fi
-
-for stale in commands standards knowledge; do
-  [[ -d "$CLAUDE_GLOBAL/$stale" ]] && log "NOTE: $CLAUDE_GLOBAL/$stale looks like a pre-4.14 copy of plugin content — remove it to avoid duplicate loading."
-done
+if [[ "${DRY_RUN:-0}" -eq 1 ]]; then
+  log "[DRY-RUN] plugin build + kernel plan, then migration plan (nothing written)"
+  node "$CLI" plugin:install claude-code || true
+  node "$CLI" platform:migrate || true
+else
+  # 1. build both plugins, write the contract kernel into ~/.claude/CLAUDE.md (kernel only; backup kept)
+  node "$CLI" plugin:install claude-code --apply
+  # 2. register + install/update the plugins through Claude's own CLI
+  if command -v claude >/dev/null 2>&1; then
+    claude plugin marketplace add "$PLATFORM_ROOT/dist/plugins/claude-code" >/dev/null 2>&1 || claude plugin marketplace update eap-local || true
+    for p in enterprise-ai-platform knowledge-graph; do
+      claude plugin install "$p@eap-local" >/dev/null 2>&1 || true
+      claude plugin update  "$p@eap-local" || true
+    done
+    # 3. existing users: remove the pre-4.14 copies the plugins now provide (backup + manifest kept)
+    node "$CLI" platform:migrate --apply
+  else
+    log "WARN: 'claude' CLI not on PATH — install the plugins manually, then run: node $CLI platform:migrate --apply"
+  fi
+fi
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PER-REPO INSTALL — settings.json + hooks + .ai/ → $REPO_PATH/.claude/

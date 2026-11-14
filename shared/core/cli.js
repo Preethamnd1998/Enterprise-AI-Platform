@@ -5,6 +5,7 @@
 //   platform:install [--apply] [--with-cortex]
 //   plugin:build [client|all]
 //   plugin:install|update|uninstall <client|all> [--apply] [--config-root <dir>]
+//   platform:migrate [--apply] [--project <dir>]... [--home <dir>]   (existing users → plugin-only layout)
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -15,6 +16,7 @@ import {
   buildPlugins, planInstall, applyInstall, planUninstall, applyUninstall, selectClients,
 } from "./plugin-manager/index.js";
 import { selftest } from "./selftest.js";
+import { planMigration, applyMigration } from "./migrate/index.js";
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -50,6 +52,21 @@ async function main() {
       const report = runRuntime(ctx, planRuntime(ctx, { withCortex: flag("with-cortex") }), { apply, withCortex: flag("with-cortex") });
       for (const r of report) console.log(`[${icon[r.status] ?? r.status}] ${r.id}: ${r.detail}`);
       if (!apply) console.log("\n(dry-run — rerun with --apply to execute)");
+      return report.some((r) => r.status === "fail") ? 1 : 0;
+    }
+    case "platform:migrate": {
+      const apply = flag("apply");
+      const projects = argv.flatMap((a, i) => (a === "--project" && argv[i + 1] ? [path.resolve(argv[i + 1])] : []));
+      const home = opt("home") ? path.resolve(opt("home")) : os.homedir();
+      const plan = planMigration(ctx, { home, projects });
+      const report = applyMigration(plan, { apply });
+      console.log(`platform:migrate ${apply ? "" : "[DRY-RUN] "}home=${home}`);
+      for (const b of plan.blocked) console.log(`[BLOCK] ${b}`);
+      for (const r of report) console.log(`[${r.status === "done" ? "done" : r.status === "fail" ? "FAIL" : "dry "}] ${r.op} ${r.kind}: ${r.path ?? r.name}${r.remove ? ` (${r.remove.length} entr${r.remove.length === 1 ? "y" : "ies"})` : ""} — ${r.why}${r.error ? ` — ${r.error}` : ""}`);
+      for (const n of plan.notes) console.log(`[note] ${n}`);
+      if (!report.length) console.log("nothing to migrate — already plugin-only");
+      if (apply && plan.backupDir) console.log(`backup: ${plan.backupDir} (MANIFEST.json lists every change; copy files back to undo)`);
+      if (!apply && report.length) console.log("\n(dry-run — nothing changed; add --apply)");
       return report.some((r) => r.status === "fail") ? 1 : 0;
     }
     case "plugin:build": {

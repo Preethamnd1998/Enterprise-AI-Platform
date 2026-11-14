@@ -33,26 +33,18 @@ This is the complete installation guide for the Enterprise AI Platform on Claude
 
 ## Architecture — What Gets Installed
 
+Since v4.14 the platform ships as two Claude Code plugins from a local marketplace (`eap-local`).
+Nothing is copied into `~/.claude/skills`, `commands`, `standards`, `rules` or `knowledge`.
+
 ```
+enterprise-ai-platform@eap-local   commands, skills, standards, rules, knowledge, templates,
+                                   unified-trace + opencode-bridge MCP, bin/ tools, context hooks
+knowledge-graph@eap-local          knowledge-graph MCP server, generator, knowledge-graph skill
+
 ~/.claude/                         # Global (one install per machine)
-├── CLAUDE.md                      # Contract kernel — loaded every CC session
-├── settings.json                  # MCP allowlist + hook configuration
-├── commands/                      # All 8 platform commands
-│   ├── bug-fix.md
-│   ├── migration.md
-│   ├── new-development.md
-│   ├── data-correction.md
-│   ├── ui-design-update.md
-│   ├── test.md
-│   ├── prompt-audit.md
-│   └── dev.md
-├── standards/                     # Coding standards (lazy-loaded)
-│   ├── coding-standards.md
-│   ├── backend/
-│   ├── frontend/
-│   ├── mobile/
-│   └── migration/
-└── .platform-version              # Install stamp
+├── CLAUDE.md                      # Contract KERNEL only (~3 KB) — loaded every session
+├── settings.json                  # your settings (enabledPlugins, hooks); untouched by the installer
+└── backups/eap-migrate-<ts>/      # only if an old install was migrated
 
 <repo>/                            # Per-repo (run once per consuming repo)
 ├── .claude/
@@ -76,30 +68,29 @@ git clone https://gitlab.example.com/lifetrenz/enterprise-ai-platform.git
 cd enterprise-ai-platform
 ```
 
-### Step 2 — Global Install
+### Step 2 — Global Install (plugins)
 
-Run once per machine. Installs the contract kernel and all commands to `~/.claude/`.
+Run once per machine. Works for new and existing users and can be repeated safely. The quickest
+path is the setup prompt: paste `Auto setup claude prompt/COMPLETE LOCAL AI DEVELOPMENT ENVIRONMENT BOOTSTRAP--MASTER PROMPT.md`
+into Claude Code. The manual equivalent:
 
-```powershell
-pwsh install/install-claude.ps1
+```bash
+node shared/core/cli.js platform:install --apply --with-cortex      # node deps, Knowledge Graph venv, Code Cortex binary
+node shared/core/cli.js plugin:install claude-code --apply          # build dist/, write kernel to ~/.claude/CLAUDE.md
+claude plugin marketplace add "$PWD/dist/plugins/claude-code"       # or: claude plugin marketplace update eap-local
+claude plugin install enterprise-ai-platform@eap-local              # or: claude plugin update ...
+claude plugin install knowledge-graph@eap-local
+node shared/core/cli.js platform:migrate --apply                    # existing users: remove old copies (backup kept)
 ```
 
-The installer:
-1. Injects the contract kernel into `~/.claude/CLAUDE.md` (creates or updates within markers)
-2. Copies 8 commands to `~/.claude/commands/`
-3. Copies standards to `~/.claude/standards/`
-4. Writes the MCP allowlist to `~/.claude/settings.json` (skips if already exists — merge manually if needed)
-5. Writes `.platform-version` stamp
+`adapters/claude/install.sh` and `install.ps1` run exactly this sequence. Restart Claude Code afterwards.
+`platform:migrate` removes only copies of platform content that older installers placed under
+`~/.claude` (by name), the full-contract text in `CLAUDE.md`, a duplicate user-level usage-logger hook,
+and user-scope or project MCP entries the plugins now register. It never touches Trail/graft skills,
+other plugins, your own skills or commands, or monitoring/DB MCP servers, and it backs up everything
+it changes.
 
-**Expected output:**
-```
-==> Global install: Enterprise AI Platform v4.3.0
-  OK Updated contract section in existing ~/.claude/CLAUDE.md
-  OK Installed commands to ~/.claude/commands/
-  OK Installed standards to ~/.claude/standards/ (lazy-loaded by the contract)
-  OK Wrote global allowlist to ~/.claude/settings.json
-  Tip: run with -RepoPath <path> to also configure a specific repo
-```
+Verify: `claude plugin list`, `claude mcp list`, `node shared/core/cli.js mcp:selftest`.
 
 ### Step 3 — Per-Repo Config
 
@@ -232,16 +223,16 @@ Do not modify `settings.json` manually. If you need to add a custom tool, add it
 
 ### `~/.claude/CLAUDE.md`
 
-The global contract is injected between marker comments:
+The contract kernel is written between marker comments:
 
 ```
-<!-- enterprise-ai-platform:contract:start -->
-# Enterprise AI Platform — Execution Contract (kernel)
+<!-- enterprise-ai-platform:kernel:start -->
+# EAP Execution Contract (kernel)
 ...
-<!-- enterprise-ai-platform:contract:end -->
+<!-- enterprise-ai-platform:kernel:end -->
 ```
 
-If you have your own `~/.claude/CLAUDE.md` content, the installer preserves it — the platform section is injected between markers and will be updated on upgrade without touching your custom content.
+If you have your own `~/.claude/CLAUDE.md` content, the installer preserves it — only the block between the markers is replaced on upgrade. Older installs used `contract:start/end` markers plus the full contract text; `platform:migrate` (and `plugin:install --apply`) rewrite those to the kernel only. The full contract is read on demand from the plugin bundle (`ai-platform/contract.md`).
 
 ---
 
