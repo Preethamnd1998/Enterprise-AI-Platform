@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased] — Knowledge Graph: split-UI discovery
+
+### Changed
+- Knowledge Graph plugin skill and `shared/mcp/knowledge-graph-setup.md` describe the new indexer discovery (`BACKEND_ROOT` / `UI_ROOT`): Java by `pom.xml`; Angular monolith, split repo (shell + `projects/*`) or standalone app by `angular.json`; React by `package.json`. `sync-projects.sh` scans `BE` and `UI`/`WAPP` in one run (`KG_BE_ROOTS` / `KG_UI_ROOTS`). The indexer itself lives in the knowledge-graph-generator repo.
+- Fixed the skill's re-index hint: the indexer takes no `--repo` flag; use `KG_CONFIG_PATH=<file> python indexer.py`.
+
 ## [4.16.0] — 2026-11-14 — Optional Gemini analysis helper
 
 ### Added

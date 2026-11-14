@@ -59,11 +59,14 @@ Both underlying indexes are **snapshots**, not live:
 - Knowledge Generator: incremental (unchanged files are skipped). Don't edit
   configs by hand for a new project — run
   `bash ../knowledge-graph-generator/sync-projects.sh` (Windows: `sync-projects.ps1`; set `PROJECTS_DIR` in `paths.local.env` first; `KG_OUTPUT_DIR` / `CBM_CACHE_DIR` index into an isolated location; no names needed: it
-  discovers every `Projects/BE/*/pom.xml` and `Projects/UI/*/angular.json`,
-  indexes both indexers, is safe to re-run, and removes duplicate edges).
-  Each UI repo runs from its own throwaway config (`KG_CONFIG_PATH`) and its
-  non-monolith libraries are stored as `<repo>/<library>`, which is what keeps
-  embedded copies of shared libraries from overwriting each other. Never run
+  discovers, under the `BE` root and the `UI` / `WAPP` roots (override `KG_BE_ROOTS` / `KG_UI_ROOTS`), every
+  `*/pom.xml` Java service, every Angular project (`angular.json`: the lifetrenz-core monolith, a split repo =
+  shell `src/` + `projects/*`, or a standalone app with no sub-projects) and every React app (`package.json`
+  with react); it indexes both indexers, is safe to re-run, and removes duplicate edges).
+  Sub-projects are the folders on disk, never `angular.json`'s project list (split repos keep the monolith's);
+  empty folders (unpopulated submodules) are skipped, and anything not indexed is printed with the reason.
+  One run covers everything; each split repo's sub-projects are stored as `<repo>/<library>` (the monolith
+  keeps bare names), which is what keeps embedded copies of shared libraries from overwriting each other. Never run
   with `INCREMENTAL=false` unless you intend a full rebuild — it deletes the DB.
   DB persistence is modelled for SQL strings, JPA (`@Entity`/`@Table`) and Mongo
   (`@Document`, `MongoRepository`/`MongoTemplate`).
