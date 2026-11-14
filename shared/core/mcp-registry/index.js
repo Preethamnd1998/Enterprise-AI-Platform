@@ -25,15 +25,23 @@ export function validateRegistry(reg, ctx) {
     if (!s.healthcheck?.type) at("missing healthcheck.type");
     if (!Array.isArray(s.permissions)) at("missing permissions[]");
     if (typeof s.expose !== "boolean") at("expose must be boolean");
+    if (s.optionalSetting !== undefined && !/^[A-Z][A-Z0-9_]*$/.test(s.optionalSetting)) at("optionalSetting must be an UPPER_SNAKE setting name");
     if (!Array.isArray(s.clients) || !s.clients.every((c) => CLIENTS.has(c))) at("bad clients");
     for (const dep of s.dependencies?.requires ?? []) if (!reg.servers[dep]) at(`requires unknown server ${dep}`);
   }
   return errs;
 }
 
-export function serversForClient(reg, client, platform) {
+// Optional servers (registry field `optionalSetting`) are part of the platform only when that
+// setting is truthy — e.g. gemini-assistant needs GEMINI_ENABLED=true. Everything else is on.
+export function isEnabled(server, settings = {}) {
+  if (!server?.optionalSetting) return true;
+  return /^(1|true|yes|on)$/i.test(String(settings[server.optionalSetting] ?? "").trim());
+}
+
+export function serversForClient(reg, client, platform, settings = {}) {
   return Object.entries(reg.servers)
-    .filter(([, s]) => s.expose && s.clients.includes(client) && s.platforms.includes(platform))
+    .filter(([, s]) => s.expose && isEnabled(s, settings) && s.clients.includes(client) && s.platforms.includes(platform))
     .map(([id]) => id);
 }
 

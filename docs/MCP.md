@@ -89,6 +89,12 @@ Read-only PostgreSQL connection. Requires SELECT-only DB role.
 
 ---
 
+### gemini-assistant (optional, 7 tools)
+
+Off by default; enabled per machine with `node shared/core/cli.js gemini:setup`. Lets Claude hand large
+pre-processing jobs (big documents, logs, many files, diffs) to Gemini and get compact JSON back. Full
+guide: [GEMINI-INTEGRATION.md](GEMINI-INTEGRATION.md).
+
 ## Credential Configuration
 
 Credentials are never stored in version-controlled files. The `.mcp.json` file is gitignored.

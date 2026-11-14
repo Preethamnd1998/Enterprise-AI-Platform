@@ -3,10 +3,10 @@
 // independently of any AI client (no client config involved).
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { loadRegistry } from "./mcp-registry/index.js";
+import { loadRegistry, isEnabled } from "./mcp-registry/index.js";
 import { spawnSync } from "node:child_process";
 import { resolveSpawn } from "./security/index.js";
-import { resolveCodeCortex } from "./path-resolver/index.js";
+import { resolveCodeCortex, loadSettings } from "./path-resolver/index.js";
 
 // The MCP SDK is a dependency of the servers (unified-trace), not of core/:
 // load it from there so core/ stays dependency-free.
@@ -38,7 +38,9 @@ export async function selftest(ctx) {
   try { sdk = await loadSdk(ctx); } catch (e) {
     return [{ name: "mcp sdk", status: "fail", detail: `MCP SDK not installed (run npm run platform:install): ${e.message}` }];
   }
+  const settings = loadSettings(ctx);
   for (const [id, s] of Object.entries(reg.servers)) {
+    if (!isEnabled(s, settings)) continue; // optional servers (e.g. gemini-assistant) are not tested while disabled
     if (s.healthcheck.type === "binary-version") {
       const cc = resolveCodeCortex(ctx);
       const r = cc.exists ? spawnSync(cc.path, ["--version"], { encoding: "utf8", timeout: 10000 }) : null;

@@ -7,7 +7,7 @@ import {
   inRepoKgDir, loadSettings, resolveBasePython, resolveVenvPython, resolveCodeCortex, resolveNode,
   resolveProjectsDir, resolveKgDb, venvPythonRel, which,
 } from "../path-resolver/index.js";
-import { loadRegistry, validateRegistry } from "../mcp-registry/index.js";
+import { loadRegistry, validateRegistry, isEnabled } from "../mcp-registry/index.js";
 import { resolveSpawn } from "../security/index.js";
 
 const defaultExec = (command, args, opts) => spawnSync(command, args, { encoding: "utf8", stdio: "pipe", ...opts });
@@ -31,7 +31,7 @@ export function planRuntime(ctx, { withCortex = false } = {}) {
   const reg = loadRegistry(ctx);
   const steps = [];
   for (const [id, s] of Object.entries(reg.servers)) {
-    if (s.dependencies?.npm) {
+    if (s.dependencies?.npm && isEnabled(s, settings)) {
       const dir = ctx.p.join(ctx.repoRoot, ...s.dependencies.npm.split("/"));
       steps.push({
         id: `npm:${id}`,
@@ -131,7 +131,7 @@ export function diagnose(ctx) {
     const errs = validateRegistry(reg, ctx);
     add("mcp registry", errs.length ? "fail" : "ok", errs.length ? errs.join("; ") : `${Object.keys(reg.servers).length} servers valid`);
     for (const [id, s] of Object.entries(reg.servers)) {
-      if (s.dependencies?.npm) {
+      if (s.dependencies?.npm && isEnabled(s, settings)) {
         const nm = ctx.p.join(ctx.repoRoot, ...s.dependencies.npm.split("/"), "node_modules");
         add(`npm deps: ${id}`, ctx.exists(nm) ? "ok" : "warn", ctx.exists(nm) ? "installed" : "run npm run platform:install");
       }

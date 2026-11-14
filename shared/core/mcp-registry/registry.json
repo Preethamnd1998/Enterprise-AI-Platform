@@ -221,6 +221,67 @@
       "expose": false,
       "clients": [],
       "entryBase": "kg"
+    },
+    "gemini-assistant": {
+      "description": "OPTIONAL Gemini analysis helper (large-file summaries, log analysis, codebase exploration, diff review, test scenarios, structured findings). Off unless GEMINI_ENABLED=true (`node shared/core/cli.js gemini:setup`).",
+      "runtime": "node",
+      "entry": "shared/mcp-tools/gemini-assistant-mcp/index.js",
+      "dependencies": {
+        "npm": "shared/mcp-tools/gemini-assistant-mcp"
+      },
+      "env": {
+        "GEMINI_API_KEY": {
+          "required": false,
+          "description": "API key (or GOOGLE_API_KEY); else read from the gitignored env file. Never stored in the registry."
+        },
+        "GEMINI_MODEL": {
+          "required": false,
+          "description": "default gemini-2.5-flash"
+        },
+        "GEMINI_ALLOWED_ROOTS": {
+          "required": false,
+          "description": "Comma-separated roots for file/diff tools; default PROJECTS_DIR"
+        },
+        "GEMINI_MAX_INPUT_CHARS": {
+          "required": false,
+          "description": "default 400000"
+        },
+        "GEMINI_REDACT_PII": {
+          "required": false,
+          "description": "default true; false disables email/phone/id masking (secrets are always masked)"
+        }
+      },
+      "platforms": [
+        "darwin",
+        "win32",
+        "linux"
+      ],
+      "healthcheck": {
+        "type": "mcp-list-tools",
+        "expectTools": [
+          "gemini_summarize",
+          "gemini_analyze_logs",
+          "gemini_explore_codebase",
+          "gemini_review_diff",
+          "gemini_generate_tests",
+          "gemini_extract_findings",
+          "gemini_status"
+        ],
+        "timeoutMs": 15000
+      },
+      "permissions": [
+        "read:fs:projects",
+        "exec:git",
+        "network:generativelanguage.googleapis.com"
+      ],
+      "expose": true,
+      "clients": [
+        "claude-code",
+        "cursor",
+        "opencode"
+      ],
+      "optionalSetting": "GEMINI_ENABLED",
+      "plugin": "enterprise-ai-platform"
     }
   }
 }

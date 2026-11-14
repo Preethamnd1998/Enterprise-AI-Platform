@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { loadSettings, clientPaths, inRepoKgDir } from "../path-resolver/index.js";
-import { loadRegistry, serversForClient, clientLaunch } from "../mcp-registry/index.js";
+import { loadRegistry, serversForClient, clientLaunch, isEnabled } from "../mcp-registry/index.js";
 
 export const CLIENTS = ["claude-code", "cursor", "opencode"];
 const NON_COMMANDS = new Set(["README.md", "registry.yml", "migration-intelligence.md", "planning-engine.md"]);
@@ -146,6 +146,23 @@ export function kernelOf(ctx, root = "${CLAUDE_PLUGIN_ROOT}") {
   return (m ? m[1] : t).trim().replace(/\{\{EAP_ROOT\}\}/g, root);
 }
 
+// Optional features ship their skills/tools ONLY while enabled (registry `optionalSetting`):
+// shared/optional/<server-id>/skills/* is copied next to the shared skills, and the server's
+// mcp-tools folder is left out of the package when the feature is off.
+function featureOn(reg, settings, id) {
+  return !!reg.servers[id] && isEnabled(reg.servers[id], settings);
+}
+function copyOptionalSkills(ctx, skillsDir, reg, settings) {
+  const base = path.join(ctx.repoRoot, "shared", "optional");
+  if (!fs.existsSync(base)) return;
+  for (const id of fs.readdirSync(base)) {
+    const skills = path.join(base, id, "skills");
+    if (featureOn(reg, settings, id) && fs.existsSync(skills)) copyDir(skills, skillsDir);
+  }
+}
+const OPTIONAL_MCP_DIRS = { "gemini-assistant": "gemini-assistant-mcp" };
+const disabledMcpDirs = (reg, settings) => Object.entries(OPTIONAL_MCP_DIRS).filter(([id]) => !featureOn(reg, settings, id)).map(([, d]) => d);
+
 // Claude Code reads ~/.claude/CLAUDE.md on EVERY turn: it must hold the kernel
 // only (prompt-cache prefix), never the full contract. Content outside the
 // markers is the user's own and is preserved.
@@ -186,12 +203,13 @@ function buildClaude(ctx, root, ver, reg, settings, refRoot, info) {
     keywords: ["enterprise", "mcp", "knowledge-graph"],
   });
   copyShared(ctx, plugin);
+  copyOptionalSkills(ctx, path.join(plugin, "skills"), reg, settings);
   copyBundle(ctx, plugin);
   rewriteTree(plugin, "${CLAUDE_PLUGIN_ROOT}");
-  copyMcpTools(ctx, plugin, { exclude: ["knowledge-graph-generator"] }); // after rewriteTree: vendored MCP docs ship verbatim; KG ships in its own plugin
+  copyMcpTools(ctx, plugin, { exclude: ["knowledge-graph-generator", ...disabledMcpDirs(reg, settings)] }); // after rewriteTree: vendored MCP docs ship verbatim; KG ships in its own plugin
   copyContextTools(ctx, plugin);
   const mcp = {};
-  for (const id of serversForClient(reg, "claude-code", ctx.platform).filter((i) => (reg.servers[i].plugin ?? "enterprise-ai-platform") === "enterprise-ai-platform")) {
+  for (const id of serversForClient(reg, "claude-code", ctx.platform, settings).filter((i) => (reg.servers[i].plugin ?? "enterprise-ai-platform") === "enterprise-ai-platform")) {
     // Claude does NOT dedupe: a plugin server and a same-named user-scope server
     // both start (verified). Skip ids the user already registered unless asked.
     if (info.userScope.includes(id)) { info.skipped.push(id); continue; }
@@ -239,7 +257,7 @@ function buildClaudeKnowledgeGraph(ctx, root, ver, reg, settings) {
   rewriteTree(plugin, "${CLAUDE_PLUGIN_ROOT}");
   copyKnowledgeGraphGenerator(ctx, plugin, settings);
   const mcp = {};
-  for (const id of serversForClient(reg, "claude-code", ctx.platform).filter((i) => reg.servers[i].plugin === "knowledge-graph")) {
+  for (const id of serversForClient(reg, "claude-code", ctx.platform, settings).filter((i) => reg.servers[i].plugin === "knowledge-graph")) {
     const l = clientLaunch(id, ctx, settings);
     mcp[id] = { command: l.command, args: l.args };
   }
@@ -259,6 +277,7 @@ function buildCursor(ctx, root, ver, reg, settings, refRoot) {
     plugins: [{ name: "enterprise-ai-platform", source: "enterprise-ai-platform", description: DESC, version: ver }],
   });
   copyShared(ctx, plugin);
+  copyOptionalSkills(ctx, path.join(plugin, "skills"), reg, settings);
   copyBundle(ctx, plugin);
   // Rules (.mdc): contract kernel always-on; shared rules agent-requestable.
   write(path.join(plugin, "rules", "eap-contract.mdc"),
@@ -271,7 +290,7 @@ function buildCursor(ctx, root, ver, reg, settings, refRoot) {
       `---\ndescription: Enterprise AI Platform rule: ${title}\nalwaysApply: false\n---\n\n${read(path.join(rulesDir, f))}`);
   }
   const mcp = {};
-  for (const id of serversForClient(reg, "cursor", ctx.platform)) {
+  for (const id of serversForClient(reg, "cursor", ctx.platform, settings)) {
     const l = clientLaunch(id, ctx, settings);
     mcp[id] = { command: l.command, args: l.args };
   }
@@ -284,12 +303,13 @@ function buildCursor(ctx, root, ver, reg, settings, refRoot) {
 function buildOpenCode(ctx, root, ver, reg, settings, refRoot) {
   const plugin = path.join(root, "enterprise-ai-platform"); // mirrors ~/.config/opencode layout
   copyShared(ctx, plugin);
+  copyOptionalSkills(ctx, path.join(plugin, "skills"), reg, settings);
   copyBundle(ctx, plugin);
   const agentsSrc = path.join(ctx.repoRoot, "integrations", "opencode", "agents");
   if (fs.existsSync(agentsSrc)) copyDir(agentsSrc, path.join(plugin, "agents"));
   rewriteTree(plugin, refRoot);
   const mcp = {};
-  for (const id of serversForClient(reg, "opencode", ctx.platform)) {
+  for (const id of serversForClient(reg, "opencode", ctx.platform, settings)) {
     const l = clientLaunch(id, ctx, settings);
     mcp[id] = { type: "local", command: [l.command, ...l.args], enabled: true };
   }

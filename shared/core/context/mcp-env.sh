@@ -31,7 +31,7 @@ d=json.load(open(src))["mcpServers"]
 prof=collections.defaultdict(dict)
 for name,cfg in d.items():
     n=name.lower()
-    if n in ("unified-trace","opencode-bridge","knowledge-graph"): p="plugin-provided"   # the EAP / KG plugins register these; a project copy would start them twice
+    if n in ("unified-trace","opencode-bridge","knowledge-graph","gemini-assistant"): p="plugin-provided"   # the EAP / KG plugins register these; a project copy would start them twice
     elif n in ("gitlab-reader","redmine-reader"): p="core"
     elif re.search(r"grafana|signoz|lths|kafka",n): p="monitoring"
     elif "mongo" in n: p="mongo"

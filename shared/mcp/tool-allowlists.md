@@ -76,6 +76,25 @@ The read-only role prevents writes even if a non-SELECT query is attempted.
 
 **Blocked:** `execute`, `insert`, `update`, `delete` — denied by `mcp__*`.
 
+### `gemini-assistant` — OPTIONAL Gemini analysis helper (off unless `GEMINI_ENABLED=true`)
+
+Read-only with respect to the repository: it reads files/diffs inside the allowed roots (`PROJECTS_DIR` or
+`GEMINI_ALLOWED_ROOTS`; `.env`, `.ssh`, keys are refused) and sends the masked content to Google's Gemini API.
+It never writes files, runs git only with `diff`, and never returns the API key.
+
+| Tool | Purpose | Risk |
+|---|---|---|
+| `gemini_summarize` | Summarise a large file/text | Medium (sends content to an external API) |
+| `gemini_analyze_logs` | Error groups / causes from an application log | Medium |
+| `gemini_explore_codebase` | Answer a question over caller-chosen paths | Medium |
+| `gemini_review_diff` | First-pass diff review | Medium |
+| `gemini_generate_tests` | Draft test scenarios | Medium |
+| `gemini_extract_findings` | Structured findings from text | Medium |
+| `gemini_status` | Local configuration check (no API call) | Low |
+
+Not part of the per-repo `permissions.allow` template: it is a platform-plugin server (like `unified-trace`),
+enabled per machine by `gemini:setup`, not per repo.
+
 ---
 
 ## Upgrade policy

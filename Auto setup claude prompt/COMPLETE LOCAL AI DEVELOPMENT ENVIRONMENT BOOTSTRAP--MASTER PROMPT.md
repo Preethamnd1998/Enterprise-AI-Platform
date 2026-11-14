@@ -191,6 +191,33 @@ pending with the exact commands.
 
 ---
 
+## 8b. Optional — Gemini analysis helper (default: skip)
+
+An optional MCP server lets Claude hand large pre-processing jobs (big documents, logs, many files, diffs) to
+Google's Gemini API. It is **off unless the user opts in**; users without it keep today's Claude-only workflow
+unchanged. Ask the user once, plainly: *"Enable the optional Gemini helper? It sends masked file/log/diff
+content to Google's Gemini API and needs your own API key. Default: no."* Then:
+
+- **No / no answer / already disabled** → do nothing and report "Gemini: not enabled". Never enable it for them.
+- **Yes** → tell the user to run this **in their own terminal** (the key is entered with hidden input; never ask
+  for the key in chat, never read or print it, never put it in a file yourself):
+
+  ```bash
+  node shared/core/cli.js gemini:setup
+  ```
+
+  It detects `GEMINI_API_KEY` / `GOOGLE_API_KEY`, otherwise prompts, stores the key in the gitignored local `.env`
+  (owner-only), checks it, and sets `GEMINI_ENABLED=true` in `paths.local.env`. Wait for the user to confirm it
+  finished, then run `node shared/core/cli.js gemini:status` (it never prints the key) and re-run §3
+  (`platform:install --apply`, installs the server's dependencies) and §4–§5 (rebuild, `claude plugin update`).
+- **Existing user who already enabled it** → `gemini:status` shows it; just make sure §3–§5 were re-run after
+  any update. To turn it off: `node shared/core/cli.js gemini:setup --disable` (add `--forget-key` to also
+  delete the stored key), then §4–§5.
+
+Details, privacy notes and troubleshooting: `docs/GEMINI-INTEGRATION.md`.
+
+---
+
 ## 9. Verify — every line must pass
 
 ```bash
@@ -208,6 +235,10 @@ Read the `/context` output and confirm:
 - Memory files lists `~/.claude/CLAUDE.md` at roughly 1k tokens (kernel only);
 - the platform plugins' skills add ≈ 1–2k tokens in total; slash commands are not listed (they are
   user-invoked only).
+
+If Gemini is enabled (`gemini:status` says ENABLED): `GEMINI_ENABLED=true node shared/core/cli.js mcp:selftest`
+must list `mcp start: gemini-assistant: 7 tools`, and `claude mcp list` must show it connected. If it is not
+enabled, `mcp:selftest` must not mention it — that is correct, not a gap.
 
 Smoke test the graph (skip with a note if no project is indexed):
 `node shared/mcp-tools/unified-trace-mcp/test/run-tool.mjs trace '{"query":"<a known Class.method>","depth":2}'`
@@ -244,6 +275,7 @@ Migration         : <n items removed, backup path>  or  nothing to migrate
 CLAUDE.md         : kernel only, <bytes>
 MCP               : unified-trace / opencode-bridge / knowledge-graph connected (yes/no each)
 Index             : <projects indexed / pending, with command>
+Gemini helper     : not enabled (default) | enabled, key source <env|env file>, model <name>, selftest PASS/FAIL
 Always-on context : <tokens from /context>, duplicates: none | <list>
 Checks            : platform:doctor · mcp:selftest · ci/validate · npm test  → PASS/FAIL each
 Needs the user    : <restart Claude Code; anything blocked, with the exact command>

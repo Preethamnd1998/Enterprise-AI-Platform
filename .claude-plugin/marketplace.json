@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Lifetrenz internal Claude Code plugins",
-    "version": "4.15.0"
+    "version": "4.16.0"
   },
   "plugins": [
     {
       "name": "enterprise-ai-platform",
       "source": "./",
       "description": "Enterprise AI Platform v4.4 — bug-fix, migration, new-development, ui-design-update, data-correction, test, prompt-audit, dev",
-      "version": "4.15.0"
+      "version": "4.16.0"
     }
   ]
 }

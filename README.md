@@ -146,6 +146,22 @@ Windows machine**) plus the PowerShell contract/commands install above.
 
 ---
 
+## Gemini analysis helper (optional, off by default)
+
+An optional MCP server (`gemini-assistant`) lets Claude delegate large pre-processing jobs — long documents,
+application logs, broad codebase questions, diff first-pass review, test-scenario brainstorming, structured
+findings — to Google's Gemini API and receive concise JSON. Claude keeps reasoning, implementation and every
+decision. Without it nothing changes: the server, its skill and its dependencies are not installed, and the
+platform behaves exactly as before.
+
+```bash
+node shared/core/cli.js gemini:setup      # detects GEMINI_API_KEY / GOOGLE_API_KEY, or asks (hidden input)
+node shared/core/cli.js gemini:status     # enabled? key present? (never prints the key)
+node shared/core/cli.js gemini:setup --disable
+```
+
+Setup, privacy and troubleshooting: [docs/GEMINI-INTEGRATION.md](docs/GEMINI-INTEGRATION.md).
+
 ## Knowledge Graph MCP (optional)
 
 If a `knowledge-graph` MCP server is connected, the contract kernel's

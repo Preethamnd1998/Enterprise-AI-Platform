@@ -5,6 +5,8 @@
 //   platform:install [--apply] [--with-cortex]
 //   plugin:build [client|all]
 //   plugin:install|update|uninstall <client|all> [--apply] [--config-root <dir>]
+//   gemini:setup [--disable] [--forget-key] [--prompt-key] [--check] [--enable]   (OPTIONAL Gemini analysis MCP; off by default)
+//   gemini:status
 //   platform:migrate [--apply] [--project <dir>]... [--home <dir>]   (existing users → plugin-only layout)
 import fs from "node:fs";
 import os from "node:os";
@@ -17,6 +19,7 @@ import {
 } from "./plugin-manager/index.js";
 import { selftest } from "./selftest.js";
 import { planMigration, applyMigration } from "./migrate/index.js";
+import { runSetup as geminiSetup, printStatus as geminiStatusPrint } from "./gemini/setup.js";
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -53,6 +56,13 @@ async function main() {
       for (const r of report) console.log(`[${icon[r.status] ?? r.status}] ${r.id}: ${r.detail}`);
       if (!apply) console.log("\n(dry-run — rerun with --apply to execute)");
       return report.some((r) => r.status === "fail") ? 1 : 0;
+    }
+    case "gemini:status":
+      geminiStatusPrint(ctx);
+      return 0;
+    case "gemini:setup": {
+      const r = await geminiSetup(ctx, { disable: flag("disable"), forgetKey: flag("forget-key"), promptKey: flag("prompt-key"), check: flag("check"), forceEnable: flag("enable") });
+      return r.code ?? 0;
     }
     case "platform:migrate": {
       const apply = flag("apply");
@@ -116,7 +126,7 @@ async function main() {
       return 0;
     }
     default:
-      console.error("commands: platform:doctor mcp:doctor mcp:selftest platform:install plugin:build plugin:install plugin:update plugin:uninstall");
+      console.error("commands: platform:doctor mcp:doctor mcp:selftest platform:install platform:migrate gemini:setup gemini:status plugin:build plugin:install plugin:update plugin:uninstall");
       return 2;
   }
 }

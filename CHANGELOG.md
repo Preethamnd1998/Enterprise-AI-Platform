@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.16.0] — 2026-11-14 — Optional Gemini analysis helper
+
+### Added
+- `gemini-assistant` MCP server (`shared/mcp-tools/gemini-assistant-mcp/`), **optional and off by default**. Seven tools — `gemini_summarize` (map-reduce for very large inputs), `gemini_analyze_logs`, `gemini_explore_codebase`, `gemini_review_diff`, `gemini_generate_tests`, `gemini_extract_findings`, `gemini_status` — return compact structured JSON so Claude can delegate large pre-processing and keep reasoning, implementation and decisions. Official Gemini API (`generateContent`, JSON-mode structured output) over Node's built-in `fetch`; no new dependencies.
+- `node shared/core/cli.js gemini:setup | gemini:status`: detects `GEMINI_API_KEY` / `GOOGLE_API_KEY`, else prompts with hidden input and stores the key in the gitignored local `.env` (owner-only), verifies it, and writes `GEMINI_ENABLED=true` to `paths.local.env`. `--disable [--forget-key]` returns to Claude-only. The key is never printed, logged, returned or written to MCP config.
+- Registry field `optionalSetting` + `isEnabled()`: an optional server is part of the platform (client MCP config, runtime install plan, selftest, package contents) only while its setting is true. When Gemini is off there is no server, no npm install, no skill and no tools folder in the package.
+- Delegation skill `gemini-delegation` (`shared/optional/gemini-assistant/skills/`), shipped only when enabled.
+- Safety: path guard (allowed roots, `.env`/`.ssh`/key files refused), bounded reads and directory walks, validated git refs (`execFile`, no shell), secret + personal-data masking before anything is sent, untrusted-content framing, https-only base URL (http for localhost).
+- Graceful degradation: no key, auth/quota/network errors or blocked responses return `ok:false, unavailable:true` with a fallback hint — a normal result, never a protocol error.
+- Setup prompt: optional step 8b (default: skip; the agent never handles the key). Docs: `docs/GEMINI-INTEGRATION.md`; entries in README, `docs/MCP.md`, `shared/mcp/tool-allowlists.md`, `.env.example`, `paths.env.example`.
+- Tests: `shared/mcp-tools/gemini-assistant-mcp/test/` (17, including the real stdio server against a mock API) and `shared/core/tests/gemini.test.mjs` (16).
+
+### Changed
+- `mcp:selftest`, `platform:install` and `platform:doctor` skip optional servers while disabled.
+- `mcp-env` classifies `gemini-assistant` as plugin-provided.
+
 ## [4.15.0] — 2026-11-14 — Plugin-only setup for new and existing users
 
 ### Added
