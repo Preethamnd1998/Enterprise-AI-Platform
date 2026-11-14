@@ -5,7 +5,7 @@
 //   platform:install [--apply] [--with-cortex]
 //   plugin:build [client|all]
 //   plugin:install|update|uninstall <client|all> [--apply] [--config-root <dir>]
-//   gemini:setup [--disable] [--forget-key] [--prompt-key] [--check] [--enable]   (OPTIONAL Gemini analysis MCP; off by default)
+//   gemini:setup [--disable] [--forget-key] [--prompt-key] [--store-key] [--check] [--enable]   (OPTIONAL Gemini analysis MCP; off by default)
 //   gemini:status
 //   platform:migrate [--apply] [--project <dir>]... [--home <dir>]   (existing users → plugin-only layout)
 import fs from "node:fs";
@@ -61,7 +61,7 @@ async function main() {
       geminiStatusPrint(ctx);
       return 0;
     case "gemini:setup": {
-      const r = await geminiSetup(ctx, { disable: flag("disable"), forgetKey: flag("forget-key"), promptKey: flag("prompt-key"), check: flag("check"), forceEnable: flag("enable") });
+      const r = await geminiSetup(ctx, { disable: flag("disable"), forgetKey: flag("forget-key"), promptKey: flag("prompt-key"), storeKey: flag("store-key"), check: flag("check"), forceEnable: flag("enable") });
       return r.code ?? 0;
     }
     case "platform:migrate": {

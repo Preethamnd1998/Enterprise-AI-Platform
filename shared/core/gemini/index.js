@@ -10,8 +10,10 @@ import { loadSettings } from "../path-resolver/index.js";
 export const KEY_VARS = ["GEMINI_API_KEY", "GOOGLE_API_KEY"];
 export const DEFAULT_MODEL = "gemini-2.5-flash";
 export const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com";
-// Google API keys are 39 chars (AIza…); accept a wider, injection-safe range.
-const KEY_RE = /^[A-Za-z0-9_-]{20,200}$/;
+// Classic Google API keys are 39 chars (AIza…); newer formats may contain a "." — accept a wider but
+// still injection-safe set (no whitespace, quotes, $, #, backticks, newlines) of 20–200 characters.
+const KEY_CHARS = /[A-Za-z0-9._-]/;
+const KEY_RE = /^[A-Za-z0-9._-]{20,200}$/;
 const TRUTHY = /^(1|true|yes|on)$/i;
 
 export const isTruthy = (v) => typeof v === "string" && TRUTHY.test(v.trim());
@@ -42,6 +44,29 @@ export function detectKey(ctx, { env = ctx.env, settings = loadSettings(ctx) } =
     for (const v of KEY_VARS) if (parsed[v]?.trim()) return { key: parsed[v].trim(), source: `file:${file}` };
   } catch { /* no file */ }
   return { key: null, source: null };
+}
+
+// Cleans what people actually paste: terminal escape sequences (bracketed-paste markers, arrow
+// keys), zero-width characters, surrounding quotes, an `export GEMINI_API_KEY=` prefix, spaces.
+export function normalizeKeyInput(raw) {
+  let s = String(raw ?? "");
+  s = s.replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "").replace(/\u001b/g, "");
+  s = s.replace(/[\u200B-\u200D\u2060\uFEFF]/g, "").trim();
+  s = s.replace(/^\[200~/, "").replace(/\[201~$/, ""); // bracketed-paste markers whose ESC byte was already lost
+  s = s.replace(/^(?:export\s+)?(?:GEMINI_API_KEY|GOOGLE_API_KEY)\s*=\s*/i, "");
+  s = s.replace(/^["'`\u2018\u2019\u201C\u201D]+|["'`\u2018\u2019\u201C\u201D]+$/g, "").trim();
+  return s;
+}
+
+// Why a key was refused — describes length and unsupported characters by Unicode code point only,
+// so the explanation can be shown without revealing any part of the key.
+export function explainKeyProblem(key) {
+  if (!key) return "nothing was received — the paste may not have reached the prompt";
+  if (key.length < 20) return `only ${key.length} characters were received (a key is normally about 39) — the paste may have been cut off`;
+  if (key.length > 200) return `${key.length} characters were received — too long to be a key; copy only the key itself`;
+  const bad = [...new Set([...key].filter((c) => !KEY_CHARS.test(c)))];
+  if (bad.length) return `it contains ${bad.length} unsupported character${bad.length > 1 ? "s" : ""} (${bad.slice(0, 6).map((c) => `U+${c.codePointAt(0).toString(16).toUpperCase().padStart(4, "0")}`).join(", ")}) — copy the key again without spaces or quotes`;
+  return null;
 }
 
 // The only printable description of a key.
@@ -95,7 +120,7 @@ function upsertLine(file, key, value, { mode } = {}) {
 // Writes the key to the local env file with owner-only permissions. Refuses anything that is
 // not a plain token so a pasted value can never inject extra lines or shell syntax.
 export function saveKey(file, key) {
-  if (!KEY_RE.test(key ?? "")) throw new Error("that does not look like a Gemini API key (expected 20–200 characters: letters, digits, _ or -)");
+  if (!KEY_RE.test(key ?? "")) throw new Error(`that does not look like a Gemini API key: ${explainKeyProblem(key)}`);
   upsertLine(file, "GEMINI_API_KEY", key, { mode: 0o600 });
   return file;
 }
@@ -138,7 +163,8 @@ export function promptHidden(question, { input = process.stdin, output = process
       err ? reject(err) : resolve(value.trim());
     };
     const onData = (chunk) => {
-      for (const ch of chunk) {
+      // drop terminal escape sequences (bracketed-paste markers, arrow keys) instead of keeping them as key text
+      for (const ch of String(chunk).replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "").replace(/\u001bO./g, "")) {
         if (ch === "\r" || ch === "\n" || ch === "\u0004") return finish();
         if (ch === "\u0003") return finish(new Error("cancelled"));
         if (ch === "\u007f" || ch === "\b") { value = value.slice(0, -1); continue; }

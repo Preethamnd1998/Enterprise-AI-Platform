@@ -1,7 +1,7 @@
 // gemini:setup / gemini:status — the optional-feature switch. Disabled by default; nothing in
 // the platform changes until a user runs `gemini:setup`. Never prints the key.
 import {
-  detectKey, envFilePath, geminiStatus, saveKey, forgetKey, setSetting, isGitIgnored, promptHidden, checkApi, DEFAULT_MODEL,
+  detectKey, envFilePath, geminiStatus, saveKey, forgetKey, setSetting, isGitIgnored, promptHidden, checkApi, normalizeKeyInput, explainKeyProblem, DEFAULT_MODEL,
 } from "./index.js";
 import { loadSettings } from "../path-resolver/index.js";
 
@@ -23,7 +23,7 @@ export function printStatus(ctx, log = console.log) {
   return s;
 }
 
-// opts: { enable, disable, forceEnable, forgetKey, check, noPrompt, apply(default true) }
+// opts: { disable, forceEnable, forgetKey, promptKey, storeKey, check, apply(default true) }
 // deps (tests): { prompt, check, log }
 export async function runSetup(ctx, opts = {}, deps = {}) {
   const log = deps.log ?? console.log;
@@ -48,6 +48,15 @@ export async function runSetup(ctx, opts = {}, deps = {}) {
     log(`API key found (${det.source.startsWith("file:") ? "env file" : det.source}; not displayed).`);
     if (det.source.startsWith("env:")) log("  note: an environment variable is only visible to processes started from that shell; to make the key independent of the shell, re-run with --prompt-key to store it in the gitignored env file.");
   }
+  if (det.key && opts.storeKey && det.source.startsWith("env:")) {
+    const clean = normalizeKeyInput(det.key);
+    try {
+      if (apply) saveKey(file, clean);
+      det = { key: clean, source: `file:${file}` };
+      log(`key stored in ${file} (owner-only permissions).`);
+      if (isGitIgnored(ctx, file) === false) log(`WARNING: ${file} is inside a git checkout and NOT ignored — add it to .gitignore before committing anything.`);
+    } catch (e) { log(`not stored: ${e.message}`); return { enabled: false, code: 1 }; }
+  }
   if (!det.key || opts.promptKey) {
     if (!interactive && !det.key) {
       log("No GEMINI_API_KEY / GOOGLE_API_KEY found and this is not an interactive terminal.");
@@ -56,7 +65,8 @@ export async function runSetup(ctx, opts = {}, deps = {}) {
       if (!opts.forceEnable) return { enabled: false, code: 2, reason: "no key" };
     } else if (interactive && (opts.promptKey || !det.key)) {
       let key;
-      try { key = await prompt("Enter your Gemini API key (input is hidden; leave empty to skip): "); } catch (e) { log(`cancelled (${e.message})`); return { enabled: false, code: 130 }; }
+      try { key = normalizeKeyInput(await prompt("Enter your Gemini API key (input is hidden; paste it, then press Enter; leave empty to skip): ")); } catch (e) { log(`cancelled (${e.message})`); return { enabled: false, code: 130 }; }
+      if (key) log(`received ${key.length} characters.`);
       if (key) {
         try {
           if (apply) saveKey(file, key);
@@ -64,7 +74,12 @@ export async function runSetup(ctx, opts = {}, deps = {}) {
           log(`key saved to ${file} (owner-only permissions).`);
           const ignored = isGitIgnored(ctx, file);
           if (ignored === false) log(`WARNING: ${file} is inside a git checkout and NOT ignored — add it to .gitignore before committing anything.`);
-        } catch (e) { log(`not saved: ${e.message}`); return { enabled: false, code: 1 }; }
+        } catch (e) {
+          log(`not saved: ${e.message}`);
+          log("  tip: copy only the key (no quotes or spaces). If pasting into the hidden prompt keeps failing, use the shell instead:");
+          log("       read -s GEMINI_API_KEY; export GEMINI_API_KEY; node shared/core/cli.js gemini:setup --store-key");
+          return { enabled: false, code: 1 };
+        }
       } else if (!det.key && !opts.forceEnable) {
         log("no key entered — integration stays disabled.");
         return { enabled: false, code: 0 };

@@ -11,7 +11,7 @@ import { loadRegistry, validateRegistry, serversForClient, isEnabled } from "../
 import { planRuntime } from "../runtime-manager/index.js";
 import { buildPlugins } from "../plugin-manager/index.js";
 import { PassThrough } from "node:stream";
-import { parseDotenv, detectKey, envFilePath, saveKey, forgetKey, setSetting, geminiStatus, describeKey, validateBaseUrl, promptHidden } from "../gemini/index.js";
+import { parseDotenv, detectKey, envFilePath, saveKey, forgetKey, setSetting, geminiStatus, describeKey, validateBaseUrl, promptHidden, normalizeKeyInput, explainKeyProblem } from "../gemini/index.js";
 import { runSetup } from "../gemini/setup.js";
 
 const repoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
@@ -110,6 +110,31 @@ test("promptHidden: reads a pasted key with editing, echoes nothing, restores th
   await assert.rejects(promptHidden("Key: ", { input: new PassThrough(), output: new PassThrough() }), /not a terminal/);
 });
 
+test("normalizeKeyInput: strips paste wrappers; explainKeyProblem never echoes the key", () => {
+  const ESC = "\u001b";
+  for (const wrapped of [`${ESC}[200~${KEY}${ESC}[201~`, `[200~${KEY}[201~`, `"${KEY}"`, `'${KEY}'`, `\u201C${KEY}\u201D`, `  ${KEY}\n`, `export GEMINI_API_KEY=${KEY}`, `GOOGLE_API_KEY="${KEY}"`, `${KEY}\u200B`]) {
+    assert.equal(normalizeKeyInput(wrapped), KEY, JSON.stringify(wrapped).replace(KEY, "<KEY>"));
+  }
+  assert.equal(explainKeyProblem(KEY), null);
+  assert.equal(explainKeyProblem("AQ.Ab8RN6" + "x".repeat(30)), null, "dotted key formats are accepted");
+  assert.match(explainKeyProblem(""), /nothing was received/);
+  assert.match(explainKeyProblem("short"), /only 5 characters/);
+  assert.match(explainKeyProblem("x".repeat(250)), /250 characters .* too long/);
+  const bad = explainKeyProblem(`${KEY.slice(0, 10)} ${KEY.slice(10)}\u201D`);
+  assert.match(bad, /2 unsupported characters \(U\+0020, U\+201D\)/);
+  assert.ok(!bad.includes(KEY.slice(0, 10)), "the explanation must not reveal any part of the key");
+  assert.throws(() => saveKey(path.join(tmp(), "e"), "not a key !!!!!!!!!!!!!!!"), /does not look like a Gemini API key: it contains/);
+});
+
+test("promptHidden: terminal escape sequences from a paste are not kept as key text", async () => {
+  const input = new PassThrough();
+  input.isTTY = true; input.isRaw = false; input.setRawMode = (v) => { input.isRaw = v; };
+  const output = new PassThrough();
+  const p = promptHidden("Key: ", { input, output });
+  input.write(`\u001b[200~${KEY}\u001b[201~\r`);
+  assert.equal(await p, KEY);
+});
+
 // ---- gemini:setup flows ----------------------------------------------------------------
 test("setup, key already in the environment: enables, never prints the key", async () => {
   const s = sandbox({ GEMINI_API_KEY: KEY });
@@ -144,6 +169,37 @@ test("setup, interactive: hidden prompt → key saved owner-only to the env file
   if (process.platform !== "win32") assert.equal(fs.statSync(s.envFile).mode & 0o777, 0o600);
   assert.ok(!out.lines.join("\n").includes(KEY));
   assert.match(fs.readFileSync(s.local, "utf8"), /GEMINI_ENABLED=true/);
+});
+
+test("setup, interactive: a quoted or wrapped paste is cleaned and accepted; a refusal explains itself and offers the fallback", async () => {
+  const s = sandbox();
+  const out = collect();
+  const r = await runSetup(s.ctx, {}, { log: out.log, interactive: true, prompt: async () => `  "${KEY}" `, check: async () => ({ ok: true }) });
+  assert.deepEqual([r.enabled, r.code], [true, 0]);
+  assert.match(fs.readFileSync(s.envFile, "utf8"), new RegExp(`^GEMINI_API_KEY=${KEY}$`, "m"));
+  assert.match(out.lines.join("\n"), new RegExp(`received ${KEY.length} characters`));
+  const bad = sandbox();
+  const o2 = collect();
+  const r2 = await runSetup(bad.ctx, {}, { log: o2.log, interactive: true, prompt: async () => "short" });
+  assert.equal(r2.code, 1);
+  const text = o2.lines.join("\n");
+  assert.match(text, /only 5 characters/);
+  assert.match(text, /read -s GEMINI_API_KEY/);
+  assert.match(text, /--store-key/);
+});
+
+test("setup --store-key: copies a key from the environment into the env file (validated), no prompt", async () => {
+  const s = sandbox({ GEMINI_API_KEY: `"${KEY}"` });
+  const out = collect();
+  const r = await runSetup(s.ctx, { storeKey: true }, { log: out.log, interactive: false, check: async () => ({ ok: true }) });
+  assert.deepEqual([r.enabled, r.keyConfigured], [true, true]);
+  assert.match(fs.readFileSync(s.envFile, "utf8"), new RegExp(`^GEMINI_API_KEY=${KEY}$`, "m"));
+  if (process.platform !== "win32") assert.equal(fs.statSync(s.envFile).mode & 0o777, 0o600);
+  assert.ok(!out.lines.join("\n").includes(KEY));
+  const junk = sandbox({ GEMINI_API_KEY: "has spaces in it and is clearly not a key" });
+  const r2 = await runSetup(junk.ctx, { storeKey: true }, { log: collect().log, interactive: false });
+  assert.deepEqual([r2.enabled, r2.code], [false, 1]);
+  assert.ok(!fs.existsSync(junk.envFile) && !fs.existsSync(junk.local));
 });
 
 test("setup, interactive: invalid, empty or rejected keys never enable anything", async () => {

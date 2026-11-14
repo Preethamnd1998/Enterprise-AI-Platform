@@ -26,7 +26,8 @@ node shared/core/cli.js gemini:setup --disable --forget-key   # also remove the 
    `GEMINI_API_KEY=…` in the local env file — gitignored, owner-only permissions (`0600`). The key is
    validated as a plain token first, so a pasted value can never inject extra lines.
 3. In a terminal (or with `--check`) makes one cheap metadata request to confirm the key works (no tokens consumed); a rejected key leaves the integration disabled.
-4. Writes `GEMINI_ENABLED=true` to `paths.local.env` (gitignored; never the tracked `paths.env`).
+4. Cleans what you pasted (quotes, spaces, an `export GEMINI_API_KEY=` prefix, terminal paste markers) and tells you how many characters it received — never the key itself. Keys of 20–200 characters made of letters, digits, `_`, `-` and `.` are accepted.
+5. Writes `GEMINI_ENABLED=true` to `paths.local.env` (gitignored; never the tracked `paths.env`).
 5. Prints the follow-up commands:
 
 ```bash
@@ -44,6 +45,7 @@ Without a terminal (CI, agents) it will not enable anything unless you pass `--e
 | `--disable` | set `GEMINI_ENABLED=false` |
 | `--forget-key` | with `--disable`: delete `GEMINI_API_KEY` from the env file |
 | `--prompt-key` | ask for a key even if one is in the environment, and store it in the env file |
+| `--store-key` | copy a key that is already in the environment into the env file (no prompt) |
 | `--check` | verify the key against the API even without a terminal |
 | `--enable` | enable even when no key exists yet (tools will report "unavailable" until you add one) |
 
@@ -130,6 +132,7 @@ No existing Gemini integration was present in the platform, so none was reused.
 | Symptom | Check |
 |---|---|
 | Tools not visible in Claude | `gemini:status` says enabled? then rebuild + update the plugin and restart Claude Code (§1) |
+| `not saved: … it contains N unsupported characters (U+…)` or `only N characters were received` | copy only the key (no quotes/spaces). If pasting at the hidden prompt keeps failing, use the shell instead: `read -s GEMINI_API_KEY; export GEMINI_API_KEY; node shared/core/cli.js gemini:setup --store-key` |
 | `unavailable … NO_KEY` | key not in the environment of the process that started Claude Code — store it with `gemini:setup --prompt-key` |
 | `unavailable … AUTH` | key rejected or the Generative Language API is not enabled for it |
 | `unavailable … BAD_RESPONSE` ("output was cut off") | raise `GEMINI_MAX_OUTPUT_TOKENS` or narrow the input |

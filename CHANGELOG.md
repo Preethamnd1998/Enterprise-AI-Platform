@@ -10,7 +10,8 @@
 - Safety: path guard (allowed roots, `.env`/`.ssh`/key files refused), bounded reads and directory walks, validated git refs (`execFile`, no shell), secret + personal-data masking before anything is sent, untrusted-content framing, https-only base URL (http for localhost).
 - Graceful degradation: no key, auth/quota/network errors or blocked responses return `ok:false, unavailable:true` with a fallback hint — a normal result, never a protocol error.
 - Setup prompt: optional step 8b (default: skip; the agent never handles the key). Docs: `docs/GEMINI-INTEGRATION.md`; entries in README, `docs/MCP.md`, `shared/mcp/tool-allowlists.md`, `.env.example`, `paths.env.example`.
-- Tests: `shared/mcp-tools/gemini-assistant-mcp/test/` (17, including the real stdio server against a mock API) and `shared/core/tests/gemini.test.mjs` (16).
+- Key entry hardening: pasted keys are cleaned (quotes, `export …=` prefix, spaces, zero-width characters, terminal bracketed-paste markers), keys containing `.` are accepted, a refusal states the length / unsupported Unicode code points without revealing the key, and `gemini:setup --store-key` stores a key from the environment as a no-prompt fallback.
+- Tests: `shared/mcp-tools/gemini-assistant-mcp/test/` (17, including the real stdio server against a mock API) and `shared/core/tests/gemini.test.mjs` (20).
 
 ### Changed
 - `mcp:selftest`, `platform:install` and `platform:doctor` skip optional servers while disabled.
