@@ -96,7 +96,7 @@ directly to execution. Use `auto=true` only when the scope is well-understood an
 
 ## 4. Security Escalation
 
-**Security escalation contact:** preetham.nd@lifetrenz.com (Platform Engineer / Security Lead)
+**Security escalation contact:** Preetham.ND (Platform Engineer / Security Lead) — https://preethamnd1998.github.io/
 
 **Escalate immediately for:**
 - A literal secret (API key, PAT, password) found in a committed file

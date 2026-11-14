@@ -155,7 +155,7 @@ Only engineers with access to the consuming repo's local filesystem. The log is 
 Stop the session immediately. Follow the escalation procedure in [GOVERNANCE.md](GOVERNANCE.md) §4:
 1. Stop the session
 2. Rotate the exposed secret
-3. Notify preetham.nd@lifetrenz.com
+3. Notify the developer, Preetham.ND — https://preethamnd1998.github.io/
 
 **Q: Can I use `auto=true` for Flyway migrations?**
 

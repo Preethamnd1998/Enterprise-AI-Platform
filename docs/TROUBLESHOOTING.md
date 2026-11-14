@@ -403,5 +403,5 @@ Remove-Item .claude\audit\log.jsonl
 
 1. Check the [FAQ](FAQ.md) for common questions
 2. Review the specific platform guide: [INSTALL-CLAUDE.md](INSTALL-CLAUDE.md), [INSTALL-COPILOT.md](INSTALL-COPILOT.md), [INSTALL-OPENCODE.md](INSTALL-OPENCODE.md)
-3. For security incidents: contact preetham.nd@lifetrenz.com immediately (see [GOVERNANCE.md](GOVERNANCE.md) §4)
+3. For security incidents: contact Preetham.ND (https://preethamnd1998.github.io/) immediately (see [GOVERNANCE.md](GOVERNANCE.md) §4)
 4. For rollback of any component: see [docs/rollback.md](docs/rollback.md)

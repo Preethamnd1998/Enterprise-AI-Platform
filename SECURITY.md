@@ -6,7 +6,7 @@
 
 ## Reporting a Security Issue
 
-**Email:** preetham.nd@lifetrenz.com (Platform Engineer / Security Lead)
+**Contact:** Preetham.ND (Platform Engineer / Security Lead) — https://preethamnd1998.github.io/
 
 **Do not** open a public GitLab issue for security vulnerabilities.
 

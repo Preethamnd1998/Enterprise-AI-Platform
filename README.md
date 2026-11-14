@@ -279,7 +279,7 @@ The `shared/contract.md.sha256` file stores the expected kernel hash. The `hash-
 - Secrets use `${env:}` injection in `.mcp.json` — no literals ever committed
 - Contract tamper detection: hash mismatch → warn + re-inject
 - Session audit: every tool use logged to `.claude/audit/log.jsonl`
-- Security contact: preetham.nd@lifetrenz.com
+- Security contact: Preetham.ND — https://preethamnd1998.github.io/
 
 See [docs/security.md](docs/security.md) and [GOVERNANCE.md](docs/GOVERNANCE.md) §4.
 
@@ -332,7 +332,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the full detail behind each of these, plus 
 
 ## Support
 
-- Security incidents: preetham.nd@lifetrenz.com (see [GOVERNANCE.md](docs/GOVERNANCE.md) §4)
+- Security incidents: Preetham.ND — https://preethamnd1998.github.io/ (see [GOVERNANCE.md](docs/GOVERNANCE.md) §4)
 - Platform issues: file a Redmine ticket or open a GitLab MR against this repo
 - Documentation gaps: open an MR with the fix
 

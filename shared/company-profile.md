@@ -48,7 +48,7 @@ Patterns that must never be introduced in any Lifetrenz repo:
 
 ## Security Contact
 
-Platform security issues: preetham.nd@lifetrenz.com
+Platform security issues: Preetham.ND — https://preethamnd1998.github.io/
 See GOVERNANCE.md §4 for the full escalation procedure.
 
 ## Custom Flow & Architecture Knowledge

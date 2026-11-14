@@ -103,5 +103,5 @@ Your MR must pass:
 
 ## Contact
 
-- Platform Architect / Security Lead: preetham.nd@lifetrenz.com
+- Platform Architect / Security Lead: Preetham.ND — https://preethamnd1998.github.io/
 - Security incidents: see [GOVERNANCE.md](docs/GOVERNANCE.md) §4 — do not wait

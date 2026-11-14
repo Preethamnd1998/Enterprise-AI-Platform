@@ -92,6 +92,6 @@ Decision:                    TODO [FT-066] — approved by: TODO — due 2026-08
 
 ## Measurement ownership
 
-**Owner:** preetham.nd@lifetrenz.com  
+**Owner:** Preetham.ND (https://preethamnd1998.github.io/)  
 **Review meeting:** 2026-08-07 (or nearest working day)  
 **Reference:** FT-066 (Copilot 30-day measurement hook), EP-15, C3 decision criterion

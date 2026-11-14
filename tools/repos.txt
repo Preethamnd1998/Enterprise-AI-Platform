@@ -9,7 +9,7 @@
 #           manager or SSH agent configured on the engineer's machine.
 #
 # IMPORTANT: Add real GitLab repo clone URLs below. Run with -DryRun first.
-#            Contact preetham.nd@lifetrenz.com before adding repos from other teams.
+#            Contact Preetham.ND (https://preethamnd1998.github.io/) before adding repos from other teams.
 #
 # ─── Backend Services ─────────────────────────────────────────────────────────
 # https://<gitlab-host>/lifetrenz/<backend-service-1>.git
