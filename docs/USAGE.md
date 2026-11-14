@@ -136,16 +136,6 @@ If the AI surfaces a high-risk item mid-task, do not override. Review carefully 
 
 ---
 
-## The Pause Turn Cap (G16)
-
-The AI must pause and check with you if, during a single command:
-- Cumulative changes exceed **10 files**, OR
-- The task has expanded into a **different layer** than originally scoped
-
-This is a safeguard against runaway scope. When you see the pause, review what's been done and whether to continue.
-
----
-
 ## Reading the Execution Summary
 
 After every command, the AI outputs an execution summary:

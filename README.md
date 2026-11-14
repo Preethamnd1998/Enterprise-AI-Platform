@@ -316,7 +316,7 @@ Semantic Versioning (SemVer). Current: **v4.10.0**.
 | Phase B | v3.2 | MCP env injection, GitLab+DB MCP, Copilot adapter |
 | Phase C | v4.0 | /test command, subagents, coverage gate, audit schema |
 | Phase D | v4.1 | /ai/ templates, rules, /prompt-audit, pre-flight block |
-| Phase E | v4.2 | GOVERNANCE.md, telemetry, HITL matrix, pause-turn cap |
+| Phase E | v4.2 | GOVERNANCE.md, telemetry, HITL matrix |
 | Phase F | v4.3 | Lazy kernel refactor, company-profile seam, fleet rollout, adapter stubs |
 | Phase G | v4.4 | `/dev` command (AI Developer Agent) — Single Agent default, opt-in Multi-Agent (≤3 sub-agents) |
 | Phase H | v4.5 | Drift fix: `/planning` + `planning-engine.md` backported into source |

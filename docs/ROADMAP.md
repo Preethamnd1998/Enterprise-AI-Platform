@@ -14,7 +14,7 @@ The Enterprise AI Platform reached its planned architecture milestone (v4.3.0) w
 | B | v3.1 | Security — MCP allowlist, hash-check, audit logging | ✅ Complete |
 | C | v3.2 | Platform expansion — Copilot adapter, /test command | ✅ Complete |
 | D | v4.0 | Governance — registry, /prompt-audit, HITL matrix | ✅ Complete |
-| E | v4.2 | OpenCode adapter, lazy §15/§16, pause-turn cap | ✅ Complete |
+| E | v4.2 | OpenCode adapter, lazy §15/§16 | ✅ Complete |
 | F | v4.3 | Rollout & Polish — company seam, fleet rollout, future stubs | ✅ Complete |
 
 ---

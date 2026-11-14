@@ -258,7 +258,7 @@ Check `.claude/audit/log.jsonl` — entries should still be written without Post
 
 ---
 
-## Scenario 11: Roll back Phase E changes (audit schema v1.1, GOVERNANCE.md, contract §17)
+## Scenario 11: Roll back Phase E changes (audit schema v1.1, GOVERNANCE.md)
 
 **When:** Phase E changes cause unexpected behaviour in audit logging, governance flow,
 or contract enforcement.
@@ -276,13 +276,6 @@ git checkout HEAD~1 -- shared/schemas/audit-schema.json
 **Note:** Existing log entries with schema_version "1.1" remain in log.jsonl and are valid
 against the v1.0 schema EXCEPT for the five new top-level fields, which would fail validation.
 If strict v1.0 validation is required, archive the v1.1 entries first.
-
-### Roll back contract §17 (pause-turn cap)
-```powershell
-# Restore contract + hash from git
-git checkout HEAD~1 -- shared/contract.md
-git checkout HEAD~1 -- shared/contract.md.sha256
-```
 
 ### Roll back GOVERNANCE.md
 ```powershell

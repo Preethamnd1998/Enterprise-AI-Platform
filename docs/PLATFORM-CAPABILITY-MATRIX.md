@@ -26,7 +26,6 @@ This document defines what the Enterprise AI Platform can do on each supported p
 | **auto=true override** | ✅ | ✅ | ✅ |
 | **CRISP prompt scoring** | ✅ | ✅ | ✅ |
 | **Pre-flight check** | ✅ | ✅ | ✅ |
-| **Pause-turn cap (G16)** | ✅ | ✅ | ✅ |
 | **Installer** | `install/install-claude.ps1` | `install/install-copilot.ps1` | `adapters/opencode/install.ps1` |
 | **Install type** | Global + per-repo | Per-repo (vendored) | Per-repo |
 | **Upgrade method** | Re-run installer | Re-run + commit | Re-run + commit |

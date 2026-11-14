@@ -31,7 +31,6 @@ explicit, decision-ready criteria for common scenarios. When in doubt: **stop an
 | MCP write tool (if allowlisted) | HIGH | ✅ Explicit approval per call | Read-only by default; write must be justified |
 | Run a script (`auto=true` scope) | MEDIUM | ✅ After Phase 1 approval | Script must be shown before execution |
 | Scope expansion beyond original layer | MEDIUM | ✅ Stop → describe drift → approve | Contract §3d scope drift rule |
-| Pause-turn threshold exceeded (≥10 changes) | MEDIUM | ✅ Pause and check in | Contract §17 pause_turn cap |
 | End of command (done) | LOW | ❌ Final report only | Summary emitted; no approval needed |
 
 **Legend:** ✅ = human must approve · ❌ = may proceed · CRITICAL = security escalation also required
@@ -109,7 +108,6 @@ The matrix is authoritative documentation — the contract is the enforcement me
 - `GOVERNANCE.md` §4 — Security escalation contact
 - `shared/contract.md` §9 — Risk gate
 - `shared/contract.md` §14 — Global approval gate
-- `shared/contract.md` §17 — Pause turn cap (Phase E)
 - `adapters/claude/capability-map.yml` — Full Claude capability matrix
 - `adapters/copilot/capability-map.yml` — Copilot degraded capabilities
 - `adapters/opencode/capability-map.yml` — OpenCode degraded capabilities

@@ -92,10 +92,6 @@ directly to execution. Use `auto=true` only when the scope is well-understood an
 - Billing, financial, or patient data changes
 - Changes flagged as CRITICAL in `AI_SECURITY.md`
 
-**Pause turn cap (G16):** During a single command turn, the AI must pause and check with the
-engineer if cumulative actions exceed 10 file changes OR the task has expanded into a
-different layer than originally scoped. See contract §17 (Phase E addition).
-
 ---
 
 ## 4. Security Escalation

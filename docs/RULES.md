@@ -77,7 +77,6 @@ The following rules are enforced by the contract kernel (`shared/contract.md`) a
 | Lazy standards | §5 | Standards loaded only when the relevant language/layer is in the change set. |
 | Token budgets | §10 | Hard per-task limits; stop and report when reached. |
 | Stop conditions | §11 | Stop when objective met + both gates pass. |
-| Pause turn cap | §17 (G16) | Stop at ≥10 file changes or layer expansion within a single turn. |
 
 ---
 

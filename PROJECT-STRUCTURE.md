@@ -46,7 +46,7 @@ The single canonical location for every platform asset. Nothing in this director
 
 ```
 shared/
-├── contract.md             # Execution contract (kernel + full §0–§17)
+├── contract.md             # Execution contract (kernel + full §0–§18)
 ├── contract.md.sha256      # Expected SHA-256 of the contract kernel section
 ├── company-profile.md      # Company-specific customisation seam (F10 partial)
 │
