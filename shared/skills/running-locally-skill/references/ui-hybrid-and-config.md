@@ -1,12 +1,12 @@
 # UI in hybrid mode + local config files
 
-**UI in hybrid mode**: same `app-routing.module.ts` commenting approach as
-fully-local. Only a subset of `lifetrenz-core/package.json` scripts have a
-hybrid variant (they use `proxy.hybrid.js` instead of `proxy.conf.json`) — run
-these individually rather than the plain `start-*` scripts when mixing local
-and canary-dev backends: `start-hybrid`, `start-umgt-hybrid`, `start-fdm-hybrid`,
-`start-opd-hybrid`, `start-inpatient-hybrid`, `start-masters-hybrid`,
-`start-rcm-hybrid`, `start-physiotherapy-hybrid`.
+**UI in hybrid mode**: every `WAPP/<app>` repo has `npm run start-hybrid`
+(`ng serve --port 4440 --proxy-config proxy.hybrid.js --configuration=local`). Open `proxy.hybrid.js`,
+uncomment the ONE service you run locally, start that service (see run-backend-service.md), then
+run the script. `/api/<svc>/...` goes to `localhost:<port>` for that service; everything else, plus
+Kafka and the console, goes to the canary-dev gateway. Legacy per-module `start-*-hybrid` scripts
+(`start-fdm-hybrid`, `start-opd-hybrid`, ...) exist in the app `package.json`s as monolith leftovers.
+Use the plain `start-hybrid` in the app you cloned.
 
 ## Config files
 

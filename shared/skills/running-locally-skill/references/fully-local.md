@@ -1,20 +1,47 @@
 # Fully local mode
 
-## Split projects vs. the monolith (status as of 2026-09-20)
+## UI shells: one repo per app (status as of 2026-11-14)
 
-Most modules have split out of this `lifetrenz-core` monolith into their own
-standalone GitLab repos under `ui/<name>` (each with its own embedded copy of
-`lifetrenz-core`) — see the split-status table in
-[projects.md](../../../ai-platform/knowledge/architecture/projects.md#split-status-per-module). For an already-split
-module, run/deploy it from its own repo's checkout, not from here.
+The monolithic `lifetrenz-core` is split. The UI is **one repo per app**, cloned under `WAPP/<app>`
+(`https://git.lifetrenz.com/novel/his-ehr/ui/<app>.git`: settings, masters, opd-clinical, ipd-clinical,
+er-clinical, audit, adt, rcm, ...). Each is a copy of the old shell that keeps only the modules it needs
+as real submodules in `projects/<module>` (`.gitmodules` -> `ui/ui-library/<module>.git`).
+`WAPP/main` is the new shell (`projects/home` + `projects/lib`). `WAPP/lifetrenz-core` is a
+**legacy shell with an empty `projects/`**, kept for reference only; its `angular.json`/tsconfig still
+list removed modules, so do not run or branch from it for new work. See
+[projects.md](../../../ai-platform/knowledge/architecture/projects.md) (older split-status table) and lths-mgmt `workspace/architecture/wapp-multi-repo.md` for the module-to-repo map.
 
-This doc (the `lifetrenz-core` monolith checkout) still applies to:
-- modules that haven't split yet (per the split-status table — e.g.
-  `callcenter`, `consulting-services`, `cssd` as of this writing), and
-- the local copy of `lifetrenz-core` itself, kept specifically for running
-  those not-yet-split modules, since developer access to the canonical
-  `ui/lifetrenz-core` repo was removed once most modules split out (access
-  comes back once Phase 2 turns it into a shared library — see projects.md).
+Run and debug from the app repo that owns the module, in `WAPP/<app>`. For a library change, work in the
+`ui-library/<module>` checkout (submodule), then move the pointer in each consuming app repo.
+
+## The three running modes (same scripts in every app repo)
+
+| Mode | Scope | UI script | Proxy |
+|---|---|---|---|
+| Fully local (rarely used) | all BE + Kafka/Zookeeper/Consul local | `npm start` | `proxy.conf.json` (local ports) |
+| Hybrid | some UI and BE local; Kafka, console and the rest from the chosen environment | `npm run start-hybrid` | `proxy.hybrid.js` (one service uncommented -> localhost, rest -> canary-dev gateway) |
+| Dev mode | all BE on the server, only the UI local | `npm run start-dev` (`start-vista-dev` for Medvista) | `proxy.dev.json` -> `https://canary-dev.lifetrenz.com/api-gateway/` |
+
+All three serve on port 4440 with `--configuration=local`, so they read
+`environments/common/environment.local.ts` (the `environment.ts` file replacement). Other `start-*`
+scripts (`start-ambulance`, `start-mis` on 4441, `start-mrd` on 4442, ...) are leftovers from the
+monolith that still exist in each app's `package.json`; use the plain `start*` scripts of the app you cloned.
+
+## Per-shell environment files: `baseUrl` is set per mode
+
+Each shell keeps `environments/common/environment.{local,dev,stage,prod}.ts` and edits them per shell
+(for example `WAPP/audit/environments/common/`). Do not trust a generic value; open the file.
+- `environment.local.ts` (fully local): `baseUrl: 'http://localhost:55002/'` (gateway), `appDomain:
+  'http://localhost:4580/#/login'`, `imageBasePath: 'http://localhost:55004/'`, with a few shared hosts
+  (`iconPath`, `webSocketServiceUrl`, `mqttWsUrl`) still on canary-dev.
+- `environment.dev.ts` (dev/server): `baseUrl: 'https://canary-dev.lifetrenz.com/api-gateway/'`,
+  `appDomain`/`environmentUrl`/`consentUrl: 'https://canary-dev.lifetrenz.com/'`,
+  `imageBasePath: 'https://canary-dev.lifetrenz.com/clinical/'`, `webSocketServiceUrl: 'wss://canary-dev.lifetrenz.com/ws'`.
+- **Gotcha:** `start-dev` and `start-hybrid` also use `--configuration=local`, so they load
+  `environment.local.ts`. For dev mode, set its `baseUrl` (and related URLs) to the values in
+  `environment.dev.ts`, or the browser calls `localhost:55002` and bypasses the proxy. Do not commit that
+  local edit unintentionally; confirm in the shell first (the angular.json `local` configuration
+  replaces `environment.ts` with `common/environment.local.ts`).
 
 ## Fully local
 
@@ -23,39 +50,5 @@ This doc (the `lifetrenz-core` monolith checkout) still applies to:
 other services the feature you're working on needs. Also requires Kafka,
 Zookeeper, and Consul running locally.
 
-**UI**: from `UI-BE/lifetrenz-core`, `npm run start` launches the root Angular
-app; which feature sub-projects actually load depends on what's *not*
-commented out in `app-routing.module.ts` — normally only the projects you need
-are left uncommented. To run a single project on its own (nothing else loads),
-use its dedicated script: `npm run start-<project>`.
-
-`lifetrenz-core/package.json` defines the available scripts — check it directly
-for the current list. As of this writing it includes (non-hybrid) start scripts
-for: `ambulance`, `mis`, `mrd`, `umgt`, `adt`, `settings`, `fdm`, `home-care`,
-`opd`, `emergency`, `inpatient`, `masters`, `infection`, `rcm`, `physiotherapy`,
-`ris`, `anesthesia`, `operation-theatre` (e.g. `npm run start-adt`,
-`npm run start-masters-dev`). Each maps to an `angular.json` build
-configuration and a `proxy.*.json` file that decides which backend the calls
-go to (`proxy.conf.json` = local ports, `proxy.dev.json` = canary-dev,
-`proxy.vista-dev.json` = Medvista dev).
-
-**`environments/common/environment.local.ts` — `baseUrl`/`appDomain` depend on
-mode.** As checked in, this file is wired for *hybrid*/canary-BE use:
-```
-baseUrl: 'https://canary-dev.lifetrenz.com/api-gateway/',
-appDomain: 'http://lcanary-dev.lifetrenz.com/#/login',
-```
-(the `appDomain` host has a stray leading `l` — `lcanary-dev` — that's an
-existing typo in the file, not a second real host). Leave these canary-dev
-values as-is when running hybrid, or when pointing the UI at canary-dev/BE
-directly. For a genuinely *fully local* run (all BE services local, per the
-"Fully local" section above), point both at the local gateway instead before
-serving/building — matching the direct-port style already used elsewhere in
-this same file (e.g. `imageBasePath: 'http://localhost:55004/'`):
-```
-baseUrl: 'http://localhost:55002/',
-appDomain: 'http://localhost:55002/#/login',
-```
-(55002 = `gateway-service`, per the port table below.) Not independently
-verified against the gateway's actual context-path config — confirm the
-exact path segment against a working fully-local run before relying on it.
+**UI**: from `WAPP/<app>`, `npm start`; `environment.local.ts` must point `baseUrl`/`appDomain` at the
+local gateway (55002, per the port table below). Confirm the exact context path against a working fully-local run.

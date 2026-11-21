@@ -1,5 +1,28 @@
 # Running one Spring Boot service locally (start-local.bat / STS run configuration / Feign URLs)
 
+## Which environment the code targets: development vs other branches
+
+- **`development` branch (Canary dev)** runs in **Docker** with Consul + Config Server: `bootstrap.yml` has
+  `consul.host: ${CONSUL_HOST:canary-dev.lifetrenz.com}`, `PROFILE:development`, and the pom has no
+  Kubernetes dependency. Everything in this skill (start-local, STS config, hybrid) is written for that.
+- **V2-QA and every other environment (stable, Medvista, Aster, ...)** run in **Kubernetes**. Their
+  `bootstrap.yml` uses `${SPRING_APPLICATION_NAME}`, `${SPRING_PROFILE_ACTIVE}`,
+  `${SPRING_CLOUD_CONIFG_ENABLED}` (sic) and a `kubernetes:` block, and the pom carries
+  `spring.cloud.kubernetes`. These do not start locally as-is: no Consul/Config Server, and the env vars
+  are unset.
+- **Running a non-development branch locally (temporary, never committed):**
+  1. Copy `pom.xml` and `src/main/resources/bootstrap.yml` from the `development` branch of that service
+     over the working copies (e.g. `git show development:pom.xml > pom.xml`, same for bootstrap.yml; the
+     `dev/BE/<service>` worktree has them).
+  2. Run it as usual (`start-local`, STS or `mvn spring-boot:run`).
+  3. **Do not commit those two files.** Before committing anything: `git restore pom.xml
+     src/main/resources/bootstrap.yml` (or `git update-index --assume-unchanged` while working, undone
+     afterwards), and check `git status` / `git diff --stat` shows neither file. If the real change
+     needs a pom/bootstrap edit, stash the dev copies first, make the edit on the branch's own files,
+     then reapply the dev copies.
+  Also remember the dev copies pull in dev-only dependency/profile differences, so a successful local run
+  proves the code, not the Kubernetes config.
+
 Run a backend service locally, from a terminal, using `UI-BE/start-local.bat`:
 
 ```
