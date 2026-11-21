@@ -1,8 +1,9 @@
 # Changelog
 
-## [Unreleased] — Knowledge Graph: split-UI discovery
+## [4.16.1] — 2026-11-21 — Split-UI docs: Knowledge Graph discovery, running-locally skill
 
 ### Changed
+- `running-locally-skill`: UI is one repo per app (`WAPP/<app>`), `lifetrenz-core` is legacy; documents the three run modes (`npm start` / `start-hybrid` / `start-dev`), per-shell `environment.local.ts` vs `environment.dev.ts` `baseUrl`, the hybrid edit checklist (compose ports, hosts file, start scripts, `proxy.hybrid.js`), and development (Docker) vs Kubernetes branches for running a BE locally (temporary `pom.xml`/`bootstrap.yml`, never committed).
 - Knowledge Graph plugin skill and `shared/mcp/knowledge-graph-setup.md` describe the new indexer discovery (`BACKEND_ROOT` / `UI_ROOT`): Java by `pom.xml`; Angular monolith, split repo (shell + `projects/*`) or standalone app by `angular.json`; React by `package.json`. `sync-projects.sh` scans `BE` and `UI`/`WAPP` in one run (`KG_BE_ROOTS` / `KG_UI_ROOTS`). The indexer itself lives in the knowledge-graph-generator repo.
 - Fixed the skill's re-index hint: the indexer takes no `--repo` flag; use `KG_CONFIG_PATH=<file> python indexer.py`.
 
