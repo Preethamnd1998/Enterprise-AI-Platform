@@ -24,6 +24,8 @@ before build or merge), **Fix** (should change) or **Note**. Quote the ticket or
 
 ## Plan: Standards axis (does it follow the rules?)
 
+Check the repo's own documented standards first. The items below are the Lifetrenz defaults; skip any that do not fit this stack and say which.
+
 - Correction: no feature toggle. Co-existing feature: toggle default OFF, both states tested.
 - Contract change: old and new forms accepted; OpenAPI or contract test included where the repo has them.
 - Money in the service's documented type; other services' data arrives by event, not cross-database read.

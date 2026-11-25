@@ -1,6 +1,8 @@
 # Fix Plan layout
 
-Headings in this order. A section with nothing to say states why, it is not dropped.
+Headings in this order. A section with nothing to say states why, it is not dropped. Usable in any repo or
+workspace: where "care setting" does not apply, list the variants the fix must cover (tenants, roles,
+platforms, modules).
 
 ```markdown
 # Fix Plan — #<id> <subject> (round <n>)

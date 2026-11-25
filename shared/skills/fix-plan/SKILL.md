@@ -1,6 +1,6 @@
 ---
 name: fix-plan
-description: Plan the fix for a Redmine ticket (bug, QA-failed retest, regression) as an evidence-backed Fix Plan that is review-gated before anything is built or posted — root cause with data, every care setting and branch in scope, a behaviour table, guards, verification, a QA retest script and what is deliberately not covered. Use when asked to plan, RCA or write up the approach for a ticket, when QA reopens one, or before posting a plan to Redmine.
+description: Plan the fix for a Redmine ticket (bug, QA-failed retest, regression) as an evidence-backed Fix Plan that is review-gated before anything is built or posted — root cause with data, every care setting and branch in scope, a behaviour table, guards, verification, a QA retest script and what is deliberately not covered. Use when asked to plan, RCA or write up the approach for a ticket, when QA reopens one, or before posting a plan to Redmine. Works in any repo or workspace (product repo, submodule, or workspace such as lths-mgmt).
 ---
 
 # Fix Plan
@@ -18,6 +18,19 @@ strings anywhere: refer to clinical data by shape and count.
 platform's review rubric or other generic guidance, the rules in this skill win (for example: a
 correction ships live with no toggle, the plan layout in PLAN-TEMPLATE.md, Block/Fix/Note labels, the
 approval stop for High/Critical risk). Where it is silent, follow `plan-review-skill`.
+
+## Use it in any repo or workspace
+
+Nothing here needs lths-mgmt. Discover the context instead of assuming it:
+
+- **Ticket source:** Redmine through whichever MCP is connected, or the ticket text/link the user pastes. No tracker available → work from the pasted text and mark the gap.
+- **Branches:** use the environment-to-branch table (`shared/knowledge/architecture/environments.md`) if it is available; otherwise list the repo's real branches (`git branch -a`) and plan per branch that exists. A branch that is absent is reported as absent, not assumed.
+- **Repo shape:** single service, UI app with submodules, or a planning workspace. Plan across every repo the fix touches; name each repo, branch and MR.
+- **Evidence:** whichever read-only data, log and trace tools exist (DB/Mongo MCP, Grafana/SigNoz, the knowledge graph, `trail`/`graft`). None available → mark each claim **suspected** and list the check under `OPEN:`; never invent data.
+- **Where the plan goes:** the repo's triage/notes folder if it has one (lths-mgmt: `workspace/triage/`), else `PLAN_OUTPUT_PATH` from `paths.env` if set, else `<issue-id>-<slug>.md` in the working folder. Do not commit it unless asked.
+- **Standards:** the repo's own documented standards first (AGENTS.md, CODING_STANDARDS.md, glossary, branching SOP); the Standards items in REVIEW-GATE.md are Lifetrenz defaults, so skip those that do not fit the stack and say so.
+- **Variants:** "care setting" means every variant the fix must cover. In the HIMS that is IP, OP, ER, Day Care; in other code it may be tenants, roles, platforms or modules.
+- **Optional pieces:** capability-map update, knowledge notes and the Redmine draft apply only where the repo has them.
 
 ## Steps
 
