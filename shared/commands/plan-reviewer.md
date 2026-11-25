@@ -1,7 +1,7 @@
 ---
 description: Review a submitted plan (PLAN.md, an attached Redmine plan, or inline text) against real evidence — code, DB, logs, Grafana/SigNoz, Kafka, BRD/requirement docs — and score it for implementation readiness. Approval requires all four scores to clear the threshold (default 95). Not approved → produces a revised plan + test-case file and re-scores.
 argument-hint: "plan=<path.md> | redmine=<id> | \"<inline plan text>\" [threshold=N] [max-revisions=N] [auto=false]"
-allowed-tools: Read, Grep, Glob, Write, Bash, TodoWrite, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_create_issue_note, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_repository_tree, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs
+allowed-tools: Read, Grep, Glob, Write, Bash, TodoWrite, Skill, mcp__redmine-reader__redmine_get_issue, mcp__redmine-reader__redmine_create_issue_note, mcp__gitlab-reader__get_file_contents, mcp__gitlab-reader__get_repository_tree, mcp__gitlab-reader__get_merge_request, mcp__gitlab-reader__get_merge_request_diffs
 disable-model-invocation: true
 ---
 
@@ -83,6 +83,13 @@ itself.
 ---
 
 ## Phase 1 — Evidence-Gathering & Scoring (read-only, no changes)
+
+Load the `plan-review-skill` skill once (Skill tool, or `Read` its `SKILL.md`) and follow its
+workflow: it supplies the branch matrix (development, V2-QA, Medvista/Aster), the blast-radius
+inventory, the 100-point rubric with hard caps, rules PR-01..PR-27 and the test-case taxonomy.
+Its rubric maps onto the four scores below (mapping table in `reference/rubric.md`); report
+both the 100-point total and the four scores. Open only the reference file the current step
+names.
 
 For each of the four scores, gather proof before assigning a number. **Never
 score from how the plan reads — score from what was actually verified.**
