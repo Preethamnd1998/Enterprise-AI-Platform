@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased] — Plan-review skill
+
+### Added
+- `plan-review-skill` (`shared/skills/plan-review-skill/`): senior-reviewer method for plans written by junior engineers. Verifies requirement, RCA and code claims on every relevant branch (development, V2-QA, Medvista-QA/UAT/PROD, Aster) with `git show <ref>:<path>`, maps blast radius (consumers, per-app copies, submodules, DB, topics, permissions, release path), checks test cases of all kinds, and scores 0-100 from a preset rubric (8 dimensions, hard caps, verdict bands). Includes rules PR-01..PR-27, test-case taxonomy, worked example (#50950), report and Redmine-comment templates. Plan: `docs/PLAN-REVIEW-SKILL-PLAN.md`. Bug-fix plans must carry a line-level Change Map (PR-25, verified per branch); `reference/self-testing-guidelines.md` defines what implementing engineers and AI agents must run (failing-first test, Jasmine+Karma, JUnit 5+Mockito, API tests, DB/Kafka, production build, evidence block); `templates/plan-submission-template.md` embeds both.
+
+### Changed
+- `/plan-reviewer` loads `plan-review-skill` for its rubric and method (adds `Skill` to allowed tools); its four scores and threshold are unchanged and map from the 100-point rubric.
+
 ## [4.16.1] — 2026-11-21 — Split-UI docs: Knowledge Graph discovery, running-locally skill
 
 ### Changed
