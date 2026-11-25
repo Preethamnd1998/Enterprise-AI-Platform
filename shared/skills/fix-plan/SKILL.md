@@ -1,6 +1,6 @@
 ---
 name: fix-plan
-description: Plan the fix for a Redmine ticket (bug, QA-failed retest, regression) as an evidence-backed Fix Plan that is review-gated before anything is built or posted — root cause with data, every care setting and branch in scope, a behaviour table, guards, verification, a QA retest script and what is deliberately not covered. Use when asked to plan, RCA or write up the approach for a ticket, when QA reopens one, or before posting a plan to Redmine. Works in any repo or workspace (product repo, submodule, or workspace such as lths-mgmt).
+description: Plan the fix for a Redmine ticket (bug, QA-failed retest, regression) as an evidence-backed Fix Plan that is review-gated before anything is built or posted — root cause with data, every care setting and branch in scope, a behaviour table, guards, verification, a QA retest script and what is deliberately not covered. Use when asked to plan, RCA or write up the approach for a ticket, when QA reopens one, or before posting a plan to Redmine. Works in any repo or workspace (product repo, submodule, or workspace such as lths-mgmt). Supporting skill: a workspace that has its own fix-plan (lths-mgmt) treats that one as main and uses this only when needed.
 ---
 
 # Fix Plan
@@ -13,6 +13,10 @@ Write the plan where the repo keeps its triage notes (in lths-mgmt: `workspace/t
 or the existing triage note; elsewhere `<issue-id>-<slug>.md` beside the ticket's other notes). Draft the
 Redmine comment next to it; **post only when asked**. No patient data, credentials or connection
 strings anywhere: refer to clinical data by shape and count.
+
+**Role.** This is the supporting, portable copy of the lths-mgmt planning method. In a workspace that has its own
+`fix-plan` (lths-mgmt), that skill is the main one: use this plugin skill there only when something is missing,
+and never let it override the workspace's own rules.
 
 **Precedence.** This is the lths-mgmt planning method, generalised. Where it conflicts with the
 platform's review rubric or other generic guidance, the rules in this skill win (for example: a
