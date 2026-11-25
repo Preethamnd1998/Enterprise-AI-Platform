@@ -219,6 +219,8 @@ Generate a revised plan + test-cases file? (approve / yes / proceed / stop)
 
 ## Revision Phase (auto by default; after approval when `auto=false`; or session-mode continuation)
 
+0. Follow `plan-review-skill`'s `reference/revision-protocol.md`: keep the old plan's score,
+   write the gap analysis, and show old vs revised (projected) scores together.
 1. For every item in "Gaps found," produce a concrete fix in the plan — not a
    vaguer restatement of the same section.
 2. Regenerate `PLAN.md` (same section shape as `/planning`'s Generation Phase)

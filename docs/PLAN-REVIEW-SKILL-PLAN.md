@@ -39,6 +39,7 @@ default, changing contract §0-§18 or the hash-pinned kernel.
 | Blast radius | `reference/blast-radius.md` | 16-axis inventory, §9 risk class, regression matrix |
 | RCA / requirement / code | `reference/rca-and-requirement.md` | traceability matrix, 5-part RCA, claim verification |
 | Test taxonomy | `reference/test-case-taxonomy.md` | 18 test kinds, case quality bar, minimum by risk |
+| Revision protocol | `reference/revision-protocol.md` | gap analysis (reviewer-closable vs author-only), better plan, old score kept beside revised projected score, score history |
 | Self-testing guidelines | `reference/self-testing-guidelines.md` | what implementers/AI agents must run and evidence; aligned to `shared/standards/testing/` |
 | Worked example | `reference/worked-example.md` | #50950 calibration |
 | Templates | `templates/plan-submission-template.md` (author fills; Change Map + self-testing sections), `templates/review-report.md`, `templates/redmine-review-comment.md` | submission, report, optional Redmine post |

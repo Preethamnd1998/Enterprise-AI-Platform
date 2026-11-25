@@ -38,8 +38,12 @@ patient data into a review: counts, shapes and structures only.
    `reference/rules.md` (PR-01…PR-27) as the checklist for deductions.
 9. **Report** → `templates/review-report.md`; Redmine form → `templates/redmine-review-comment.md`
    (post only if asked). Always end with a developer start-guide: ordered, file-level steps
-   with line numbers. Authors fill `templates/plan-submission-template.md`; hand it back with
-   the review when a plan is REVISE/REJECT.
+   with line numbers. Authors fill `templates/plan-submission-template.md`.
+10. **Gap analysis and revised plan** → `reference/revision-protocol.md`. Below APPROVED (or on
+    request): list every gap (reviewer-closable vs author-only), write a **better plan** in the
+    submission-template shape with verified line numbers, and show the **old plan's score next
+    to the revised plan's projected score** (per dimension, with caps). Keep the old score
+    verbatim; never invent evidence; revised score stays "projected" until re-review.
 
 ## Non-negotiables
 

@@ -74,5 +74,20 @@ Self-Test Evidence block present: yes / no. Skipped/focused tests left behind: y
 Ordered, file-level steps with acceptance check per step; what to split into separate tickets;
 release/promotion steps; exit criteria.
 
+## 11b. Gap analysis
+| Gap | Rule | Dim | Points lost | Evidence | Fix | Closable by (Reviewer / Author) |
+|---|---|---|---|---|---|---|
+
+## 11c. Score comparison (old plan vs revised plan)
+| Dim | Pts | Old plan | Revised (projected) | Δ | Still open (author-only) |
+|---|---|---|---|---|---|
+| D1 … D8 | | | | | |
+| Caps | | | | | |
+| **Total / verdict** | 100 | N / VERDICT | N / VERDICT | +N | |
+
+Score history: round 1 (old plan) N → round 2 (revised, projected) N → … (max 3 rounds).
+Revised plan written to `<id>-plan-REVISED.md`; this review to `<id>-plan-REVIEW.md`. The
+old score above is unchanged; the revised score is **projected** until re-review confirms it.
+
 ## 12. Revised test cases
 ID · requirement · kind · precondition · steps · expected · env/branch · priority.
